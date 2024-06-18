@@ -1,13 +1,7 @@
 package org.e2immu.resourceapi;
 
-import org.e2immu.annotation.Modified;
-import org.e2immu.annotation.NotNull;
-import org.e2immu.cstapi.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.parserapi.PackagePrefix;
-
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 /*
 Connects to the Resources maps.

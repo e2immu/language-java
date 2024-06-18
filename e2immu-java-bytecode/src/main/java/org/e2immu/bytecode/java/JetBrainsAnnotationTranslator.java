@@ -17,10 +17,10 @@ package org.e2immu.bytecode.java;
 
 import org.e2immu.annotation.NotNull;
 import org.e2immu.bytecode.java.asm.MyMethodVisitor;
-import org.e2immu.cstapi.expression.AnnotationExpression;
-import org.e2immu.cstapi.expression.Expression;
-import org.e2immu.cstapi.info.Info;
-import org.e2immu.cstapi.runtime.Runtime;
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.inputapi.AnnotationStore;
 
 import java.util.Arrays;

@@ -1,11 +1,11 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.info.Access;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.MethodModifier;
-import org.e2immu.cstapi.info.ParameterInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.info.Access;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.MethodModifier;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.parserapi.Context;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;

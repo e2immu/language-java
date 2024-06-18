@@ -1,17 +1,17 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.expression.ArrayLength;
-import org.e2immu.cstapi.expression.BinaryOperator;
-import org.e2immu.cstapi.expression.IntConstant;
-import org.e2immu.cstapi.expression.VariableExpression;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.ParameterInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.Block;
-import org.e2immu.cstapi.statement.LocalVariableCreation;
-import org.e2immu.cstapi.statement.ReturnStatement;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.variable.LocalVariable;
+import org.e2immu.language.cst.api.expression.ArrayLength;
+import org.e2immu.language.cst.api.expression.BinaryOperator;
+import org.e2immu.language.cst.api.expression.IntConstant;
+import org.e2immu.language.cst.api.expression.VariableExpression;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.LocalVariableCreation;
+import org.e2immu.language.cst.api.statement.ReturnStatement;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

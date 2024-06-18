@@ -1,13 +1,13 @@
 package org.e2immu.parserimpl;
 
 import org.e2immu.annotation.NotNull;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.ParameterInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.translate.TranslationMap;
-import org.e2immu.cstapi.type.NamedType;
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.translate.TranslationMap;
+import org.e2immu.language.cst.api.type.NamedType;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 
 import java.util.*;
 import java.util.stream.Collectors;

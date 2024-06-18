@@ -1,16 +1,16 @@
 package org.e2immu.parserimpl;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Element;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.expression.Expression;
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.info.Info;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.statement.Block;
-import org.e2immu.cstapi.statement.Statement;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Element;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.parser.java.ParseBlock;
 import org.e2immu.parser.java.ParseExpression;
 import org.e2immu.parser.java.ParseStatement;
@@ -68,12 +68,12 @@ public class ResolverImpl implements Resolver {
 
         for (Todo todo : todos) {
             if (todo.infoBuilder instanceof FieldInfo.Builder builder) {
-                org.e2immu.cstapi.expression.Expression e = parseExpression.parse(todo.context, START_INDEX,
+                Expression e = parseExpression.parse(todo.context, START_INDEX,
                         todo.forwardType, todo.expression);
                 builder.setInitializer(e);
                 builder.commit();
             } else if (todo.infoBuilder instanceof MethodInfo.Builder builder) {
-                org.e2immu.cstapi.statement.ExplicitConstructorInvocation eci;
+                org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
                 if (todo.eci == null) {
                     eci = null;
                 } else {
@@ -145,8 +145,8 @@ public class ResolverImpl implements Resolver {
         return null;
     }
 
-    private org.e2immu.cstapi.statement.ExplicitConstructorInvocation parseEci(Todo todo) {
-        org.e2immu.cstapi.statement.ExplicitConstructorInvocation eci;
+    private org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation parseEci(Todo todo) {
+        org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
         ConstructorDeclaration cd = (ConstructorDeclaration) todo.eci.getParent();
         List<Comment> comments = parseStatement.comments(cd);
         Source source = parseStatement.source(todo.context.enclosingMethod(), "0", cd);

@@ -14,8 +14,8 @@
 
 package org.e2immu.bytecode.java.asm;
 
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.runtime.Runtime;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.inputapi.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.FieldVisitor;

@@ -15,28 +15,19 @@
 package org.e2immu.bytecode.java.asm;
 
 
-import org.e2immu.bytecode.java.ResourcesImpl;
-import org.e2immu.bytecode.java.TypeContextImpl;
-import org.e2immu.bytecode.java.TypeMapImpl;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.type.TypeParameter;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.cstimpl.output.QualificationImpl;
-import org.e2immu.cstimpl.runtime.RuntimeImpl;
 import org.e2immu.cstimpl.type.DiamondEnum;
 import org.e2immu.cstimpl.type.ParameterizedTypePrinter;
 import org.e2immu.cstimpl.type.TypeParameterImpl;
-import org.e2immu.inputapi.Resources;
 import org.e2immu.inputapi.TypeContext;
 import org.e2immu.support.Either;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 
 import static org.e2immu.inputapi.InspectionState.STARTING_BYTECODE;

@@ -1,15 +1,17 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.expression.*;
-import org.e2immu.cstapi.expression.Expression;
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.variable.FieldReference;
-import org.e2immu.cstapi.variable.Variable;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Assignment;
+import org.e2immu.language.cst.api.expression.Cast;
+import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.expression.VariableExpression;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.variable.FieldReference;
+import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.parserapi.Context;
 import org.e2immu.parserapi.ForwardType;
 import org.parsers.java.Node;

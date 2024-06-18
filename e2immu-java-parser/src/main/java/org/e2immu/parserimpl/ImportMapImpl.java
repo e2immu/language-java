@@ -1,6 +1,6 @@
 package org.e2immu.parserimpl;
 
-import org.e2immu.cstapi.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.parserapi.ImportMap;
 
 import java.util.*;

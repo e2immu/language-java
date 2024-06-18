@@ -1,9 +1,9 @@
 package org.e2immu.parserimpl;
 
-import org.e2immu.cstapi.info.ParameterInfo;
-import org.e2immu.cstapi.variable.FieldReference;
-import org.e2immu.cstapi.variable.LocalVariable;
-import org.e2immu.cstapi.variable.Variable;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.variable.FieldReference;
+import org.e2immu.language.cst.api.variable.LocalVariable;
+import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.parserapi.VariableContext;
 
 import java.util.HashMap;

@@ -15,18 +15,9 @@
 package org.e2immu.bytecode.java.asm;
 
 
-import org.e2immu.bytecode.java.ResourcesImpl;
-import org.e2immu.bytecode.java.TypeContextImpl;
-import org.e2immu.bytecode.java.TypeMapImpl;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstimpl.runtime.RuntimeImpl;
-import org.e2immu.inputapi.TypeContext;
-import org.junit.jupiter.api.BeforeEach;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;

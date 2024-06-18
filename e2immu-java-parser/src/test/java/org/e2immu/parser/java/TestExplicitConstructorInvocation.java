@@ -1,12 +1,10 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.expression.InlineConditional;
-import org.e2immu.cstapi.expression.IntConstant;
-import org.e2immu.cstapi.expression.StringConstant;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.ExplicitConstructorInvocation;
-import org.e2immu.cstapi.statement.ReturnStatement;
+import org.e2immu.language.cst.api.expression.IntConstant;
+import org.e2immu.language.cst.api.expression.StringConstant;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

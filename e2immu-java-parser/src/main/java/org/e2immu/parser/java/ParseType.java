@@ -1,8 +1,8 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.NamedType;
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.parserapi.Context;
 import org.parsers.java.Node;
 import org.parsers.java.Token;

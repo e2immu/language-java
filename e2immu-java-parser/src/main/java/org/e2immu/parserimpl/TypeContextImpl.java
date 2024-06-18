@@ -1,14 +1,14 @@
 package org.e2immu.parserimpl;
 
 import org.e2immu.annotation.NotNull;
-import org.e2immu.cstapi.element.CompilationUnit;
-import org.e2immu.cstapi.element.ImportStatement;
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.NamedType;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.variable.FieldReference;
+import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.ImportStatement;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.parserapi.ImportMap;
 import org.e2immu.parserapi.PackagePrefix;
 import org.e2immu.parserapi.TypeContext;

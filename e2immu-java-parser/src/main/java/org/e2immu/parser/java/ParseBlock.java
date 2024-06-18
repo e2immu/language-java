@@ -1,9 +1,9 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.statement.Block;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.parserapi.Context;
 import org.parsers.java.Node;
 import org.parsers.java.ast.CodeBlock;
@@ -31,7 +31,7 @@ public class ParseBlock extends CommonParse {
         for (Node child : codeBlock.children()) {
             if (child instanceof Statement s) {
                 String sIndex = (index.isEmpty() ? "" : index + ".") + count;
-                org.e2immu.cstapi.statement.Statement statement = parseStatement.parse(context, sIndex, s);
+                org.e2immu.language.cst.api.statement.Statement statement = parseStatement.parse(context, sIndex, s);
                 builder.addStatement(statement);
                 count++;
             }

@@ -1,9 +1,9 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.expression.VariableExpression;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.ForEachStatement;
+import org.e2immu.language.cst.api.expression.VariableExpression;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ForEachStatement;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

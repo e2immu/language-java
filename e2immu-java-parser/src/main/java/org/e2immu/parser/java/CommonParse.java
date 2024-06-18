@@ -1,9 +1,9 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.info.Info;
-import org.e2immu.cstapi.runtime.Runtime;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.runtime.Runtime;
 import org.parsers.java.Node;
 import org.parsers.java.ast.MultiLineComment;
 import org.parsers.java.ast.SingleLineComment;

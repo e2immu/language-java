@@ -1,11 +1,11 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.expression.Assignment;
-import org.e2immu.cstapi.expression.BinaryOperator;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.ExpressionAsStatement;
-import org.e2immu.cstapi.statement.WhileStatement;
+import org.e2immu.language.cst.api.expression.Assignment;
+import org.e2immu.language.cst.api.expression.BinaryOperator;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
+import org.e2immu.language.cst.api.statement.WhileStatement;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

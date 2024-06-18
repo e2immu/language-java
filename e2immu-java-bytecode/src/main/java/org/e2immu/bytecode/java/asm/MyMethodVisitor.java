@@ -16,12 +16,15 @@ package org.e2immu.bytecode.java.asm;
 
 
 import org.e2immu.bytecode.java.JetBrainsAnnotationTranslator;
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.expression.AnnotationExpression;
-import org.e2immu.cstapi.info.*;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.info.Access;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.inputapi.AnnotationStore;
 import org.e2immu.inputapi.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;

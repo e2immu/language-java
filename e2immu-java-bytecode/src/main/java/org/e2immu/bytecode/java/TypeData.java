@@ -1,12 +1,8 @@
 package org.e2immu.bytecode.java;
 
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.inputapi.InspectionState;
 import org.e2immu.inputapi.TypeMap;
-
-import java.util.Map;
 
 public interface TypeData {
     InspectionState getInspectionState();

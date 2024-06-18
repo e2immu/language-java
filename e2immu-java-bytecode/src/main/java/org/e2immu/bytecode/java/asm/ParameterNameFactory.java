@@ -15,7 +15,7 @@
 package org.e2immu.bytecode.java.asm;
 
 
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 
 import java.util.HashSet;
 import java.util.Set;

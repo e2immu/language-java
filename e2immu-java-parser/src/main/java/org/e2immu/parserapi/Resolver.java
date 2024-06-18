@@ -1,7 +1,7 @@
 package org.e2immu.parserapi;
 
-import org.e2immu.cstapi.info.Info;
-import org.e2immu.cstapi.info.TypeInfo;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.parsers.java.Node;
 import org.parsers.java.ast.ExplicitConstructorInvocation;
 

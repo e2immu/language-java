@@ -1,10 +1,10 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.expression.MethodReference;
-import org.e2immu.cstapi.expression.TypeExpression;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.ReturnStatement;
+import org.e2immu.language.cst.api.expression.MethodReference;
+import org.e2immu.language.cst.api.expression.TypeExpression;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

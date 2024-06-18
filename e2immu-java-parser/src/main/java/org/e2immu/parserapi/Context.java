@@ -1,12 +1,12 @@
 package org.e2immu.parserapi;
 
-import org.e2immu.cstapi.element.CompilationUnit;
-import org.e2immu.cstapi.info.FieldInfo;
-import org.e2immu.cstapi.info.Info;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.resourceapi.TypeMap;
 
 public interface Context {

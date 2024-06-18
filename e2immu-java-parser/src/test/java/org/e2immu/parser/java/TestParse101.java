@@ -1,12 +1,12 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.expression.MethodCall;
-import org.e2immu.cstapi.expression.StringConstant;
-import org.e2immu.cstapi.info.MethodInfo;
-import org.e2immu.cstapi.info.ParameterInfo;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.statement.ExpressionAsStatement;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.expression.MethodCall;
+import org.e2immu.language.cst.api.expression.StringConstant;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.cstimpl.element.SingleLineComment;
 import org.e2immu.cstimpl.element.SourceImpl;
 import org.intellij.lang.annotations.Language;

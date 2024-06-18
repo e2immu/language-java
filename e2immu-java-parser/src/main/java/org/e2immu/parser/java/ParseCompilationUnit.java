@@ -1,13 +1,10 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.ImportStatement;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
+import org.e2immu.language.cst.api.element.ImportStatement;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.parserapi.Context;
-import org.e2immu.parserimpl.ContextImpl;
 import org.e2immu.resourceapi.TypeMap;
 import org.e2immu.support.Either;
-import org.parsers.java.Node;
 import org.parsers.java.ast.CompilationUnit;
 import org.parsers.java.ast.ImportDeclaration;
 import org.parsers.java.ast.PackageDeclaration;
@@ -33,7 +30,7 @@ public class ParseCompilationUnit extends CommonParse {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
         String packageName = packageDeclaration == null ? ""
                 : Objects.requireNonNullElse(packageDeclaration.getName(), "");
-        org.e2immu.cstapi.element.CompilationUnit.Builder builder = runtime.newCompilationUnitBuilder()
+        org.e2immu.language.cst.api.element.CompilationUnit.Builder builder = runtime.newCompilationUnitBuilder()
                 .setPackageName(packageName);
         int i = 0;
         while (i < cu.size() && !(cu.get(i) instanceof TypeDeclaration)) {
@@ -45,7 +42,7 @@ public class ParseCompilationUnit extends CommonParse {
             }
             i++;
         }
-        org.e2immu.cstapi.element.CompilationUnit compilationUnit = builder.build();
+        org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = builder.build();
 
         Context newContext = rootContext.newCompilationUnit(rootContext.resolver(), typeMap, compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));

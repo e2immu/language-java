@@ -1,15 +1,14 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.Element;
-import org.e2immu.cstapi.element.Source;
-import org.e2immu.cstapi.expression.Expression;
-import org.e2immu.cstapi.info.TypeInfo;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.statement.Block;
-import org.e2immu.cstapi.statement.LocalVariableCreation;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.variable.LocalVariable;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.LocalVariableCreation;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.parserapi.Context;
 import org.e2immu.parserapi.ForwardType;
 import org.parsers.java.Node;
@@ -39,7 +38,7 @@ public class ParseStatement extends CommonParse {
         parseBlock = new ParseBlock(runtime, this);
     }
 
-    public org.e2immu.cstapi.statement.Statement parse(Context context, String index, Statement statement) {
+    public org.e2immu.language.cst.api.statement.Statement parse(Context context, String index, Statement statement) {
         try {
             return internalParse(context, index, statement);
         } catch (Throwable t) {
@@ -48,7 +47,7 @@ public class ParseStatement extends CommonParse {
         }
     }
 
-    private org.e2immu.cstapi.statement.Statement internalParse(Context context, String index, Statement statement) {
+    private org.e2immu.language.cst.api.statement.Statement internalParse(Context context, String index, Statement statement) {
         List<Comment> comments = comments(statement);
         Source source = source(context.enclosingMethod(), index, statement);
 
@@ -60,7 +59,7 @@ public class ParseStatement extends CommonParse {
         }
         if (statement instanceof ReturnStatement rs) {
             ForwardType forwardType = context.newForwardType(context.enclosingMethod().returnType());
-            org.e2immu.cstapi.expression.Expression e = parseExpression.parse(context, index, forwardType, rs.get(1));
+            Expression e = parseExpression.parse(context, index, forwardType, rs.get(1));
             assert e != null;
             return runtime.newReturnBuilder()
                     .setExpression(e).setSource(source).addComments(comments)
@@ -143,13 +142,13 @@ public class ParseStatement extends CommonParse {
             Context newContext = context.newVariableContext("tryBlock");
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, tryStatement.get(i));
             i++;
-            org.e2immu.cstapi.statement.TryStatement.Builder builder = runtime.newTryBuilder()
+            org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder()
                     .setBlock(block)
                     .addComments(comments).setSource(source);
             int blockCount = 1;
             while (tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
-                org.e2immu.cstapi.statement.TryStatement.CatchClause.Builder ccBuilder = runtime.newCatchClauseBuilder();
+                org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder = runtime.newCatchClauseBuilder();
                 int j = 2;
                 if (catchBlock.get(j) instanceof Type type) {
                     ParameterizedType pt = parseType.parse(context, type);
@@ -178,7 +177,7 @@ public class ParseStatement extends CommonParse {
             return builder.setFinallyBlock(finallyBlock).build();
         }
         if (statement instanceof BasicForStatement) {
-            org.e2immu.cstapi.statement.ForStatement.Builder builder = runtime.newForBuilder();
+            org.e2immu.language.cst.api.statement.ForStatement.Builder builder = runtime.newForBuilder();
             Context newContext = context.newVariableContext("for-loop");
 
             // initializers
@@ -250,7 +249,7 @@ public class ParseStatement extends CommonParse {
             return parseBlock.parse(context, index, codeBlock);
         }
         if (node instanceof Statement s) {
-            org.e2immu.cstapi.statement.Statement st = parse(context, index + FIRST_STATEMENT, s);
+            org.e2immu.language.cst.api.statement.Statement st = parse(context, index + FIRST_STATEMENT, s);
             return runtime.newBlockBuilder().addStatement(st).build();
         }
         throw new UnsupportedOperationException();

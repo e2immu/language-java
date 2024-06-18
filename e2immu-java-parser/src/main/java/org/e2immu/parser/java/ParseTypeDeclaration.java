@@ -1,14 +1,17 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.cstapi.element.Comment;
-import org.e2immu.cstapi.element.CompilationUnit;
-import org.e2immu.cstapi.expression.AnnotationExpression;
-import org.e2immu.cstapi.info.*;
-import org.e2immu.cstapi.runtime.Runtime;
-import org.e2immu.cstapi.type.ParameterizedType;
-import org.e2immu.cstapi.type.TypeNature;
-import org.e2immu.cstapi.type.TypeParameter;
-import org.e2immu.cstapi.type.Wildcard;
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeModifier;
+import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeNature;
+import org.e2immu.language.cst.api.type.TypeParameter;
+import org.e2immu.language.cst.api.type.Wildcard;
 import org.e2immu.parserapi.Context;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
