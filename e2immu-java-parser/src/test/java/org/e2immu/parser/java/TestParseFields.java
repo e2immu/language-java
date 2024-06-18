@@ -12,7 +12,7 @@ import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.This;
-import org.e2immu.cstimpl.element.MultiLineComment;
+import org.e2immu.language.cst.impl.element.MultiLineComment;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

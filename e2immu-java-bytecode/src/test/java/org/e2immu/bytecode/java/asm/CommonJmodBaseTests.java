@@ -4,7 +4,7 @@ import org.e2immu.bytecode.java.ResourcesImpl;
 import org.e2immu.bytecode.java.TypeContextImpl;
 import org.e2immu.bytecode.java.TypeMapImpl;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.cstimpl.runtime.RuntimeImpl;
+import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.inputapi.Resources;
 import org.e2immu.inputapi.TypeContext;
 import org.junit.jupiter.api.BeforeAll;

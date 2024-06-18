@@ -7,8 +7,8 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
-import org.e2immu.cstimpl.element.SingleLineComment;
-import org.e2immu.cstimpl.element.SourceImpl;
+import org.e2immu.language.cst.impl.element.SingleLineComment;
+import org.e2immu.language.cst.impl.element.SourceImpl;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
