@@ -21,14 +21,15 @@ import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.inputapi.*;
+import org.e2immu.language.inspection.api.*;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static org.e2immu.inputapi.InspectionState.STARTING_BYTECODE;
-import static org.e2immu.inputapi.InspectionState.TRIGGER_BYTECODE_INSPECTION;
+import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
+import static org.e2immu.language.inspection.api.InspectionState.TRIGGER_BYTECODE_INSPECTION;
 
 
 /*

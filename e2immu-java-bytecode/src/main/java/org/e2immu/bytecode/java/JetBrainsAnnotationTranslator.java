@@ -21,7 +21,7 @@ import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.inputapi.AnnotationStore;
+import org.e2immu.language.inspection.api.AnnotationStore;
 
 import java.util.Arrays;
 import java.util.List;

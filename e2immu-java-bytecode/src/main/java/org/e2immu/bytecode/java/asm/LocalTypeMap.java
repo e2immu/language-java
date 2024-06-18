@@ -4,9 +4,9 @@ package org.e2immu.bytecode.java.asm;
 import org.e2immu.annotation.Modified;
 import org.e2immu.bytecode.java.TypeData;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.inputapi.SourceFile;
-import org.e2immu.inputapi.TypeContext;
-import org.e2immu.inputapi.TypeMap;
+import org.e2immu.language.inspection.api.SourceFile;
+import org.e2immu.language.inspection.api.TypeContext;
+import org.e2immu.language.inspection.api.TypeMap;
 
 import java.util.List;
 

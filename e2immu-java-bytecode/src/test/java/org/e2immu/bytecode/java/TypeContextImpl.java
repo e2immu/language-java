@@ -3,8 +3,8 @@ package org.e2immu.bytecode.java;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
-import org.e2immu.inputapi.TypeContext;
-import org.e2immu.inputapi.TypeMap;
+import org.e2immu.language.inspection.api.TypeContext;
+import org.e2immu.language.inspection.api.TypeMap;
 
 import java.util.HashMap;
 import java.util.Map;

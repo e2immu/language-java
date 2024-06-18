@@ -23,14 +23,14 @@ import org.e2immu.language.cst.impl.output.QualificationImpl;
 import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
 import org.e2immu.language.cst.impl.type.TypeParameterImpl;
-import org.e2immu.inputapi.TypeContext;
+import org.e2immu.language.inspection.api.TypeContext;
 import org.e2immu.support.Either;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static org.e2immu.inputapi.InspectionState.STARTING_BYTECODE;
+import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseGenerics extends CommonJmodBaseTests {

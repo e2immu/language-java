@@ -24,6 +24,7 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.inputapi.*;
+import org.e2immu.language.inspection.api.*;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.e2immu.inputapi.InspectionState.STARTING_BYTECODE;
+import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
 import static org.objectweb.asm.Opcodes.ASM9;
 
 public class MyClassVisitor extends ClassVisitor {

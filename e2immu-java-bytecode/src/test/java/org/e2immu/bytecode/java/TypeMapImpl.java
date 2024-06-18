@@ -1,10 +1,10 @@
 package org.e2immu.bytecode.java;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.inputapi.InspectionState;
-import org.e2immu.inputapi.Resources;
-import org.e2immu.inputapi.SourceFile;
-import org.e2immu.inputapi.TypeMap;
+import org.e2immu.language.inspection.api.InspectionState;
+import org.e2immu.language.inspection.api.Resources;
+import org.e2immu.language.inspection.api.SourceFile;
+import org.e2immu.language.inspection.api.TypeMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;

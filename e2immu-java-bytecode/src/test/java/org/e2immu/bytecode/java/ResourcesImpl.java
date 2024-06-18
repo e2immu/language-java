@@ -1,7 +1,7 @@
 package org.e2immu.bytecode.java;
 
-import org.e2immu.inputapi.Resources;
-import org.e2immu.inputapi.SourceFile;
+import org.e2immu.language.inspection.api.Resources;
+import org.e2immu.language.inspection.api.SourceFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
