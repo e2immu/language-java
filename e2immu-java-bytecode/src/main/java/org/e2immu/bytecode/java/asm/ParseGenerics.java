@@ -97,8 +97,8 @@ record ParseGenerics(Runtime runtime,
             if (charAfterColon == COLON) { // this can happen max. once, when there is no class extension, but there are interface extensions
                 end++;
             }
-            ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, localTypeMap, loadMode,
-                    signature.substring(end + 1));
+            ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext, localTypeMap,
+                    loadMode, signature.substring(end + 1));
             if (result == null) return null; // unable to load type
             if (result.parameterizedType.typeInfo() != null
                 && !result.parameterizedType.typeInfo().isJavaLangObject()) {
@@ -164,7 +164,7 @@ record ParseGenerics(Runtime runtime,
 
     List<ParameterizedType> parseParameterTypesOfMethod(TypeContext typeContext, String signature) {
         if (signature.startsWith("()")) {
-            ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime,
+            ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext,
                     findType, loadMode, signature.substring(2));
             if (from == null) return null;
             return List.of(from.parameterizedType);
@@ -184,7 +184,7 @@ record ParseGenerics(Runtime runtime,
     private IterativeParsing<ParameterizedType> iterativelyParseMethodTypes(TypeContext typeContext,
                                                                             String signature,
                                                                             IterativeParsing<ParameterizedType> iterativeParsing) {
-        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime,
+        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,
                 findType, loadMode, signature.substring(iterativeParsing.startPos));
         if (result == null) return null;
         int end = iterativeParsing.startPos + result.nextPos;

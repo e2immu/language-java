@@ -21,6 +21,7 @@ import org.e2immu.cstapi.expression.Expression;
 import org.e2immu.cstapi.info.Info;
 import org.e2immu.cstapi.runtime.Runtime;
 import org.e2immu.cstapi.type.ParameterizedType;
+import org.e2immu.inputapi.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class MyAnnotationVisitor<T extends Info.Builder<? extends Info.Builder<T
     private final AnnotationExpression.Builder expressionBuilder;
 
     public MyAnnotationVisitor(Runtime runtime,
+                               TypeContext typeContext,
                                LocalTypeMap localTypeMap,
                                String descriptor,
                                Info.Builder<T> inspectionBuilder) {
@@ -48,7 +50,7 @@ public class MyAnnotationVisitor<T extends Info.Builder<? extends Info.Builder<T
         this.inspectionBuilder = Objects.requireNonNull(inspectionBuilder);
         LOGGER.debug("My annotation visitor: {}", descriptor);
 
-        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, localTypeMap,
+        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime,  typeContext, localTypeMap,
                 LocalTypeMap.LoadMode.TRIGGER, descriptor);
         if (from == null) {
             expressionBuilder = null;

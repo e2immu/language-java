@@ -30,20 +30,23 @@ public class MyFieldVisitor extends FieldVisitor {
     private final FieldInfo fieldInfo;
     private final Runtime runtime;
     private final LocalTypeMap localTypeMap;
+    private final TypeContext typeContext;
 
     public MyFieldVisitor(Runtime runtime,
+                          TypeContext typeContext,
                           FieldInfo fieldInfo,
                           LocalTypeMap localTypeMap) {
         super(ASM9);
         this.runtime = runtime;
         this.fieldInfo = fieldInfo;
         this.localTypeMap = localTypeMap;
+        this.typeContext = typeContext;
     }
 
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         LOGGER.debug("Have field annotation {} {}", descriptor, visible);
-        return new MyAnnotationVisitor<>(runtime, localTypeMap, descriptor, fieldInfo.builder());
+        return new MyAnnotationVisitor<>(runtime, typeContext, localTypeMap, descriptor, fieldInfo.builder());
     }
 
     @Override

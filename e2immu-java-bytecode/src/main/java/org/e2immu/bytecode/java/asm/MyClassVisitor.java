@@ -148,7 +148,7 @@ public class MyClassVisitor extends ClassVisitor {
                 }
                 {
                     String substring = signature.substring(pos);
-                    ParameterizedTypeFactory.Result res = ParameterizedTypeFactory.from(runtime,
+                    ParameterizedTypeFactory.Result res = ParameterizedTypeFactory.from(runtime, typeContext,
                             localTypeMap, LocalTypeMap.LoadMode.NOW, substring);
                     if (res == null) {
                         LOGGER.error("Stop inspection of {}, parent type unknown", currentType);
@@ -162,7 +162,7 @@ public class MyClassVisitor extends ClassVisitor {
                     for (int i = 0; i < interfaces.length; i++) {
                         String interfaceSignature = signature.substring(pos);
                         ParameterizedTypeFactory.Result interFaceRes = ParameterizedTypeFactory.from(runtime,
-                                localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature);
+                                typeContext, localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature);
                         if (interFaceRes == null) {
                             LOGGER.error("Stop inspection of {}, interface type unknown", currentType);
                             errorStateForType(interfaceSignature);
@@ -215,7 +215,7 @@ public class MyClassVisitor extends ClassVisitor {
                 name, descriptor, signature, value, synthetic);
         if (synthetic) return null;
 
-        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, localTypeMap,
+        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext, localTypeMap,
                 LocalTypeMap.LoadMode.QUEUE,
                 signature != null ? signature : descriptor);
         if (from == null) return null; // jdk
@@ -252,7 +252,7 @@ public class MyClassVisitor extends ClassVisitor {
             }
         }
 
-        return new MyFieldVisitor(runtime, fieldInfo, localTypeMap);
+        return new MyFieldVisitor(runtime, typeContext, fieldInfo, localTypeMap);
     }
 
     @Override
@@ -270,7 +270,7 @@ public class MyClassVisitor extends ClassVisitor {
 
         MethodInfo methodInfo;
         if ("<init>".equals(name)) {
-            methodInfo = runtime.newMethod(currentType);
+            methodInfo = runtime.newConstructor(currentType);
         } else {
             MethodInfo.MethodType methodType = extractMethodType(access);
             methodInfo = runtime.newMethod(currentType, name, methodType);
@@ -320,23 +320,23 @@ public class MyClassVisitor extends ClassVisitor {
             }
         }
 
-        return new MyMethodVisitor(runtime, localTypeMap, currentType, methodInfo,
+        return new MyMethodVisitor(runtime, typeContext, localTypeMap, currentType, methodInfo,
                 types, lastParameterIsVarargs, methodItem, jetBrainsAnnotationTranslator);
     }
 
     private MethodInfo.MethodType extractMethodType(int access) {
         boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
         if (isStatic) {
-            return runtime.newMethodTypeStaticMethod();
+            return runtime.methodTypeStaticMethod();
         }
         boolean isAbstract = (access & Opcodes.ACC_ABSTRACT) != 0;
         if (isAbstract) {
-            return runtime.newMethodTypeAbstractMethod();
+            return runtime.methodTypeAbstractMethod();
         }
         if (currentTypeIsInterface) {
-            return runtime.newMethodTypeDefaultMethod();
+            return runtime.methodTypeDefaultMethod();
         }
-        return runtime.newMethodTypeMethod();
+        return runtime.methodTypeMethod();
     }
 
     @Override
@@ -409,7 +409,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (currentType == null) return null;
 
         LOGGER.debug("Have class annotation {} {}", descriptor, visible);
-        return new MyAnnotationVisitor<>(runtime, localTypeMap, descriptor, currentTypeBuilder);
+        return new MyAnnotationVisitor<>(runtime, typeContext, localTypeMap, descriptor, currentTypeBuilder);
     }
 
     // not overriding visitOuterClass

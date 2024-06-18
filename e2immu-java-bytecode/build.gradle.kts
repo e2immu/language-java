@@ -31,7 +31,7 @@ java {
 
 dependencies {
     implementation("org.e2immu:e2immu-cst-api:some.version")
-    implementation("org.e2immu:e2immu-input-api:some.version")
+    implementation("org.e2immu:e2immu-inspection-api:some.version")
     implementation("org.e2immu:e2immu-support:0.6.4")
     implementation("org.slf4j:slf4j-api:2.0.7")
     implementation("org.ow2.asm:asm:9.5")

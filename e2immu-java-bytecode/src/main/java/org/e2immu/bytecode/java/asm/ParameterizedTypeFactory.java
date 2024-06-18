@@ -87,7 +87,7 @@ public class ParameterizedTypeFactory {
 
             // normal class or interface type
             if (CHAR_L == firstChar) {
-                return normalType(runtime, findType, loadMode, signature, arrays, wildCard, firstCharPos);
+                return normalType(runtime, typeContext, findType, loadMode, signature, arrays, wildCard, firstCharPos);
             }
 
             // type parameter
@@ -126,6 +126,7 @@ public class ParameterizedTypeFactory {
     // shows that we need to make this recursive or get the generics in a while loop
 
     private static Result normalType(Runtime runtime,
+                                     TypeContext typeContext,
                                      LocalTypeMap localTypeMap,
                                      LocalTypeMap.LoadMode loadMode,
                                      String signature,
@@ -150,7 +151,7 @@ public class ParameterizedTypeFactory {
                 IterativeParsing iterativeParsing = new IterativeParsing();
                 iterativeParsing.startPos = openGenerics + 1;
                 do {
-                    iterativeParsing = iterativelyParseTypes(runtime, localTypeMap, loadMode, signature,
+                    iterativeParsing = iterativelyParseTypes(runtime, typeContext, localTypeMap, loadMode, signature,
                             iterativeParsing);
                     if (iterativeParsing == null) return null;
                     typeParameters.add(iterativeParsing.result);
@@ -205,11 +206,12 @@ public class ParameterizedTypeFactory {
     }
 
     private static IterativeParsing iterativelyParseTypes(Runtime runtime,
+                                                          TypeContext typeContext,
                                                           LocalTypeMap findType,
                                                           LocalTypeMap.LoadMode loadMode,
                                                           String signature,
                                                           IterativeParsing iterativeParsing) {
-        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, findType, loadMode,
+        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext, findType, loadMode,
                 signature.substring(iterativeParsing.startPos));
         if (result == null) return null;
         int end = iterativeParsing.startPos + result.nextPos;

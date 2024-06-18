@@ -23,6 +23,7 @@ import org.e2immu.cstapi.info.*;
 import org.e2immu.cstapi.runtime.Runtime;
 import org.e2immu.cstapi.type.ParameterizedType;
 import org.e2immu.inputapi.AnnotationStore;
+import org.e2immu.inputapi.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -109,6 +110,7 @@ public class MyMethodVisitor extends MethodVisitor {
     }
 
     private final Runtime runtime;
+    private final TypeContext typeContext;
     private final LocalTypeMap localTypeMap;
     private final TypeInfo typeInfo;
     private final MethodInfo methodInfo;
@@ -121,6 +123,7 @@ public class MyMethodVisitor extends MethodVisitor {
 
 
     public MyMethodVisitor(Runtime runtime,
+                           TypeContext typeContext,
                            LocalTypeMap localTypeMap,
                            TypeInfo typeInfo,
                            MethodInfo methodInfo,
@@ -131,6 +134,7 @@ public class MyMethodVisitor extends MethodVisitor {
         super(ASM9);
         this.runtime = runtime;
         this.localTypeMap = localTypeMap;
+        this.typeContext = typeContext;
         this.methodInfo = methodInfo;
         this.typeInfo = typeInfo;
         this.types = types;
@@ -147,13 +151,14 @@ public class MyMethodVisitor extends MethodVisitor {
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         LOGGER.debug("Have method annotation {} {}", descriptor, visible);
-        return new MyAnnotationVisitor<>(runtime, localTypeMap, descriptor, methodInfo.builder());
+        return new MyAnnotationVisitor<>(runtime, typeContext, localTypeMap, descriptor, methodInfo.builder());
     }
 
     @Override
     public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
         LOGGER.debug("Have parameter annotation {} on parameter {}", descriptor, parameter);
-        return new MyAnnotationVisitor<>(runtime, localTypeMap, descriptor, parameterInspectionBuilders[parameter]);
+        return new MyAnnotationVisitor<>(runtime, typeContext, localTypeMap, descriptor,
+                parameterInspectionBuilders[parameter]);
     }
 
     /*
