@@ -5,8 +5,8 @@ import org.e2immu.bytecode.java.TypeContextImpl;
 import org.e2immu.bytecode.java.TypeMapImpl;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
-import org.e2immu.language.inspection.api.Resources;
-import org.e2immu.language.inspection.api.TypeContext;
+import org.e2immu.language.inspection.api.parser.TypeContext;
+import org.e2immu.language.inspection.api.resource.Resources;
 import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;

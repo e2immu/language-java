@@ -15,7 +15,7 @@
 package org.e2immu.bytecode.java;
 
 import org.e2immu.annotation.Modified;
-import org.e2immu.language.inspection.api.SourceFile;
+import org.e2immu.language.inspection.api.resource.SourceFile;
 
 import java.util.List;
 

@@ -4,7 +4,7 @@ import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.parserapi.Context;
+import org.e2immu.language.inspection.api.parser.Context;
 import org.parsers.java.ast.Annotation;
 import org.parsers.java.ast.SingleMemberAnnotation;
 

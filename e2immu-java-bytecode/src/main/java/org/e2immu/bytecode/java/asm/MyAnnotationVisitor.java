@@ -21,7 +21,7 @@ import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.TypeContext;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

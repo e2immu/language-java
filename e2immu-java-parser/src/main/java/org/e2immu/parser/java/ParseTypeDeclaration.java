@@ -12,7 +12,7 @@ import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.type.Wildcard;
-import org.e2immu.parserapi.Context;
+import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;

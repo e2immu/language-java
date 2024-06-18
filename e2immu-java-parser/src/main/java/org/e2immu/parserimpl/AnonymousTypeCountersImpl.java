@@ -1,7 +1,7 @@
 package org.e2immu.parserimpl;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.parserapi.AnonymousTypeCounters;
+import org.e2immu.language.inspection.api.parser.AnonymousTypeCounters;
 
 import java.util.HashMap;
 import java.util.Map;

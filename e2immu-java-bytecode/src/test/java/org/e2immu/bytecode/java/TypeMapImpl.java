@@ -2,9 +2,10 @@ package org.e2immu.bytecode.java;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.InspectionState;
-import org.e2immu.language.inspection.api.Resources;
-import org.e2immu.language.inspection.api.SourceFile;
-import org.e2immu.language.inspection.api.TypeMap;
+import org.e2immu.language.inspection.api.parser.PackagePrefix;
+import org.e2immu.language.inspection.api.resource.Resources;
+import org.e2immu.language.inspection.api.resource.SourceFile;
+import org.e2immu.language.inspection.api.resource.TypeMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,9 +57,20 @@ public class TypeMapImpl implements TypeMap {
     }
 
     @Override
+    public boolean isPackagePrefix(PackagePrefix packagePrefix) {
+        return false;
+    }
+
+    @Override
     public TypeInfo addToTrie(TypeInfo subType) {
         map.put(subType.fullyQualifiedName(), new InspectionAndState(subType, null));
         return subType;
+    }
+
+    @Override
+    public TypeInfo get(String fullyQualifiedName) {
+        InspectionAndState ias = map.get(fullyQualifiedName);
+        return ias == null ? null : ias.typeInfo();
     }
 
     @Override

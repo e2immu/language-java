@@ -11,12 +11,13 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Resolver;
 import org.e2immu.parser.java.ParseBlock;
 import org.e2immu.parser.java.ParseExpression;
 import org.e2immu.parser.java.ParseStatement;
-import org.e2immu.parserapi.Context;
-import org.e2immu.parserapi.ForwardType;
-import org.e2immu.parserapi.Resolver;
+
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -50,9 +51,9 @@ public class ResolverImpl implements Resolver {
     private final List<TypeInfo.Builder> types = new LinkedList<>();
 
     @Override
-    public void add(Info.Builder<?> infoBuilder, ForwardType forwardType, ExplicitConstructorInvocation eci,
-                    Node expression, Context context) {
-        todos.add(new Todo(infoBuilder, forwardType, eci, expression, context));
+    public void add(Info.Builder<?> infoBuilder, ForwardType forwardType, Object eci,
+                    Object expression, Context context) {
+        todos.add(new Todo(infoBuilder, forwardType, (ExplicitConstructorInvocation) eci, (Node) expression, context));
     }
 
     @Override
@@ -117,7 +118,7 @@ public class ResolverImpl implements Resolver {
     See TestExplicitConstructorInvocation.
      */
     private Element parseStatements(Todo todo, boolean haveEci) {
-        int start = haveEci ? 1: 0;
+        int start = haveEci ? 1 : 0;
         if (todo.expression instanceof ExpressionStatement est) {
             Statement firstStatement = parseStatement.parse(todo.context, "" + start, est);
 

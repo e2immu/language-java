@@ -7,11 +7,12 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
-import org.e2immu.parserapi.Context;
-import org.e2immu.parserapi.PackagePrefix;
+import org.e2immu.language.inspection.api.InspectionState;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.PackagePrefix;
+import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.parserimpl.ContextImpl;
 import org.e2immu.parserimpl.ResolverImpl;
-import org.e2immu.resourceapi.TypeMap;
 import org.parsers.java.JavaParser;
 
 import java.util.List;
@@ -76,6 +77,26 @@ public class CommonTestParse {
         }
 
         @Override
+        public TypeInfo get(String name, boolean complain) {
+            return null;
+        }
+
+        @Override
+        public void add(TypeInfo typeInfo, InspectionState inspectionState) {
+
+        }
+
+        @Override
+        public void addToByteCodeQueue(String fqn) {
+
+        }
+
+        @Override
+        public TypeInfo addToTrie(TypeInfo subType) {
+            return null;
+        }
+
+        @Override
         public TypeInfo get(String fullyQualifiedName) {
             return runtime.getFullyQualified(fullyQualifiedName, true);
         }
@@ -83,6 +104,16 @@ public class CommonTestParse {
         @Override
         public boolean isPackagePrefix(PackagePrefix packagePrefix) {
             return false;
+        }
+
+        @Override
+        public String pathToFqn(String interfaceName) {
+            return "";
+        }
+
+        @Override
+        public InspectionAndState typeInspectionSituation(String fqn) {
+            return null;
         }
     }
 

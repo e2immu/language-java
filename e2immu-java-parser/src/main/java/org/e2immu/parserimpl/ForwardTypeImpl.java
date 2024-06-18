@@ -4,7 +4,7 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.parserapi.ForwardType;
+import org.e2immu.language.inspection.api.parser.ForwardType;
 
 public record ForwardTypeImpl(ParameterizedType type, boolean mustBeArray, TypeParameterMap extra)
         implements ForwardType {

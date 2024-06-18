@@ -2,7 +2,7 @@ package org.e2immu.bytecode.java;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.InspectionState;
-import org.e2immu.language.inspection.api.TypeMap;
+import org.e2immu.language.inspection.api.resource.TypeMap;
 
 public class TypeDataImpl implements TypeData {
     private final TypeInfo typeInfo;

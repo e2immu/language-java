@@ -9,10 +9,11 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.FieldReference;
-import org.e2immu.parserapi.ImportMap;
-import org.e2immu.parserapi.PackagePrefix;
-import org.e2immu.parserapi.TypeContext;
-import org.e2immu.resourceapi.TypeMap;
+import org.e2immu.language.inspection.api.parser.ImportMap;
+import org.e2immu.language.inspection.api.parser.PackagePrefix;
+import org.e2immu.language.inspection.api.parser.TypeContext;
+import org.e2immu.language.inspection.api.resource.TypeMap;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -209,6 +210,11 @@ public class TypeContextImpl implements TypeContext {
         if (allowOverwrite || !map.containsKey(altName)) {
             map.put(altName, namedType);
         }
+    }
+
+    @Override
+    public TypeContext newTypeContext() {
+        return new TypeContextImpl(this);
     }
 
 

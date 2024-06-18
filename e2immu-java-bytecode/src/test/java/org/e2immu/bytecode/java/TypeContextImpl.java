@@ -1,10 +1,12 @@
 package org.e2immu.bytecode.java;
 
+import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.type.NamedType;
-import org.e2immu.language.cst.api.type.TypeParameter;
-import org.e2immu.language.inspection.api.TypeContext;
-import org.e2immu.language.inspection.api.TypeMap;
+import org.e2immu.language.inspection.api.parser.ImportMap;
+import org.e2immu.language.inspection.api.parser.TypeContext;
+import org.e2immu.language.inspection.api.resource.TypeMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +35,28 @@ public class TypeContextImpl implements TypeContext {
     }
 
     @Override
-    public void addToContext(TypeParameter typeParameter) {
-        localMap.put(typeParameter.simpleName(), typeParameter);
+    public NamedType get(String name, boolean complain) {
+        return null;
+    }
+
+    @Override
+    public boolean isKnown(String fullyQualified) {
+        return false;
+    }
+
+    @Override
+    public void addToContext(NamedType namedType) {
+
+    }
+
+    @Override
+    public void addToContext(NamedType namedType, boolean allowOverwrite) {
+
+    }
+
+    @Override
+    public void addToContext(String altName, NamedType namedType, boolean allowOverwrite) {
+
     }
 
     @Override
@@ -43,7 +65,26 @@ public class TypeContextImpl implements TypeContext {
     }
 
     @Override
-    public TypeMap typeMap() {
-        return typeMap;
+    public void addToImportMap(ImportStatement importStatement) {
+    }
+
+    @Override
+    public TypeMap.Builder typeMap() {
+        return null;
+    }
+
+    @Override
+    public ImportMap importMap() {
+        return null;
+    }
+
+    @Override
+    public CompilationUnit compilationUnit() {
+        return null;
+    }
+
+    @Override
+    public TypeInfo getFullyQualified(Class<?> clazz) {
+        return null;
     }
 }
