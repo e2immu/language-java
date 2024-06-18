@@ -4,32 +4,31 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.MethodTypeParameterMap;
+import org.e2immu.language.inspection.api.parser.TypeParameterMap;
 
-public record ForwardTypeImpl(ParameterizedType type, boolean mustBeArray, TypeParameterMap extra)
-        implements ForwardType {
+public record ForwardType(ParameterizedType type, boolean mustBeArray, TypeParameterMap extra) {
 
-    public ForwardTypeImpl() {
+    public ForwardType() {
         this(null, false, TypeParameterMap.EMPTY);
     }
 
-    public ForwardTypeImpl(ParameterizedType type) {
+    public ForwardType(ParameterizedType type) {
         this(type, false, TypeParameterMap.EMPTY);
     }
 
-    public ForwardTypeImpl(ParameterizedType type, boolean erasure) {
+    public ForwardType(ParameterizedType type, boolean erasure) {
         this(type, erasure, TypeParameterMap.EMPTY);
     }
 
-    @Override
     public ForwardType withMustBeArray() {
-        return new ForwardTypeImpl(type, true, extra);
+        return new ForwardType(type, true, extra);
     }
 
     // we'd rather have java.lang.Boolean, because as soon as type parameters are involved, primitives
     // are boxed
     public static ForwardType expectBoolean(Runtime runtime) {
-        return new ForwardTypeImpl(runtime.boxedBooleanTypeInfo().asSimpleParameterizedType(), false);
+        return new ForwardType(runtime.boxedBooleanTypeInfo().asSimpleParameterizedType(), false);
     }
 
     public MethodTypeParameterMap computeSAM(Runtime runtime, TypeInfo primaryType) {

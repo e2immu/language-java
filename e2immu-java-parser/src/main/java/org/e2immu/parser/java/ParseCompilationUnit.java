@@ -2,7 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.parserimpl.Context;
 import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.support.Either;
 import org.parsers.java.ast.CompilationUnit;

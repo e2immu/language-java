@@ -38,6 +38,7 @@ dependencies {
 
     testImplementation("org.jetbrains:annotations:24.1.0")
     testImplementation("org.e2immu:e2immu-cst-impl:some.version")
+    testImplementation("org.e2immu:e2immu-inspection-parser:some.version")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")

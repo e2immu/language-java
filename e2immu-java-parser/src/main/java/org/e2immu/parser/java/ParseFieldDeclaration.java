@@ -9,8 +9,8 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.FieldReference;
-import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.parserimpl.Context;
+import org.e2immu.parserimpl.ForwardType;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 

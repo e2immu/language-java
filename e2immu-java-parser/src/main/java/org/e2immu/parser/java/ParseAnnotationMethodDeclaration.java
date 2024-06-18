@@ -3,7 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.parserimpl.Context;
 import org.parsers.java.ast.*;
 
 public class ParseAnnotationMethodDeclaration extends CommonParse {

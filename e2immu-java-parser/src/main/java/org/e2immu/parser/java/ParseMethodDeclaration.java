@@ -7,8 +7,8 @@ import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.parserimpl.ForwardTypeImpl;
+import org.e2immu.parserimpl.Context;
+import org.e2immu.parserimpl.ForwardType;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 
@@ -73,7 +73,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } else throw new UnsupportedOperationException("Node " + md.get(i).getClass());
         while (i < md.size() && md.get(i) instanceof Delimiter) i++;
         if (i < md.size()) {
-            ForwardTypeImpl forwardType = new ForwardTypeImpl(returnType);
+            ForwardType forwardType = new ForwardType(returnType);
             Context newContext = context.newVariableContextForMethodBlock(methodInfo, forwardType);
             if (md.get(i) instanceof CodeBlock codeBlock) {
                 /*

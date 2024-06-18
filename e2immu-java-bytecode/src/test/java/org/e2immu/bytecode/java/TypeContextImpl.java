@@ -69,6 +69,11 @@ public class TypeContextImpl implements TypeContext {
     }
 
     @Override
+    public TypeContext newCompilationUnit(TypeMap.Builder typeMap, CompilationUnit compilationUnit) {
+        return null;
+    }
+
+    @Override
     public TypeMap.Builder typeMap() {
         return null;
     }
