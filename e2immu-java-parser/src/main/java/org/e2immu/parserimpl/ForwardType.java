@@ -4,6 +4,7 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.e2immu.language.inspection.api.parser.MethodTypeParameterMap;
 import org.e2immu.language.inspection.api.parser.TypeParameterMap;
 
@@ -31,21 +32,21 @@ public record ForwardType(ParameterizedType type, boolean mustBeArray, TypeParam
         return new ForwardType(runtime.boxedBooleanTypeInfo().asSimpleParameterizedType(), false);
     }
 
-    public MethodTypeParameterMap computeSAM(Runtime runtime, TypeInfo primaryType) {
+    public MethodTypeParameterMap computeSAM(Runtime runtime, GenericsHelper genericsHelper, TypeInfo primaryType) {
         if (type == null || type.isVoid()) return null;
-        MethodTypeParameterMap sam = MethodTypeParameterMap.findSingleAbstractMethodOfInterface(runtime, type, false);
+        MethodTypeParameterMap sam = genericsHelper.findSingleAbstractMethodOfInterface(type, false);
         if (sam != null) {
             return sam.expand(runtime, primaryType, type.initialTypeParameterMap(runtime));
         }
         return null;
     }
 
-    public boolean isVoid(Runtime runtime) {
+    public boolean isVoid(Runtime runtime, GenericsHelper genericsHelper) {
         if (type == null || type.typeInfo() == null) return false;
         if (type.isVoid()) return true;
         MethodInfo sam = type.typeInfo().singleAbstractMethod();
         if (sam == null) return false;
-        MethodTypeParameterMap samMap = MethodTypeParameterMap.findSingleAbstractMethodOfInterface(runtime, type, true);
+        MethodTypeParameterMap samMap = genericsHelper.findSingleAbstractMethodOfInterface(type, true);
         assert samMap != null;
         return samMap.getConcreteReturnType(runtime).isVoid();
     }
