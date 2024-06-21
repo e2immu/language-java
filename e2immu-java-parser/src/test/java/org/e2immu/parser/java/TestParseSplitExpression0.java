@@ -72,6 +72,7 @@ public class TestParseSplitExpression0 extends CommonTestParse {
     @Test
     public void test() {
         TypeInfo typeInfo = parse(INPUT);
+        assertEquals("SplitExpression_0", typeInfo.fullyQualifiedName());
         assertEquals(2, typeInfo.fields().size());
         FieldInfo base = typeInfo.fields().get(0);
         assertTrue(base.isFinal());
@@ -109,11 +110,24 @@ public class TestParseSplitExpression0 extends CommonTestParse {
             && cast.expression() instanceof MethodCall mc) {
             assertSame(runtime.intTypeInfo(), cast.parameterizedType().typeInfo());
             assertEquals(2, mc.parameterExpressions().size());
-            if(mc.object() instanceof TypeExpression te) {
+            if (mc.object() instanceof TypeExpression te) {
                 assertEquals("java.lang.Math", te.parameterizedType().typeInfo().fullyQualifiedName());
             } else fail();
         } else fail();
 
+        MethodInfo same1 = typeInfo.findUniqueMethod("same1", 1);
+        assertEquals("SplitExpression_0.same1(int):0:k", same1.parameters().get(0).fullyQualifiedName());
+
+        MethodInfo same2 = typeInfo.findUniqueMethod("same2", 1);
+        assertEquals("SplitExpression_0.same2(int):0:k", same2.parameters().get(0).fullyQualifiedName());
+
+        if (same1.methodBody().statements().get(0) instanceof ReturnStatement rs
+            && rs.expression() instanceof MethodCall mc) {
+            Expression arg1 = mc.parameterExpressions().get(1);
+            if (arg1 instanceof MethodCall mc2 && mc2.parameterExpressions().get(0) instanceof VariableExpression ve) {
+                assertEquals("SplitExpression_0.same1(int):0:k", ve.variable().fullyQualifiedName());
+            }
+        } else fail();
 
         MethodInfo same6 = typeInfo.findUniqueMethod("same6", 1);
         assertEquals(2, same6.methodBody().statements().size());

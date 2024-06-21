@@ -44,7 +44,7 @@ public class TestParseBinaryOperator extends CommonTestParse {
 
         MethodInfo and = typeInfo.findUniqueMethod("and", 2);
         if (and.methodBody().statements().get(0) instanceof ReturnStatement rs) {
-            assertEquals("this.c&&a&&b", rs.expression().toString());
+            assertEquals("a&&b&&this.c", rs.expression().toString());
         }
         MethodInfo or = typeInfo.findUniqueMethod("or", 2);
         if (or.methodBody().statements().get(0) instanceof ReturnStatement rs) {

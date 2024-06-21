@@ -63,26 +63,28 @@ public class ParseMethodDeclaration extends CommonParse {
         } else throw new UnsupportedOperationException();
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder().setReturnType(returnType);
+
+        ForwardType forwardType = new ForwardType(returnType);
+        Context newContext = context.newVariableContextForMethodBlock(methodInfo, forwardType);
+
         if (md.get(i) instanceof FormalParameters fps) {
             for (Node child : fps.children()) {
                 if (child instanceof FormalParameter fp) {
-                    parseFormalParameter(context, builder, fp);
+                    parseFormalParameter(newContext, builder, fp);
                 }
             }
             i++;
         } else throw new UnsupportedOperationException("Node " + md.get(i).getClass());
         while (i < md.size() && md.get(i) instanceof Delimiter) i++;
         if (i < md.size()) {
-            ForwardType forwardType = new ForwardType(returnType);
-            Context newContext = context.newVariableContextForMethodBlock(methodInfo, forwardType);
             if (md.get(i) instanceof CodeBlock codeBlock) {
                 /*
                  delay the parsing of the code-block for a second phase, when all methods are known so that they can
                  be resolved
                  */
-                context.resolver().add(builder, context.emptyForwardType(), null, codeBlock, newContext);
+                newContext.resolver().add(builder, newContext.emptyForwardType(), null, codeBlock, newContext);
             } else if(md.get(i) instanceof StatementExpression se) {
-                context.resolver().add(builder, context.emptyForwardType(), null, se, newContext);
+                newContext.resolver().add(builder, newContext.emptyForwardType(), null, se, newContext);
             } else throw new UnsupportedOperationException();
         } else {
             builder.setMethodBody(runtime.emptyBlock());
@@ -90,7 +92,7 @@ public class ParseMethodDeclaration extends CommonParse {
         builder.commitParameters();
         methodModifiers.forEach(builder::addMethodModifier);
         Access access = access(methodModifiers);
-        Access accessCombined = context.enclosingType().access().combine(access);
+        Access accessCombined = newContext.enclosingType().access().combine(access);
         builder.setAccess(accessCombined);
         builder.addComments(comments(md));
         builder.setSource(source(methodInfo, null, md));
