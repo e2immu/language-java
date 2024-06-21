@@ -427,6 +427,9 @@ public class ParseExpression extends CommonParse {
         if (child instanceof StringLiteral sl) {
             return runtime.newStringConstant(sl.getString());
         }
+        if(child instanceof NullLiteral) {
+            return runtime.nullConstant();
+        }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
     }
 }

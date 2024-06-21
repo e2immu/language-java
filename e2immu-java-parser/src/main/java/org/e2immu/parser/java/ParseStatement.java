@@ -235,11 +235,23 @@ public class ParseStatement extends CommonParse {
             return runtime.newSynchronizedBuilder().setExpression(expression).setBlock(block)
                     .setSource(source).addComments(comments).build();
         }
-        if(statement instanceof BreakStatement) {
+        if (statement instanceof BreakStatement) {
             return runtime.newBreakBuilder().setSource(source).addComments(comments).build();
         }
-        if(statement instanceof ContinueStatement) {
+        if (statement instanceof ContinueStatement) {
             return runtime.newContinueBuilder().setSource(source).addComments(comments).build();
+        }
+        if (statement instanceof AssertStatement) {
+            Expression expression = parseExpression.parse(context, index,
+                    context.newForwardType(runtime.booleanParameterizedType()), statement.get(1));
+            Expression message = Token.TokenType.COLON.equals(statement.get(2).getType())
+                    ? parseExpression.parse(context, index, context.newForwardType(runtime.stringParameterizedType()),
+                    statement.get(3))
+                    : runtime.newEmptyExpression();
+            return runtime.newAssertBuilder().setSource(source).addComments(comments)
+                    .setExpression(expression)
+                    .setMessage(message)
+                    .build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }

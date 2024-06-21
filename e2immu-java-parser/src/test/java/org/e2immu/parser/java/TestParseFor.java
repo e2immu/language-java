@@ -31,7 +31,7 @@ public class TestParseFor extends CommonTestParse {
         if (main.methodBody().statements().get(0) instanceof ForStatement s) {
             assertEquals(1, s.initializers().size());
             assertInstanceOf(LocalVariableCreation.class, s.initializers().get(0));
-            assertEquals("int i=0", s.initializers().get(0).toString());
+            assertEquals("int i=0;", s.initializers().get(0).toString());
 
             assertEquals("i<args.length", s.expression().toString());
 
@@ -58,7 +58,7 @@ public class TestParseFor extends CommonTestParse {
         if (main.methodBody().statements().get(0) instanceof ForStatement s) {
             assertEquals(1, s.initializers().size());
             assertInstanceOf(LocalVariableCreation.class, s.initializers().get(0));
-            assertEquals("int i=0,j=10", s.initializers().get(0).toString());
+            assertEquals("int i=0,j=10;", s.initializers().get(0).toString());
 
             assertEquals("j>0&&i<args.length", s.expression().toString());
 

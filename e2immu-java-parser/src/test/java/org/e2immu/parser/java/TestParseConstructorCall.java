@@ -70,7 +70,7 @@ public class TestParseConstructorCall extends CommonTestParse {
             assertTrue(cc.diamond().isYes());
 
             assertEquals("new C<>()", cc.toString());
-            assertEquals("C<String> c=new C<>()", lvc.toString());
+            assertEquals("C<String> c=new C<>();", lvc.toString());
         } else fail();
         if (main.methodBody().statements().get(1) instanceof LocalVariableCreation lvc
             && lvc.localVariable().assignmentExpression() instanceof ConstructorCall cc) {
@@ -83,7 +83,7 @@ public class TestParseConstructorCall extends CommonTestParse {
             assertEquals(pt, ccPt);
             assertTrue(cc.diamond().isShowAll());
             assertEquals("new C<Integer>()", cc.toString());
-            assertEquals("C<Integer> d=new C<Integer>()", lvc.toString());
+            assertEquals("C<Integer> d=new C<Integer>();", lvc.toString());
         } else fail();
 
         if (main.methodBody().statements().get(2) instanceof LocalVariableCreation lvc
@@ -95,7 +95,7 @@ public class TestParseConstructorCall extends CommonTestParse {
             assertEquals(0, ccPt.parameters().size());
             assertTrue(cc.diamond().isNo());
             assertEquals("new C()", cc.toString());
-            assertEquals("C<K> e=new C()", lvc.toString());
+            assertEquals("C<K> e=new C();", lvc.toString());
         } else fail();
     }
 }
