@@ -92,20 +92,6 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setTypeNature(typeNature);
         builder.setSource(source(typeInfo, null, td));
 
-        if (td.get(i) instanceof ExtendsList extendsList) {
-            for (Node child : extendsList.children()) {
-
-            }
-            i++;
-        }
-
-        if (td.get(i) instanceof ImplementsList implementsList) {
-            for (Node child : implementsList.children()) {
-
-            }
-            i++;
-        }
-
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
 
@@ -118,6 +104,26 @@ public class ParseTypeDeclaration extends CommonParse {
                 typeInfo.builder().addTypeParameter(typeParameter);
                 j += 2; // skip the ',' or '>' delimiter
                 typeParameterIndex++;
+            }
+            i++;
+        }
+
+        if (td.get(i) instanceof ExtendsList extendsList) {
+            for (int j = 1; j < extendsList.size(); j += 2) {
+                ParameterizedType pt = parseType.parse(newContext, extendsList.get(j));
+                if (typeNature.isInterface()) {
+                    builder.addInterfaceImplemented(pt);
+                } else {
+                    builder.setParentClass(pt);
+                }
+            }
+            i++;
+        }
+
+        if (td.get(i) instanceof ImplementsList implementsList) {
+            for (int j = 1; j < implementsList.size(); j += 2) {
+                ParameterizedType pt = parseType.parse(newContext, implementsList.get(j));
+                builder.addInterfaceImplemented(pt);
             }
             i++;
         }
