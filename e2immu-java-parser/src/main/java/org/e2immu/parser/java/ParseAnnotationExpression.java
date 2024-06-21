@@ -4,7 +4,7 @@ import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.parserimpl.Context;
+import org.e2immu.language.inspection.api.parser.Context;
 import org.parsers.java.ast.Annotation;
 import org.parsers.java.ast.SingleMemberAnnotation;
 
@@ -20,7 +20,7 @@ public class ParseAnnotationExpression extends CommonParse {
         String name = a.get(1).getSource();
         TypeInfo typeInfo = (TypeInfo) context.typeContext().get(name, true);
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo);
-        if (a instanceof SingleMemberAnnotation sma) {
+        if (a instanceof SingleMemberAnnotation) {
             Expression expression = parseExpression.parse(context, "", context.emptyForwardType(), a.get(3));
             builder.addKeyValuePair("value", expression);
         }

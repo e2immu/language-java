@@ -4,7 +4,7 @@ import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
-import org.e2immu.parserimpl.Context;
+import org.e2immu.language.inspection.api.parser.Context;
 import org.parsers.java.Node;
 import org.parsers.java.ast.CodeBlock;
 import org.parsers.java.ast.Statement;

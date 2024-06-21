@@ -11,6 +11,9 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Resolver;
 import org.e2immu.parser.java.ParseBlock;
 import org.e2immu.parser.java.ParseExpression;
 import org.e2immu.parser.java.ParseStatement;
@@ -25,7 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Resolver {
+public class ResolverImpl implements Resolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(Resolver.class);
 
     private final ParseStatement parseStatement;
@@ -33,7 +36,7 @@ public class Resolver {
     private final ParseBlock parseBlock;
     private final Runtime runtime;
 
-    public Resolver(Runtime runtime) {
+    public ResolverImpl(Runtime runtime) {
         this.parseExpression = new ParseExpression(runtime);
         this.parseStatement = new ParseStatement(runtime);
         this.parseBlock = new ParseBlock(runtime, parseStatement);
@@ -54,6 +57,7 @@ public class Resolver {
     }
 
 
+    @Override
     public void add(TypeInfo.Builder typeInfoBuilder) {
         types.add(typeInfoBuilder);
     }

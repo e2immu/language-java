@@ -7,8 +7,8 @@ import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.parserimpl.Context;
-import org.e2immu.parserimpl.ForwardType;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 
@@ -64,7 +64,7 @@ public class ParseMethodDeclaration extends CommonParse {
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder().setReturnType(returnType);
 
-        ForwardType forwardType = new ForwardType(returnType);
+        ForwardType forwardType = context.newForwardType(returnType);
         Context newContext = context.newVariableContextForMethodBlock(methodInfo, forwardType);
 
         if (md.get(i) instanceof FormalParameters fps) {
