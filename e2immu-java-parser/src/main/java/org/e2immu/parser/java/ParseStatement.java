@@ -253,6 +253,15 @@ public class ParseStatement extends CommonParse {
                     .setMessage(message)
                     .build();
         }
+        if (statement instanceof ThrowStatement) {
+            TypeInfo throwable = runtime.getFullyQualified(Throwable.class, false);
+            ForwardType fwd = throwable != null ? context.newForwardType(throwable.asSimpleParameterizedType())
+                    : context.emptyForwardType();
+            Expression expression = parseExpression.parse(context, index, fwd, statement.get(1));
+            return runtime.newThrowBuilder()
+                    .addComments(comments).setSource(source)
+                    .setExpression(expression).build();
+        }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
 

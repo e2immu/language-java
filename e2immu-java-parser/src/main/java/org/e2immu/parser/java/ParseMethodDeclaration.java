@@ -75,6 +75,13 @@ public class ParseMethodDeclaration extends CommonParse {
             }
             i++;
         } else throw new UnsupportedOperationException("Node " + md.get(i).getClass());
+        if (md.get(i) instanceof ThrowsList throwsList) {
+            for (int j = 1; j < throwsList.size(); j += 2) {
+                ParameterizedType pt = parseType.parse(newContext, throwsList.get(j));
+                builder.addExceptionType(pt);
+            }
+            i++;
+        }
         while (i < md.size() && md.get(i) instanceof Delimiter) i++;
         if (i < md.size()) {
             if (md.get(i) instanceof CodeBlock codeBlock) {
@@ -83,7 +90,7 @@ public class ParseMethodDeclaration extends CommonParse {
                  be resolved
                  */
                 newContext.resolver().add(builder, newContext.emptyForwardType(), null, codeBlock, newContext);
-            } else if(md.get(i) instanceof StatementExpression se) {
+            } else if (md.get(i) instanceof StatementExpression se) {
                 newContext.resolver().add(builder, newContext.emptyForwardType(), null, se, newContext);
             } else throw new UnsupportedOperationException();
         } else {
