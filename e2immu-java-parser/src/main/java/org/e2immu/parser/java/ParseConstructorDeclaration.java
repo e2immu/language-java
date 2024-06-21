@@ -7,13 +7,18 @@ import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParseConstructorDeclaration extends CommonParse {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParseConstructorDeclaration.class);
+
     private final ParseType parseType;
     private final ParseExpression parseExpression;
 
@@ -24,6 +29,19 @@ public class ParseConstructorDeclaration extends CommonParse {
     }
 
     public MethodInfo parse(Context context, ConstructorDeclaration cd) {
+        try {
+            return internalParse(context, cd);
+        } catch (Summary.FailFastException ffe) {
+            throw ffe;
+        } catch (RuntimeException re) {
+            LOGGER.error("Caught exception parsing constructor in type {}", context.info());
+            context.summary().addParserError(re);
+            context.summary().addType(context.enclosingType().primaryType(), false);
+            return null;
+        }
+    }
+
+    private MethodInfo internalParse(Context context, ConstructorDeclaration cd) {
         int i = 0;
         List<MethodModifier> methodModifiers = new ArrayList<>();
         if (cd.get(i) instanceof Modifiers modifiers) {
@@ -40,15 +58,15 @@ public class ParseConstructorDeclaration extends CommonParse {
 
         MethodInfo.MethodType methodType;
         ParameterizedType returnType;
-        if (cd.get(i) instanceof Identifier) {
-            methodType = runtime.methodTypeConstructor();
-            returnType = runtime.parameterizedTypeReturnTypeOfConstructor();
-        } else throw new UnsupportedOperationException();
         String name;
         if (cd.get(i) instanceof Identifier identifier) {
+            methodType = runtime.methodTypeConstructor();
+            returnType = runtime.parameterizedTypeReturnTypeOfConstructor();
             name = identifier.getSource();
             i++;
-        } else throw new UnsupportedOperationException();
+        } else {
+            throw new Summary.ParseException(context.info(), "Expected Identifier, got " + cd.get(i).getClass());
+        }
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder()
                 .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor());
@@ -63,8 +81,8 @@ public class ParseConstructorDeclaration extends CommonParse {
         ExplicitConstructorInvocation explicitConstructorInvocation;
         while (i < cd.size() && cd.get(i) instanceof Delimiter) i++;
         if (cd.get(i) instanceof org.parsers.java.ast.ExplicitConstructorInvocation eci) {
-                explicitConstructorInvocation = eci;
-            i ++;
+            explicitConstructorInvocation = eci;
+            i++;
         } else {
             explicitConstructorInvocation = null;
         }

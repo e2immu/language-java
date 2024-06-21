@@ -70,47 +70,70 @@ public class ResolverImpl implements Resolver {
 
         for (Todo todo : todos) {
             if (todo.infoBuilder instanceof FieldInfo.Builder builder) {
-                Expression e = parseExpression.parse(todo.context, START_INDEX,
-                        todo.forwardType, todo.expression);
-                builder.setInitializer(e);
-                builder.commit();
+                boolean success = true;
+                try {
+                    resolveField(todo, builder);
+                } catch (RuntimeException re) {
+                    success = false;
+                    todo.context.summary().addParserError(re);
+                }
+                todo.context.summary().addType(todo.context.enclosingType().primaryType(), success);
             } else if (todo.infoBuilder instanceof MethodInfo.Builder builder) {
-                org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
-                if (todo.eci == null) {
-                    eci = null;
-                } else {
-                    eci = parseEci(todo);
+                boolean success = true;
+                try {
+                    resolveMethod(todo, builder);
+                } catch (RuntimeException re) {
+                    success = false;
+                    todo.context.summary().addParserError(re);
                 }
-                Element e;
-                if (todo.expression instanceof CodeBlock codeBlock) {
-                    e = parseBlock.parse(todo.context, START_INDEX, codeBlock, eci == null ? 0 : 1);
-                } else {
-                    e = parseStatements(todo, eci != null);
-                }
-                if (e instanceof Block b) {
-                    Block bWithEci;
-                    if (eci == null) {
-                        bWithEci = b;
-                    } else {
-                        bWithEci = runtime.newBlockBuilder().addStatement(eci).addStatements(b.statements()).build();
-                    }
-                    builder.setMethodBody(bWithEci);
-                } else if (e instanceof Statement s) {
-                    Block.Builder bb = runtime.newBlockBuilder();
-                    if (eci != null) bb.addStatement(eci);
-                    builder.setMethodBody(bb.addStatement(s).build());
-                } else if (e == null && eci != null) {
-                    builder.setMethodBody(runtime.newBlockBuilder().addStatement(eci).build());
-                } else {
-                    // in Java, we must have a block
-                    throw new UnsupportedOperationException();
-                }
-                builder.commit();
+                todo.context.summary().addType(todo.context.enclosingType().primaryType(), success);
+                todo.context.summary().addMethod(success);
             } else throw new UnsupportedOperationException("In java, we cannot have expressions in other places");
         }
         for (TypeInfo.Builder builder : types) {
             builder.commit();
         }
+    }
+
+    private void resolveField(Todo todo, FieldInfo.Builder builder) {
+        Expression e = parseExpression.parse(todo.context, START_INDEX,
+                todo.forwardType, todo.expression);
+        builder.setInitializer(e);
+        builder.commit();
+    }
+
+    private void resolveMethod(Todo todo, MethodInfo.Builder builder) {
+        org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
+        if (todo.eci == null) {
+            eci = null;
+        } else {
+            eci = parseEci(todo);
+        }
+        Element e;
+        if (todo.expression instanceof CodeBlock codeBlock) {
+            e = parseBlock.parse(todo.context, START_INDEX, codeBlock, eci == null ? 0 : 1);
+        } else {
+            e = parseStatements(todo, eci != null);
+        }
+        if (e instanceof Block b) {
+            Block bWithEci;
+            if (eci == null) {
+                bWithEci = b;
+            } else {
+                bWithEci = runtime.newBlockBuilder().addStatement(eci).addStatements(b.statements()).build();
+            }
+            builder.setMethodBody(bWithEci);
+        } else if (e instanceof Statement s) {
+            Block.Builder bb = runtime.newBlockBuilder();
+            if (eci != null) bb.addStatement(eci);
+            builder.setMethodBody(bb.addStatement(s).build());
+        } else if (e == null && eci != null) {
+            builder.setMethodBody(runtime.newBlockBuilder().addStatement(eci).build());
+        } else {
+            // in Java, we must have a block
+            throw new UnsupportedOperationException();
+        }
+        builder.commit();
     }
 
     /*

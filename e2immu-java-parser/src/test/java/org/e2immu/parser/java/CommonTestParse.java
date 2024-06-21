@@ -10,15 +10,15 @@ import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.InspectionState;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Resolver;
-import org.e2immu.language.inspection.impl.parser.AnonymousTypeCountersImpl;
-import org.e2immu.language.inspection.impl.parser.TypeContextImpl;
-import org.e2immu.language.inspection.impl.parser.VariableContextImpl;
-import org.e2immu.language.inspection.impl.parser.ContextImpl;
+import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.impl.parser.*;
 import org.e2immu.language.inspection.api.parser.PackagePrefix;
 import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.parserimpl.ResolverImpl;
 import org.parsers.java.JavaParser;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 
@@ -169,15 +169,47 @@ public class CommonTestParse {
         system.builder().commit();
     }
 
-    protected TypeInfo parse(String input) {
+    protected Context parseReturnContext(String input) {
+        Summary failFastSummary = new SummaryImpl(false);
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
         TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
         Resolver resolver = new ResolverImpl(runtime);
-        Context rootContext = new ContextImpl(runtime, resolver, null, null, null,
-                new TypeContextImpl(typeMapBuilder), new VariableContextImpl(), new AnonymousTypeCountersImpl(), null);
-        List<TypeInfo> types = new ParseCompilationUnit(typeMapBuilder, rootContext).parse(parser.CompilationUnit());
+        TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
+        VariableContextImpl variableContext = new VariableContextImpl();
+        AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, null,
+                null, null, typeContext, variableContext, anonymousTypeCounters,
+                null);
+        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
+        try {
+            parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         resolver.resolve();
-        return types.get(0);
+        return rootContext;
+    }
+
+    protected TypeInfo parse(String input) {
+        Summary failFastSummary = new SummaryImpl(true);
+        JavaParser parser = new JavaParser(input);
+        parser.setParserTolerant(false);
+        TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
+        Resolver resolver = new ResolverImpl(runtime);
+        TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
+        VariableContextImpl variableContext = new VariableContextImpl();
+        AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, null,
+                null, null, typeContext, variableContext, anonymousTypeCounters,
+                null);
+        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
+        try {
+            List<TypeInfo> types = parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
+            resolver.resolve();
+            return types.get(0);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

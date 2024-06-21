@@ -9,13 +9,18 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParseMethodDeclaration extends CommonParse {
+    private final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
+
     private final ParseType parseType;
     private final ParseAnnotationExpression parseAnnotationExpression;
 
@@ -26,6 +31,19 @@ public class ParseMethodDeclaration extends CommonParse {
     }
 
     public MethodInfo parse(Context context, MethodDeclaration md) {
+        try {
+            return internalParse(context, md);
+        } catch (Summary.FailFastException ffe) {
+            throw ffe;
+        } catch (RuntimeException re) {
+            LOGGER.error("Caught exception parsing method in type {}", context.info());
+            context.summary().addParserError(re);
+            context.summary().addType(context.enclosingType().primaryType(), false);
+            return null;
+        }
+    }
+
+    private MethodInfo internalParse(Context context, MethodDeclaration md) {
         int i = 0;
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<MethodModifier> methodModifiers = new ArrayList<>();

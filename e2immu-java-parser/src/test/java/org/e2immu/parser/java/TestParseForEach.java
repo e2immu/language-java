@@ -4,6 +4,7 @@ import org.e2immu.language.cst.api.expression.VariableExpression;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ForEachStatement;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,8 @@ public class TestParseForEach extends CommonTestParse {
 
     @Test
     public void test2() {
-        assertThrows(UnsupportedOperationException.class, () -> parse(INPUT_2));
+        assertThrows(Summary.FailFastException.class, () -> parse(INPUT_2));
+        Summary s = parseReturnContext(INPUT_2).summary();
+        assertTrue(s.haveErrors());
     }
 }

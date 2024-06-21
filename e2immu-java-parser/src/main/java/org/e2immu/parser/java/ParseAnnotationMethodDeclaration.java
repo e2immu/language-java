@@ -4,6 +4,8 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Summary;
+import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 
 public class ParseAnnotationMethodDeclaration extends CommonParse {
@@ -23,20 +25,20 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         }
         MethodInfo.MethodType methodType;
         ParameterizedType returnType;
-        if (amd.children().get(i) instanceof Type type) {
+        Node typeNode = amd.children().get(i);
+        if (typeNode instanceof Type type) {
             // depending on the modifiers...
             methodType = runtime.methodTypeMethod();
             returnType = parseType.parse(context, type);
             i++;
-        } else throw new UnsupportedOperationException();
+        } else throw new Summary.ParseException(context.info(), "Expect Type, got " + typeNode.getClass());
         String name;
-        if (amd.children().get(i) instanceof Identifier identifier) {
+        Node identifierNode = amd.children().get(i);
+        if (identifierNode instanceof Identifier identifier) {
             name = identifier.getSource();
-            i++;
-        } else throw new UnsupportedOperationException();
+        } else throw new Summary.ParseException(context.info(), "Expect Identifier, got " + identifierNode.getClass());
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder().setReturnType(returnType);
-
 
         builder.commitParameters();
 

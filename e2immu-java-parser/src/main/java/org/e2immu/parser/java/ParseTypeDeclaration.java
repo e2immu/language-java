@@ -13,15 +13,20 @@ import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.type.Wildcard;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParseTypeDeclaration extends CommonParse {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
+
     private final ParseConstructorDeclaration parseConstructorDeclaration;
     private final ParseMethodDeclaration parseMethodDeclaration;
     private final ParseAnnotationMethodDeclaration parseAnnotationMethodDeclaration;
@@ -42,6 +47,22 @@ public class ParseTypeDeclaration extends CommonParse {
     public TypeInfo parse(Context context,
                           Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                           TypeDeclaration td) {
+        try {
+            return internalParse(context, packageNameOrEnclosing, td);
+        } catch (Summary.FailFastException ffe) {
+            throw ffe;
+        } catch (RuntimeException re) {
+            Object where = packageNameOrEnclosing.isLeft() ? packageNameOrEnclosing.getLeft()
+                    : packageNameOrEnclosing.getRight();
+            LOGGER.error("Caught exception parsing type in {}", where);
+            context.summary().addParserError(re);
+            return null;
+        }
+    }
+
+    private TypeInfo internalParse(Context context,
+                                   Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                                   TypeDeclaration td) {
         List<Comment> comments = comments(td);
 
         int i = 0;
@@ -155,10 +176,14 @@ public class ParseTypeDeclaration extends CommonParse {
             for (Node child : body.children()) {
                 if (child instanceof MethodDeclaration md) {
                     MethodInfo methodInfo = parseMethodDeclaration.parse(newContext, md);
-                    builder.addMethod(methodInfo);
+                    if (methodInfo != null) {
+                        builder.addMethod(methodInfo);
+                    } // else error
                 } else if (child instanceof ConstructorDeclaration cd) {
                     MethodInfo constructor = parseConstructorDeclaration.parse(newContext, cd);
-                    builder.addConstructor(constructor);
+                    if (constructor != null) {
+                        builder.addConstructor(constructor);
+                    } // else error
                 }
             }
 

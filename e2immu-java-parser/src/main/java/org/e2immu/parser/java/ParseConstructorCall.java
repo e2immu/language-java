@@ -1,5 +1,6 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
@@ -14,6 +15,7 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -53,8 +55,9 @@ public class ParseConstructorCall extends CommonParse {
         int numArguments;
         if (ae.get(i) instanceof InvocationArguments ia) {
             numArguments = (ia.size() - 1) / 2;
-        } else throw new UnsupportedOperationException();
-
+        } else {
+            throw new Summary.ParseException(context.info(), "Expected InvocationArguments, got " + ae.get(i).getClass());
+        }
         // now we have scope, methodName, and the number of arguments
         // find a list of candidates
         // choose the correct candidate, and evaluate arguments
