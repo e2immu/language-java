@@ -1,6 +1,8 @@
+includeBuild("../util-external/e2immu-external-support")
 includeBuild("../language-cst/e2immu-cst-api")
 includeBuild("../language-cst/e2immu-cst-impl")
 includeBuild("../language-cst/e2immu-cst-io")
 includeBuild("../language-inspection/e2immu-inspection-api")
+includeBuild("../language-inspection/e2immu-inspection-parser")
 includeBuild("e2immu-java-bytecode")
 includeBuild("e2immu-java-parser")
