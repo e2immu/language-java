@@ -14,7 +14,7 @@ import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.language.inspection.impl.parser.*;
 import org.e2immu.language.inspection.api.parser.PackagePrefix;
 import org.e2immu.language.inspection.api.resource.TypeMap;
-import org.e2immu.parserimpl.ResolverImpl;
+import org.e2immu.language.inspection.impl.parser.ResolverImpl;
 import org.parsers.java.JavaParser;
 
 import java.net.URI;
@@ -174,13 +174,12 @@ public class CommonTestParse {
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
         TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
-        Resolver resolver = new ResolverImpl(runtime);
+        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, null,
-                null, null, typeContext, variableContext, anonymousTypeCounters,
-                null);
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, typeContext, variableContext,
+                anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
             parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
@@ -196,13 +195,12 @@ public class CommonTestParse {
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
         TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
-        Resolver resolver = new ResolverImpl(runtime);
+        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, null,
-                null, null, typeContext, variableContext, anonymousTypeCounters,
-                null);
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, typeContext, variableContext,
+                anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
             List<TypeInfo> types = parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
