@@ -48,6 +48,7 @@ public class ParseExpression extends CommonParse {
         try {
             return internalParse(context, index, forwardType, node);
         } catch (Throwable t) {
+            t.printStackTrace();
             LOGGER.error("Caught exception parsing expression at line {}, pos {}", node.getBeginLine(), node.getBeginColumn());
             throw t;
         }
@@ -102,7 +103,7 @@ public class ParseExpression extends CommonParse {
         }
         if (node instanceof ArrayAccess arrayAccess) {
             assert arrayAccess.size() == 4 : "Not implemented";
-            Expression ae = parse(context, index, forwardType.withMustBeArray(), arrayAccess.get(0));
+            Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
             ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
             Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
             Variable variable = runtime.newDependentVariable(ae, ie);
@@ -130,7 +131,28 @@ public class ParseExpression extends CommonParse {
         if (node instanceof TernaryExpression) {
             return inlineConditional(context, index, forwardType, comments, source, node);
         }
+        if (node instanceof ArrayInitializer arrayInitializer) {
+            return arrayInitializer(context, index, forwardType, comments, source, arrayInitializer);
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,
+                                        Source source, ArrayInitializer arrayInitializer) {
+        List<Expression> expressions = new ArrayList<>();
+        ParameterizedType commonType = null;
+        ParameterizedType oneFewer = forwardType.type().copyWithOneFewerArrays();
+        ForwardType forwardTypeOneArrayLess = context.newForwardType(oneFewer);
+        for (int i = 1; i < arrayInitializer.size(); i += 2) {
+            Expression e = parse(context, index, forwardTypeOneArrayLess, arrayInitializer.get(i));
+            expressions.add(e);
+            commonType = commonType == null ? e.parameterizedType() : runtime.commonType(commonType, e.parameterizedType());
+        }
+        if (commonType == null) {
+            commonType = forwardType.type();
+        }
+        assert commonType != null;
+        return runtime.newArrayInitializer(List.copyOf(expressions), commonType);
     }
 
     private Expression inlineConditional(Context context, String index, ForwardType forwardType, List<Comment> comments, Source source, Node node) {
@@ -427,7 +449,7 @@ public class ParseExpression extends CommonParse {
         if (child instanceof StringLiteral sl) {
             return runtime.newStringConstant(sl.getString());
         }
-        if(child instanceof NullLiteral) {
+        if (child instanceof NullLiteral) {
             return runtime.nullConstant();
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());

@@ -27,6 +27,7 @@ public class CommonTestParse {
     private TypeInfo predefined(String fullyQualifiedName, boolean complain) {
         return switch (fullyQualifiedName) {
             case "java.lang.Class" -> clazz;
+            case "java.lang.Object" -> runtime.objectTypeInfo();
             case "java.lang.String" -> runtime.stringTypeInfo();
             case "java.lang.Integer" -> runtime.integerTypeInfo();
             case "java.lang.SuppressWarnings" -> suppressWarnings;

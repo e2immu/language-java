@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class TestParseLambda extends CommonTestParse {
+public class TestParseLambdaExpression extends CommonTestParse {
 
     @Language("java")
     private static final String INPUT = """
@@ -28,6 +28,10 @@ public class TestParseLambda extends CommonTestParse {
     @Test
     public void test() {
         TypeInfo typeInfo = parse(INPUT);
+        test(typeInfo);
+    }
+
+    private static void test(TypeInfo typeInfo) {
         MethodInfo mapper = typeInfo.findUniqueMethod("mapper", 1);
         assertEquals("Function<C,String>", mapper.returnType().toString());
         if (mapper.methodBody().statements().get(1) instanceof ReturnStatement rs
@@ -39,5 +43,27 @@ public class TestParseLambda extends CommonTestParse {
             assertEquals(2, lambda.concreteFunctionalType().parameters().size());
             assertEquals("Function<C,String>", lambda.concreteFunctionalType().toString());
         } else fail();
+    }
+
+    // there should be no difference with INPUT
+    @Language("java")
+    private static final String INPUT_2 = """
+            package a.b;
+            import java.util.function.Function;
+            class C {
+              String s;
+              Function<C, String> mapper(int k) {
+                 int lv = k*2;
+                 return t -> {
+                     return t+s+k+lv;
+                 };
+              }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT_2);
+        test(typeInfo);
     }
 }

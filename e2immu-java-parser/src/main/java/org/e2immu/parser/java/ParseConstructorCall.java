@@ -52,28 +52,31 @@ public class ParseConstructorCall extends CommonParse {
         } else {
             diamond = type.parameters().isEmpty() ? runtime.diamondNo() : runtime.diamondShowAll();
         }
-        int numArguments;
-        if (ae.get(i) instanceof InvocationArguments ia) {
-            numArguments = (ia.size() - 1) / 2;
-        } else {
-            throw new Summary.ParseException(context.info(), "Expected InvocationArguments, got " + ae.get(i).getClass());
-        }
-        // now we have scope, methodName, and the number of arguments
-        // find a list of candidates
-        // choose the correct candidate, and evaluate arguments
-        // re-evaluate scope, and determine concrete return type
-        MethodInfo constructor = typeInfo.findConstructor(numArguments);
 
         // parse arguments
         List<Expression> expressions;
+        MethodInfo constructor;
 
-        // (, lit expr, )  or  del mc del mc, del expr del expr, del
-        expressions = new ArrayList<>();
-        for (int k = 0; k < numArguments; k++) {
-            ParameterInfo pi = constructor.parameters().get(k);
-            ForwardType forwardType = context.newForwardType(pi.parameterizedType());
-            Expression e = parseExpression.parse(context, index, forwardType, ia.get(1 + 2 * k));
-            expressions.add(e);
+        if (ae.get(i) instanceof InvocationArguments ia) {
+            int numArguments = (ia.size() - 1) / 2;
+            // now we have scope, methodName, and the number of arguments
+            // find a list of candidates
+            // choose the correct candidate, and evaluate arguments
+            // re-evaluate scope, and determine concrete return type
+            constructor = typeInfo.findConstructor(numArguments);
+
+            // (, lit expr, )  or  del mc del mc, del expr del expr, del
+            expressions = new ArrayList<>();
+            for (int k = 0; k < numArguments; k++) {
+                ParameterInfo pi = constructor.parameters().get(k);
+                ForwardType forwardType = context.newForwardType(pi.parameterizedType());
+                Expression e = parseExpression.parse(context, index, forwardType, ia.get(1 + 2 * k));
+                expressions.add(e);
+            }
+        } else if (ae.get(i) instanceof ArrayDimsAndInits ada) {
+            throw new UnsupportedOperationException("working on it");
+        } else {
+            throw new Summary.ParseException(context.info(), "Expected InvocationArguments or ArrayDimsAndInits, got " + ae.get(i).getClass());
         }
 
         return builder.setObject(null)
