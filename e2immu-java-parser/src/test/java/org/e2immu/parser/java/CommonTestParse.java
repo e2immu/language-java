@@ -26,6 +26,7 @@ public class CommonTestParse {
             case "java.lang.Class" -> clazz;
             case "java.lang.Object" -> runtime.objectTypeInfo();
             case "java.lang.String" -> runtime.stringTypeInfo();
+            case "java.lang.Override" -> override;
             case "java.lang.Integer" -> runtime.integerTypeInfo();
             case "java.lang.SuppressWarnings" -> suppressWarnings;
             case "java.lang.System" -> system;
@@ -63,6 +64,7 @@ public class CommonTestParse {
     protected final TypeInfo function;
     protected final TypeInfo biConsumer;
     protected final TypeInfo suppressWarnings;
+    protected final TypeInfo override;
 
     class TypeMapBuilder implements TypeMap.Builder {
 
@@ -130,6 +132,7 @@ public class CommonTestParse {
         suppressWarnings = runtime.newTypeInfo(javaLang, "SuppressWarnings");
         clazz = runtime.newTypeInfo(javaLang, "Class");
         math = runtime.newTypeInfo(javaLang, "Math");
+        override = runtime.newTypeInfo(javaLang, "Override");
         printStream = runtime.newTypeInfo(javaIo, "PrintStream");
         system = runtime.newTypeInfo(javaLang, "System");
         exception = runtime.newTypeInfo(javaLang, "Exception");
@@ -159,6 +162,8 @@ public class CommonTestParse {
         FieldInfo out = runtime.newFieldInfo("out", true, printStream.asSimpleParameterizedType(), system);
         system.builder().addField(out);
         system.builder().commit();
+
+        override.builder().setTypeNature(runtime.typeNatureAnnotation());
     }
 
     private void defineFunction() {
@@ -202,7 +207,7 @@ public class CommonTestParse {
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
         GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, genericsHelper, typeContext, variableContext,
+        Context rootContext = new ContextImpl(runtime, failFastSummary, genericsHelper, resolver, typeContext, variableContext,
                 anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
@@ -224,7 +229,7 @@ public class CommonTestParse {
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
         GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, genericsHelper, typeContext, variableContext,
+        Context rootContext = new ContextImpl(runtime, failFastSummary, genericsHelper, resolver, typeContext, variableContext,
                 anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {

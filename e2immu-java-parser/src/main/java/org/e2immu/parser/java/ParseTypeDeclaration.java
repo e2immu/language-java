@@ -137,53 +137,8 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         Node body = td.get(i);
-        if (body instanceof ClassOrInterfaceBody) {
-            List<TypeDeclaration> typeDeclarations = new ArrayList<>();
-            List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
-            int countCompactConstructors = 0;
-            int countNormalConstructors = 0;
-
-            for (Node child : body.children()) {
-                if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
-                else if (child instanceof CompactConstructorDeclaration) ++countCompactConstructors;
-                else if (child instanceof ConstructorDeclaration) ++countNormalConstructors;
-                else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
-            }
-
-            // FIRST, do subtypes
-
-            for (TypeDeclaration typeDeclaration : typeDeclarations) {
-                TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration);
-                builder.addSubType(subTypeInfo);
-                newContext.typeContext().addToContext(subTypeInfo);
-            }
-
-            // THEN, all sorts of methods and constructors
-
-            for (Node child : body.children()) {
-                if (child instanceof MethodDeclaration md) {
-                    MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
-                    if (methodInfo != null) {
-                        builder.addMethod(methodInfo);
-                    } // else error
-                } else if (child instanceof ConstructorDeclaration cd) {
-                    MethodInfo constructor = parsers.parseConstructorDeclaration().parse(newContext, cd);
-                    if (constructor != null) {
-                        builder.addConstructor(constructor);
-                    } // else error
-                }
-            }
-
-            if (countNormalConstructors == 0 && (typeNature.isClass() || typeNature.isEnum())) {
-                boolean privateEmptyConstructor = typeNature.isEnum();
-                builder.addConstructor(createEmptyConstructor(typeInfo, privateEmptyConstructor));
-            }
-
-            // FINALLY, do the fields
-            for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-                FieldInfo field = parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration);
-                builder.addField(field);
-            }
+        if (body instanceof ClassOrInterfaceBody cib) {
+            parseBody(newContext, cib, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
@@ -192,9 +147,6 @@ public class ParseTypeDeclaration extends CommonParse {
                 }
             }
         } else throw new UnsupportedOperationException("node " + td.get(i).getClass());
-
-        MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);
-        builder.setSingleAbstractMethod(sam);
 
         context.resolver().add(builder);
         return typeInfo;
@@ -210,6 +162,58 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setSynthetic(true);
         builder.computeAccess();
         return methodInfo;
+    }
+
+    public void parseBody(Context newContext, ClassOrInterfaceBody body, TypeNature typeNature, TypeInfo typeInfo, TypeInfo.Builder builder) {
+        List<TypeDeclaration> typeDeclarations = new ArrayList<>();
+        List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
+        int countCompactConstructors = 0;
+        int countNormalConstructors = 0;
+
+        for (Node child : body.children()) {
+            if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
+            else if (child instanceof CompactConstructorDeclaration) ++countCompactConstructors;
+            else if (child instanceof ConstructorDeclaration) ++countNormalConstructors;
+            else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
+        }
+
+        // FIRST, do subtypes
+
+        for (TypeDeclaration typeDeclaration : typeDeclarations) {
+            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration);
+            builder.addSubType(subTypeInfo);
+            newContext.typeContext().addToContext(subTypeInfo);
+        }
+
+        // THEN, all sorts of methods and constructors
+
+        for (Node child : body.children()) {
+            if (child instanceof MethodDeclaration md) {
+                MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
+                if (methodInfo != null) {
+                    builder.addMethod(methodInfo);
+                } // else error
+            } else if (child instanceof ConstructorDeclaration cd) {
+                MethodInfo constructor = parsers.parseConstructorDeclaration().parse(newContext, cd);
+                if (constructor != null) {
+                    builder.addConstructor(constructor);
+                } // else error
+            }
+        }
+
+        if (countNormalConstructors == 0 && (typeNature.isClass() || typeNature.isEnum())) {
+            boolean privateEmptyConstructor = typeNature.isEnum();
+            builder.addConstructor(createEmptyConstructor(typeInfo, privateEmptyConstructor));
+        }
+
+        // FINALLY, do the fields
+        for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
+            FieldInfo field = parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration);
+            builder.addField(field);
+        }
+
+        MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);
+        builder.setSingleAbstractMethod(sam);
     }
 
     private TypeParameter parseTypeParameter(Context context, Node node, TypeInfo owner, int typeParameterIndex) {

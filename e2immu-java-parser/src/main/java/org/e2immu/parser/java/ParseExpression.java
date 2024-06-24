@@ -104,7 +104,7 @@ public class ParseExpression extends CommonParse {
             return parseParentheses(context, index, forwardType, p);
         }
         if (node instanceof AllocationExpression ae) {
-            return parsers.parseConstructorCall().parse(context, index, ae);
+            return parsers.parseConstructorCall().parse(context, index, forwardType, ae);
         }
         if (node instanceof MethodReference mr) {
             return parsers.parseMethodReference().parse(context, comments, source, index, mr);

@@ -1,6 +1,5 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
@@ -11,10 +10,12 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.Diamond;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ParseConstructorCall extends CommonParse {
     private final static Logger LOGGER = LoggerFactory.getLogger(ParseConstructorCall.class);
@@ -31,21 +33,29 @@ public class ParseConstructorCall extends CommonParse {
         super(runtime, parsers);
     }
 
-    public ConstructorCall parse(Context context, String index, org.parsers.java.ast.AllocationExpression ae) {
-        ConstructorCall.Builder builder = runtime.newConstructorCallBuilder();
-
+    public ConstructorCall parse(Context context,
+                                 String index,
+                                 ForwardType forwardType,
+                                 org.parsers.java.ast.AllocationExpression ae) {
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
-        ParameterizedType type = parsers.parseType().parse(context, ae.get(1));
-        TypeInfo typeInfo = type.typeInfo();
+        ParameterizedType typeAsIs = parsers.parseType().parse(context, ae.get(1));
+        TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
 
         Diamond diamond;
         int i = 2;
+        ParameterizedType expectedConcreteType;
         if (ae.get(i) instanceof DiamondOperator) {
             diamond = runtime.diamondYes();
+            if (forwardType.type() == null || forwardType.type().isVoid()) {
+                expectedConcreteType = null;
+            } else {
+                expectedConcreteType = inferDiamond(context, typeAsIs.typeInfo(), forwardType.type());
+            }
             i++;
         } else {
-            diamond = type.parameters().isEmpty() ? runtime.diamondNo() : runtime.diamondShowAll();
+            diamond = typeAsIs.parameters().isEmpty() ? runtime.diamondNo() : runtime.diamondShowAll();
+            expectedConcreteType = typeAsIs;
         }
 
         // parse arguments
@@ -55,6 +65,9 @@ public class ParseConstructorCall extends CommonParse {
         ParameterizedType concreteReturnType;
 
         if (ae.get(i) instanceof InvocationArguments ia) {
+            if (i + 1 < ae.size() && ae.get(i + 1) instanceof ClassOrInterfaceBody body) {
+                return anonymousType(context, expectedConcreteType, typeAsIs, ia, body, diamond);
+            }
             int numArguments = (ia.size() - 1) / 2;
             // now we have scope, methodName, and the number of arguments
             // find a list of candidates
@@ -65,12 +78,12 @@ public class ParseConstructorCall extends CommonParse {
             // (, lit expr, )  or  del mc del mc, del expr del expr, del
             for (int k = 0; k < numArguments; k++) {
                 ParameterInfo pi = constructor.parameters().get(k);
-                ForwardType forwardType = context.newForwardType(pi.parameterizedType());
-                Expression e = parsers.parseExpression().parse(context, index, forwardType, ia.get(1 + 2 * k));
+                ForwardType paramFwd = context.newForwardType(pi.parameterizedType());
+                Expression e = parsers.parseExpression().parse(context, index, paramFwd, ia.get(1 + 2 * k));
                 expressions.add(e);
             }
             initializer = null;
-            concreteReturnType = type;
+            concreteReturnType = typeAsIs;
         } else if (ae.get(i) instanceof ArrayDimsAndInits ada) {
             ForwardType fwdIndex = context.newForwardType(runtime.intParameterizedType());
             int j = 0;
@@ -109,7 +122,8 @@ public class ParseConstructorCall extends CommonParse {
             throw new Summary.ParseException(context.info(), "Expected InvocationArguments or ArrayDimsAndInits, got " + ae.get(i).getClass());
         }
 
-        return builder.setObject(null)
+        return runtime.newConstructorCallBuilder()
+                .setObject(null)
                 .setParameterExpressions(expressions)
                 .setConstructor(constructor)
                 .setConcreteReturnType(concreteReturnType)
@@ -118,6 +132,46 @@ public class ParseConstructorCall extends CommonParse {
                 .setSource(source(context.info(), index, ae))
                 .addComments(comments(ae))
                 .build();
+    }
+
+    private ParameterizedType inferDiamond(Context context, TypeInfo formalType, ParameterizedType type) {
+        if (type.typeInfo() == formalType) return type;
+        ParameterizedType formalPt = formalType.asParameterizedType(runtime);
+        Map<NamedType, ParameterizedType> typeParameterMap = context.genericsHelper().translateMap(formalPt, type,
+                false);
+        return formalPt.applyTranslation(runtime, typeParameterMap);
+    }
+
+    private ConstructorCall anonymousType(Context context,
+                                          ParameterizedType forwardType,
+                                          ParameterizedType type,
+                                          InvocationArguments ia,
+                                          ClassOrInterfaceBody body,
+                                          Diamond diamond) {
+        TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(),
+                context.anonymousTypeCounters().newIndex(context.enclosingType()));
+        TypeNature typeNature = runtime.typeNatureClass();
+        TypeInfo.Builder builder = anonymousType.builder();
+        builder.setTypeNature(typeNature);
+        ParameterizedType concreteReturnType = diamond.isShowAll() ? type : forwardType;
+        if (concreteReturnType.typeInfo().isInterface()) {
+            builder.addInterfaceImplemented(concreteReturnType);
+        } else {
+            builder.setParentClass(concreteReturnType);
+        }
+        assert ia.size() == 2
+               && Token.TokenType.LPAREN.equals(ia.get(0).getType())
+               && Token.TokenType.RPAREN.equals(ia.get(1).getType());
+        Context newContext = context.newResolver();
+        parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType,
+                builder);
+        newContext.resolver().resolve();
+        builder.commit();
+        return runtime.newConstructorCallBuilder()
+                .setDiamond(diamond)
+                .setConcreteReturnType(concreteReturnType)
+                .setParameterExpressions(List.of())
+                .setAnonymousClass(anonymousType).build();
     }
 
     /*
