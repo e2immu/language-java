@@ -49,8 +49,10 @@ public class ParseConstructorCall extends CommonParse {
         }
 
         // parse arguments
-        List<Expression> expressions;
+        List<Expression> expressions = new ArrayList<>();
         MethodInfo constructor;
+        org.e2immu.language.cst.api.expression.ArrayInitializer initializer;
+        ParameterizedType concreteReturnType;
 
         if (ae.get(i) instanceof InvocationArguments ia) {
             int numArguments = (ia.size() - 1) / 2;
@@ -61,15 +63,48 @@ public class ParseConstructorCall extends CommonParse {
             constructor = typeInfo.findConstructor(numArguments);
 
             // (, lit expr, )  or  del mc del mc, del expr del expr, del
-            expressions = new ArrayList<>();
             for (int k = 0; k < numArguments; k++) {
                 ParameterInfo pi = constructor.parameters().get(k);
                 ForwardType forwardType = context.newForwardType(pi.parameterizedType());
                 Expression e = parsers.parseExpression().parse(context, index, forwardType, ia.get(1 + 2 * k));
                 expressions.add(e);
             }
+            initializer = null;
+            concreteReturnType = type;
         } else if (ae.get(i) instanceof ArrayDimsAndInits ada) {
-            throw new UnsupportedOperationException("working on it");
+            ForwardType fwdIndex = context.newForwardType(runtime.intParameterizedType());
+            int j = 0;
+            boolean haveDimensions = false;
+            while (j < ada.size() && !(ada.get(j) instanceof ArrayInitializer)) {
+                if (Token.TokenType.LBRACKET.equals(ada.get(j).getType())) {
+                    j++;
+                    if (Token.TokenType.RBRACKET.equals(ada.get(j).getType())) {
+                        // unknown array dimension
+                        expressions.add(runtime.newEmptyExpression());
+                        j++;
+                    } else if (ada.get(j) instanceof org.parsers.java.ast.Expression expression) {
+                        Expression e = parsers.parseExpression().parse(context, index, fwdIndex, expression);
+                        expressions.add(e);
+                        j += 2;
+                        haveDimensions = true;
+                    }
+                }
+            }
+            ParameterizedType formalReturnType = runtime.newParameterizedType(typeInfo, expressions.size());
+            constructor = runtime.newArrayCreationConstructor(formalReturnType);
+            if (haveDimensions) {
+                initializer = null;
+                concreteReturnType = formalReturnType;
+            } else {
+                assert j < ada.size();
+                if (ada.get(j) instanceof ArrayInitializer ai) {
+                    LOGGER.debug("Parsing array initializer");
+                    ForwardType fwd = context.newForwardType(formalReturnType);
+                    initializer = (org.e2immu.language.cst.api.expression.ArrayInitializer) parsers.parseExpression()
+                            .parse(context, index, fwd, ai);
+                    concreteReturnType = initializer.parameterizedType();
+                } else throw new Summary.ParseException(context.info(), "Expected array initializer");
+            }
         } else {
             throw new Summary.ParseException(context.info(), "Expected InvocationArguments or ArrayDimsAndInits, got " + ae.get(i).getClass());
         }
@@ -77,7 +112,8 @@ public class ParseConstructorCall extends CommonParse {
         return builder.setObject(null)
                 .setParameterExpressions(expressions)
                 .setConstructor(constructor)
-                .setConcreteReturnType(type)
+                .setConcreteReturnType(concreteReturnType)
+                .setArrayInitializer(initializer)
                 .setDiamond(diamond)
                 .setSource(source(context.info(), index, ae))
                 .addComments(comments(ae))

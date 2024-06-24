@@ -134,7 +134,9 @@ public class ParseExpression extends CommonParse {
         ParameterizedType oneFewer = forwardType.type().copyWithOneFewerArrays();
         ForwardType forwardTypeOneArrayLess = context.newForwardType(oneFewer);
         for (int i = 1; i < arrayInitializer.size(); i += 2) {
-            Expression e = parse(context, index, forwardTypeOneArrayLess, arrayInitializer.get(i));
+            Node ai = arrayInitializer.get(i);
+            if(ai instanceof Delimiter) break; // empty expression list
+            Expression e = parse(context, index, forwardTypeOneArrayLess, ai);
             expressions.add(e);
             commonType = commonType == null ? e.parameterizedType() : runtime.commonType(commonType, e.parameterizedType());
         }
