@@ -8,11 +8,8 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.InspectionState;
-import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.language.inspection.api.parser.Resolver;
-import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.*;
 import org.e2immu.language.inspection.impl.parser.*;
-import org.e2immu.language.inspection.api.parser.PackagePrefix;
 import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.language.inspection.impl.parser.ResolverImpl;
 import org.parsers.java.JavaParser;
@@ -36,6 +33,7 @@ public class CommonTestParse {
             case "java.lang.Exception" -> exception;
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
+            case "java.util.function.BiConsumer" -> biConsumer;
             default -> {
                 if (complain) throw new UnsupportedOperationException("Type " + fullyQualifiedName);
                 yield null;
@@ -52,6 +50,7 @@ public class CommonTestParse {
         @Override
         public TypeInfo syntheticFunctionalType(int inputParameters, boolean hasReturnValue) {
             if (inputParameters == 1 && hasReturnValue) return function;
+            if (inputParameters == 2 && !hasReturnValue) return biConsumer;
             throw new UnsupportedOperationException();
         }
     };
@@ -62,6 +61,7 @@ public class CommonTestParse {
     protected final TypeInfo exception;
     protected final TypeInfo printStream;
     protected final TypeInfo function;
+    protected final TypeInfo biConsumer;
     protected final TypeInfo suppressWarnings;
 
     class TypeMapBuilder implements TypeMap.Builder {
@@ -134,21 +134,12 @@ public class CommonTestParse {
         system = runtime.newTypeInfo(javaLang, "System");
         exception = runtime.newTypeInfo(javaLang, "Exception");
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
+        biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
 
         clazz.builder().addTypeParameter(runtime.newTypeParameter(0, "C", clazz));
 
-        TypeParameter T = runtime.newTypeParameter(0, "T", function);
-        TypeParameter R = runtime.newTypeParameter(1, "R", function);
-        function.builder().addTypeParameter(T).addTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
-        MethodInfo apply = runtime.newMethod(function, "apply", runtime.methodTypeAbstractMethod());
-        apply.builder().setReturnType(runtime.newParameterizedType(R, 0, null))
-                .addMethodModifier(runtime.methodModifierPublic())
-                .addParameter("t", runtime.newParameterizedType(T, 0, null));
-        apply.builder().computeAccess();
-        apply.builder().commit();
-        function.builder().addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
-                .setSingleAbstractMethod(apply)
-                .computeAccess();
+        defineFunction();
+        defineBiConsumer();
 
         MethodInfo pow = runtime.newMethod(math, "pow", runtime.methodTypeStaticMethod());
         pow.builder().addParameter("base", runtime.doubleParameterizedType());
@@ -170,6 +161,37 @@ public class CommonTestParse {
         system.builder().commit();
     }
 
+    private void defineFunction() {
+        TypeParameter T = runtime.newTypeParameter(0, "T", function);
+        TypeParameter R = runtime.newTypeParameter(1, "R", function);
+        function.builder().addTypeParameter(T).addTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
+        MethodInfo apply = runtime.newMethod(function, "apply", runtime.methodTypeAbstractMethod());
+        apply.builder().setReturnType(runtime.newParameterizedType(R, 0, null))
+                .addMethodModifier(runtime.methodModifierPublic())
+                .addParameter("t", runtime.newParameterizedType(T, 0, null));
+        apply.builder().computeAccess();
+        apply.builder().commit();
+        function.builder().addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
+                .setSingleAbstractMethod(apply)
+                .computeAccess();
+    }
+
+    private void defineBiConsumer() {
+        TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer);
+        TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer);
+        biConsumer.builder().addTypeParameter(T).addTypeParameter(U).setTypeNature(runtime.typeNatureInterface());
+        MethodInfo accept = runtime.newMethod(biConsumer, "accept", runtime.methodTypeAbstractMethod());
+        accept.builder().setReturnType(runtime.voidParameterizedType())
+                .addMethodModifier(runtime.methodModifierPublic())
+                .addParameter("t", runtime.newParameterizedType(T, 0, null));
+        accept.builder().addParameter("u", runtime.newParameterizedType(U, 1, null));
+        accept.builder().computeAccess();
+        accept.builder().commit();
+        biConsumer.builder().addMethod(accept).addTypeModifier(runtime.typeModifierPublic())
+                .setSingleAbstractMethod(accept)
+                .computeAccess();
+    }
+
     protected Context parseReturnContext(String input) {
         Summary failFastSummary = new SummaryImpl(false);
         JavaParser parser = new JavaParser(input);
@@ -179,7 +201,8 @@ public class CommonTestParse {
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, typeContext, variableContext,
+        GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, genericsHelper, typeContext, variableContext,
                 anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
@@ -200,7 +223,8 @@ public class CommonTestParse {
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
         VariableContextImpl variableContext = new VariableContextImpl();
         AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, typeContext, variableContext,
+        GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
+        Context rootContext = new ContextImpl(runtime, failFastSummary, resolver, genericsHelper, typeContext, variableContext,
                 anonymousTypeCounters, null);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {

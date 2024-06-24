@@ -10,26 +10,29 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class TestParseLambdaExpression extends CommonTestParse {
+public class TestParseLambdaWithBlock extends CommonTestParse {
+
 
     @Language("java")
-    private static final String INPUT = """
+    private static final String INPUT_1 = """
             package a.b;
-            import java.util.function.Function;
+            import java.util.function.BiConsumer;
             class C {
-              String s;
-              Function<C, String> mapper(int k) {
+              BiConsumer<Integer, Integer, Integer> mapper(int k) {
                  int lv = k*2;
-                 return t -> t+s+k+lv;
+                 return (i,j) -> {
+                     System.out.println("lv+t", i+j+lv);
+                 };
               }
             }
             """;
 
     @Test
-    public void test() {
-        TypeInfo typeInfo = parse(INPUT);
+    public void test1() {
+        TypeInfo typeInfo = parse(INPUT_1);
         test(typeInfo);
     }
+
 
     private static void test(TypeInfo typeInfo) {
         MethodInfo mapper = typeInfo.findUniqueMethod("mapper", 1);
@@ -45,17 +48,15 @@ public class TestParseLambdaExpression extends CommonTestParse {
         } else fail();
     }
 
-    // there should be no difference with INPUT
     @Language("java")
     private static final String INPUT_2 = """
             package a.b;
-            import java.util.function.Function;
+            import java.util.function.BiConsumer;
             class C {
-              String s;
-              Function<C, String> mapper(int k) {
+              BiConsumer<Integer, Integer, Integer> mapper(int k) {
                  int lv = k*2;
-                 return t -> {
-                     return t+s+k+lv;
+                 return (int i,int j) -> {
+                     System.out.println("lv+t", i+j+lv);
                  };
               }
             }
@@ -67,4 +68,24 @@ public class TestParseLambdaExpression extends CommonTestParse {
         test(typeInfo);
     }
 
+
+    @Language("java")
+    private static final String INPUT_3 = """
+            package a.b;
+            import java.util.function.BiConsumer;
+            class C {
+              BiConsumer<Integer, Integer, Integer> mapper(int k) {
+                 int lv = k*2;
+                 return (var i,var j) -> {
+                     System.out.println("lv+t", i+j+lv);
+                 };
+              }
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT_3);
+        test(typeInfo);
+    }
 }
