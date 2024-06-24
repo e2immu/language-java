@@ -21,13 +21,8 @@ import java.util.List;
 public class ParseMethodDeclaration extends CommonParse {
     private final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
 
-    private final ParseType parseType;
-    private final ParseAnnotationExpression parseAnnotationExpression;
-
-    public ParseMethodDeclaration(Runtime runtime) {
-        super(runtime);
-        parseType = new ParseType(runtime);
-        parseAnnotationExpression = new ParseAnnotationExpression(runtime);
+    public ParseMethodDeclaration(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public MethodInfo parse(Context context, MethodDeclaration md) {
@@ -51,11 +46,11 @@ public class ParseMethodDeclaration extends CommonParse {
         Node mdi;
         while (!((mdi = md.get(i)) instanceof ReturnType)) {
             if (mdi instanceof Annotation a) {
-                annotations.add(parseAnnotationExpression.parse(context, a));
+                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (mdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof MarkerAnnotation a) {
-                        annotations.add(parseAnnotationExpression.parse(context, a));
+                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         methodModifiers.add(modifier(keyWord));
                     }
@@ -71,7 +66,7 @@ public class ParseMethodDeclaration extends CommonParse {
         if (md.get(i) instanceof ReturnType rt) {
             // depending on the modifiers...
             methodType = runtime.methodTypeMethod();
-            returnType = parseType.parse(context, rt);
+            returnType = parsers.parseType().parse(context, rt);
             i++;
         } else throw new UnsupportedOperationException();
         String name;
@@ -95,7 +90,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } else throw new UnsupportedOperationException("Node " + md.get(i).getClass());
         if (md.get(i) instanceof ThrowsList throwsList) {
             for (int j = 1; j < throwsList.size(); j += 2) {
-                ParameterizedType pt = parseType.parse(newContext, throwsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, throwsList.get(j));
                 builder.addExceptionType(pt);
             }
             i++;
@@ -129,7 +124,7 @@ public class ParseMethodDeclaration extends CommonParse {
         ParameterizedType typeOfParameter;
         Node node0 = fp.get(0);
         if (node0 instanceof Type type) {
-            typeOfParameter = parseType.parse(context, type);
+            typeOfParameter = parsers.parseType().parse(context, type);
         } else {
             throw new UnsupportedOperationException();
         }

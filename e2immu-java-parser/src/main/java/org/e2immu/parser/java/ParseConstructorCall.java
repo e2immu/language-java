@@ -27,20 +27,15 @@ import java.util.List;
 public class ParseConstructorCall extends CommonParse {
     private final static Logger LOGGER = LoggerFactory.getLogger(ParseConstructorCall.class);
 
-    private final ParseExpression parseExpression;
-    private final ParseType parseType;
-
-    protected ParseConstructorCall(Runtime runtime, ParseExpression parseExpression) {
-        super(runtime);
-        this.parseExpression = parseExpression;
-        parseType = new ParseType(runtime);
+    protected ParseConstructorCall(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public ConstructorCall parse(Context context, String index, org.parsers.java.ast.AllocationExpression ae) {
         ConstructorCall.Builder builder = runtime.newConstructorCallBuilder();
 
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
-        ParameterizedType type = parseType.parse(context, ae.get(1));
+        ParameterizedType type = parsers.parseType().parse(context, ae.get(1));
         TypeInfo typeInfo = type.typeInfo();
         assert typeInfo != null;
 
@@ -70,7 +65,7 @@ public class ParseConstructorCall extends CommonParse {
             for (int k = 0; k < numArguments; k++) {
                 ParameterInfo pi = constructor.parameters().get(k);
                 ForwardType forwardType = context.newForwardType(pi.parameterizedType());
-                Expression e = parseExpression.parse(context, index, forwardType, ia.get(1 + 2 * k));
+                Expression e = parsers.parseExpression().parse(context, index, forwardType, ia.get(1 + 2 * k));
                 expressions.add(e);
             }
         } else if (ae.get(i) instanceof ArrayDimsAndInits ada) {

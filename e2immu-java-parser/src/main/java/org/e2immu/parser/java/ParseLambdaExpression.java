@@ -10,11 +10,9 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.ForwardType;
-import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.language.inspection.api.parser.MethodTypeParameterMap;
-import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.*;
 import org.e2immu.parser.java.erasure.LambdaErasure;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -22,20 +20,13 @@ import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ParseLambdaExpression extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseLambdaExpression.class);
 
-    private final ParseExpression parseExpression;
-    private final ParseType parseType;
-
-    public ParseLambdaExpression(Runtime runtime, ParseExpression parseExpression) {
-        super(runtime);
-        this.parseExpression = parseExpression;
-        this.parseType = new ParseType(runtime);
+    public ParseLambdaExpression(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public Expression parse(Context context,
@@ -53,7 +44,6 @@ public class ParseLambdaExpression extends CommonParse {
 
         Lambda.Builder builder = runtime.newLambdaBuilder();
 
-        Context newContext = context.newVariableContext("lambda");
         List<Lambda.OutputVariant> outputVariants = new ArrayList<>();
 
         int typeIndex = context.anonymousTypeCounters().newIndex(context.enclosingType());
@@ -62,70 +52,28 @@ public class ParseLambdaExpression extends CommonParse {
         MethodInfo sam = singleAbstractMethod.methodInfo();
         MethodInfo methodInfo = runtime.newMethod(anonymousType, sam.name(), runtime.methodTypeMethod());
         MethodInfo.Builder miBuilder = methodInfo.builder();
-        List<ParameterizedType> types = new ArrayList<>();
 
-        if (le.get(0) instanceof LambdaLHS lhs) {
-            Node lhs0 = lhs.get(0);
-            if (lhs0 instanceof Identifier identifier) {
-                // single variable, no type given. we must extract it from the forward type, which must be a functional interface
-                ParameterizedType type = forwardType.type().parameters().get(0);
-                String parameterName = identifier.getSource();
-                ParameterInfo pi = miBuilder.addParameter(parameterName, type);
-                outputVariants.add(runtime.lambdaOutputVariantEmpty());
-                pi.builder().commit();
-                newContext.variableContext().add(pi);
-            } else if (lhs0 instanceof LambdaParameters lambdaParameters) {
-                assert lambdaParameters.get(0) instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
-                // we have a list of parameters, with type
-                int i = 1;
-                while (i < lambdaParameters.size()) {
-                    if (lambdaParameters.get(i) instanceof LambdaParameter lp) {
-                        ParameterizedType type;
-                        Lambda.OutputVariant outputVariant;
-                        if (lp.get(0) instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
-                            type = forwardType.type().parameters().get(1);
-                            outputVariant = runtime.lambdaOutputVariantEmpty();
-                        } else {
-                            type = parseType.parse(context, lp.get(0));
-                            outputVariant = runtime.lambdaOutputVariantTyped();
-                        }
-                        Identifier identifier = (Identifier) lp.get(1);
-                        ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type);
-                        outputVariants.add(outputVariant);
-                        pi.builder().commit();
-                        newContext.variableContext().add(pi);
-                    } else throw new Summary.ParseException(context.info(), "Expected LambdaParameter");
-                    if (Token.TokenType.RPAREN.equals(lambdaParameters.get(i + 1).getType())) break;
-                    i += 2;
-                }
-            } else {
-                assert lhs0 instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
-                // we have a list of parameters, without type
-                int i = 1;
-                int paramIndex = 0;
-                while (i < lhs.size()) {
-                    if (lhs.get(i) instanceof Identifier identifier) {
-                        ParameterizedType type = forwardType.type().parameters().get(paramIndex);
-                        String parameterName = identifier.getSource();
-                        ParameterInfo pi = miBuilder.addParameter(parameterName, type);
-                        outputVariants.add(runtime.lambdaOutputVariantEmpty());
-                        pi.builder().commit();
-                        newContext.variableContext().add(pi);
-                    } else throw new Summary.ParseException(context.info(), "Expected identifier");
-                    if (Token.TokenType.RPAREN.equals(lhs.get(i + 1).getType())) break;
-                    paramIndex++;
-                    i += 2;
-                }
-            }
-        } else throw new UnsupportedOperationException();
+        parseParameters(context, forwardType, le, miBuilder, outputVariants, context);
+        Context newContext = context.newLambdaContext(anonymousType);
+        methodInfo.parameters().forEach(newContext.variableContext()::add);
+        ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
 
+        // add all formal -> concrete of the parameters of the SAM, without the return type
+        Map<NamedType, ParameterizedType> extra = new HashMap<>();
+        methodInfo.parameters().forEach(pi -> {
+            Map<NamedType, ParameterizedType> map = pi.parameterizedType().initialTypeParameterMap(runtime);
+            extra.putAll(map);
+        });
+        ForwardType newForward = context.newForwardType(returnTypeOfLambda, false, extra);
+
+        // start evaluation
 
         ParameterizedType concreteReturnType;
         Block methodBody;
-        if (le.get(1) instanceof org.parsers.java.ast.Expression e) {
+        Node le1 = le.get(1);
+        if (le1 instanceof org.parsers.java.ast.Expression e) {
             // simple function or supplier
-            ForwardType fwd = newContext.emptyForwardType();
-            Expression expression = parseExpression.parse(newContext, index, fwd, e);
+            Expression expression = parsers.parseExpression().parse(newContext, index, newForward, e);
             concreteReturnType = expression.parameterizedType();
             Statement returnStatement = runtime.newReturnStatement(expression);
             methodBody = runtime.newBlockBuilder().addStatement(returnStatement).build();
@@ -139,7 +87,10 @@ public class ParseLambdaExpression extends CommonParse {
             ParameterizedType concreteFunctionalType = runtime.newParameterizedType(abstractFunctionalType, concreteFtParams);
             // new we have  "class $1 implements Function<Integer, String>"
             anonymousType.builder().addInterfaceImplemented(concreteFunctionalType);
-        } else throw new UnsupportedOperationException();
+        } else if (le1 instanceof CodeBlock codeBlock) {
+            methodBody = null;
+            concreteReturnType = null;
+        } else throw new Summary.ParseException(context.info(), "Expected either expression or code block");
 
 
         miBuilder.setAccess(runtime.accessPrivate());
@@ -156,6 +107,65 @@ public class ParseLambdaExpression extends CommonParse {
                 .addComments(comments)
                 .setSource(source)
                 .build();
+    }
+
+    private void parseParameters(Context context, ForwardType forwardType, LambdaExpression le, MethodInfo.Builder miBuilder, List<Lambda.OutputVariant> outputVariants, Context newContext) {
+        if (!(le.get(0) instanceof LambdaLHS lhs)) {
+            throw new Summary.ParseException(context.info(), "Expected lambda lhs");
+        }
+        Node lhs0 = lhs.get(0);
+        if (lhs0 instanceof Identifier identifier) {
+            // single variable, no type given. we must extract it from the forward type, which must be a functional interface
+            ParameterizedType type = forwardType.type().parameters().get(0);
+            String parameterName = identifier.getSource();
+            ParameterInfo pi = miBuilder.addParameter(parameterName, type);
+            outputVariants.add(runtime.lambdaOutputVariantEmpty());
+            pi.builder().commit();
+            newContext.variableContext().add(pi);
+        } else if (lhs0 instanceof LambdaParameters lambdaParameters) {
+            assert lambdaParameters.get(0) instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
+            // we have a list of parameters, with type
+            int i = 1;
+            while (i < lambdaParameters.size()) {
+                if (lambdaParameters.get(i) instanceof LambdaParameter lp) {
+                    ParameterizedType type;
+                    Lambda.OutputVariant outputVariant;
+                    if (lp.get(0) instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
+                        type = forwardType.type().parameters().get(1);
+                        outputVariant = runtime.lambdaOutputVariantEmpty();
+                    } else {
+                        type = parsers.parseType().parse(context, lp.get(0));
+                        outputVariant = runtime.lambdaOutputVariantTyped();
+                    }
+                    Identifier identifier = (Identifier) lp.get(1);
+                    ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type);
+                    outputVariants.add(outputVariant);
+                    pi.builder().commit();
+                    newContext.variableContext().add(pi);
+                } else throw new Summary.ParseException(context.info(), "Expected LambdaParameter");
+                if (Token.TokenType.RPAREN.equals(lambdaParameters.get(i + 1).getType())) break;
+                i += 2;
+            }
+        } else {
+            assert lhs0 instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
+            // we have a list of parameters, without type
+            int i = 1;
+            int paramIndex = 0;
+            while (i < lhs.size()) {
+                if (lhs.get(i) instanceof Identifier identifier) {
+                    ParameterizedType type = forwardType.type().parameters().get(paramIndex);
+                    String parameterName = identifier.getSource();
+                    ParameterInfo pi = miBuilder.addParameter(parameterName, type);
+                    outputVariants.add(runtime.lambdaOutputVariantEmpty());
+                    pi.builder().commit();
+                    newContext.variableContext().add(pi);
+                } else throw new Summary.ParseException(context.info(), "Expected identifier");
+                if (Token.TokenType.RPAREN.equals(lhs.get(i + 1).getType())) break;
+                paramIndex++;
+                i += 2;
+            }
+        }
+        miBuilder.commitParameters();
     }
 
     private enum IsVoid {NO_IDEA, YES, NO, ESCAPE}

@@ -19,21 +19,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParseHelperImpl implements ParseHelper {
-    private final ParseExpression parseExpression;
-    private final ParseStatement parseStatement;
-    private final ParseBlock parseBlock;
+    private final Parsers parsers;
     private final Runtime runtime;
 
     public ParseHelperImpl(Runtime runtime) {
-        parseExpression = new ParseExpression(runtime);
-        parseStatement = new ParseStatement(runtime);
-        parseBlock = new ParseBlock(runtime, parseStatement);
+        this(runtime, new Parsers(runtime));
+    }
+
+    public ParseHelperImpl(Runtime runtime, Parsers parsers) {
+        this.parsers = parsers;
         this.runtime = runtime;
     }
 
     @Override
     public Expression parseExpression(Context context, String index, ForwardType forward, Object expression) {
-        return this.parseExpression.parse(context, index, forward, (Node) expression);
+        return parsers.parseExpression().parse(context, index, forward, (Node) expression);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ParseHelperImpl implements ParseHelper {
         }
         Element e;
         if (expression instanceof CodeBlock codeBlock) {
-            e = parseBlock.parse(context, "", codeBlock, eci == null ? 0 : 1);
+            e = parsers.parseBlock().parse(context, "", codeBlock, eci == null ? 0 : 1);
         } else {
             e = parseStatements(context, forwardType, expression, eci != null);
         }
@@ -83,7 +83,7 @@ public class ParseHelperImpl implements ParseHelper {
     private Element parseStatements(Context context, ForwardType forwardType, Object expression, boolean haveEci) {
         int start = haveEci ? 1 : 0;
         if (expression instanceof ExpressionStatement est) {
-            Statement firstStatement = parseStatement.parse(context, "" + start, est);
+            Statement firstStatement = parsers.parseStatement().parse(context, "" + start, est);
 
             List<ExpressionStatement> siblings = new ArrayList<>();
             while (est.nextSibling() instanceof ExpressionStatement next) {
@@ -97,7 +97,7 @@ public class ParseHelperImpl implements ParseHelper {
             b.addStatement(firstStatement);
             for (ExpressionStatement es : siblings) {
                 ++start;
-                Statement s2 = parseStatement.parse(context, "" + start, es);
+                Statement s2 = parsers.parseStatement().parse(context, "" + start, es);
                 b.addStatement(s2);
             }
             return b.build();
@@ -114,8 +114,8 @@ public class ParseHelperImpl implements ParseHelper {
         ExplicitConstructorInvocation unparsedEci = (ExplicitConstructorInvocation) eciObject;
         org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
         ConstructorDeclaration cd = (ConstructorDeclaration) unparsedEci.getParent();
-        List<Comment> comments = parseStatement.comments(cd);
-        Source source = parseStatement.source(context.enclosingMethod(), "0", cd);
+        List<Comment> comments = parsers.parseStatement().comments(cd);
+        Source source = parsers.parseStatement().source(context.enclosingMethod(), "0", cd);
         boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.get(0).getType());
         List<Expression> parameterExpressions = parseArguments(context, unparsedEci.get(1));
         MethodInfo eciMethod = context.enclosingType().findConstructor(parameterExpressions.size());
@@ -134,7 +134,7 @@ public class ParseHelperImpl implements ParseHelper {
         assert node instanceof InvocationArguments;
         List<Expression> expressions = new ArrayList<>();
         for (int k = 1; k < node.size(); k += 2) {
-            Expression e = parseExpression.parse(context, "0", context.emptyForwardType(), node.get(k));
+            Expression e = parsers.parseExpression().parse(context, "0", context.emptyForwardType(), node.get(k));
             expressions.add(e);
         }
         return List.copyOf(expressions);

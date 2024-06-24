@@ -17,13 +17,9 @@ import org.parsers.java.ast.Type;
 import java.util.List;
 
 public class ParseMethodReference extends CommonParse {
-    private final ParseExpression parseExpression;
-    private final ParseType parseType;
 
-    public ParseMethodReference(Runtime runtime, ParseExpression parseExpression, ParseType parseType) {
-        super(runtime);
-        this.parseExpression = parseExpression;
-        this.parseType = parseType;
+    public ParseMethodReference(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public MethodReference parse(Context context, List<Comment> comments, Source source, String index,
@@ -31,11 +27,11 @@ public class ParseMethodReference extends CommonParse {
         Expression scope;
         Node n0 = mr.get(0);
         if (n0 instanceof Type) {
-            ParameterizedType pt = parseType.parse(context, n0);
+            ParameterizedType pt = parsers.parseType().parse(context, n0);
             scope = runtime.newTypeExpression(pt, runtime.diamondNo());
         } else {
             ForwardType forwardType = context.emptyForwardType();
-            scope = parseExpression.parse(context, index, forwardType, n0);
+            scope = parsers.parseExpression().parse(context, index, forwardType, n0);
         }
         MethodInfo methodInfo;
         ParameterizedType concreteReturnType;

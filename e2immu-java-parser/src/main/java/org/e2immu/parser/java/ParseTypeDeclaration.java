@@ -27,21 +27,8 @@ import java.util.List;
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
 
-    private final ParseConstructorDeclaration parseConstructorDeclaration;
-    private final ParseMethodDeclaration parseMethodDeclaration;
-    private final ParseAnnotationMethodDeclaration parseAnnotationMethodDeclaration;
-    private final ParseFieldDeclaration parseFieldDeclaration;
-    private final ParseAnnotationExpression parseAnnotationExpression;
-    private final ParseType parseType;
-
-    public ParseTypeDeclaration(Runtime runtime) {
-        super(runtime);
-        parseMethodDeclaration = new ParseMethodDeclaration(runtime);
-        parseAnnotationMethodDeclaration = new ParseAnnotationMethodDeclaration(runtime);
-        parseFieldDeclaration = new ParseFieldDeclaration(runtime);
-        parseConstructorDeclaration = new ParseConstructorDeclaration(runtime);
-        parseType = new ParseType(runtime);
-        parseAnnotationExpression = new ParseAnnotationExpression(runtime);
+    public ParseTypeDeclaration(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public TypeInfo parse(Context context,
@@ -72,11 +59,11 @@ public class ParseTypeDeclaration extends CommonParse {
         Node tdi;
         while (!((tdi = td.get(i)) instanceof Identifier)) {
             if (tdi instanceof Annotation a) {
-                annotations.add(parseAnnotationExpression.parse(context, a));
+                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof MarkerAnnotation a) {
-                        annotations.add(parseAnnotationExpression.parse(context, a));
+                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         typeModifiers.add(getTypeModifier(keyWord.getType()));
                     }
@@ -131,7 +118,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         if (td.get(i) instanceof ExtendsList extendsList) {
             for (int j = 1; j < extendsList.size(); j += 2) {
-                ParameterizedType pt = parseType.parse(newContext, extendsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j));
                 if (typeNature.isInterface()) {
                     builder.addInterfaceImplemented(pt);
                 } else {
@@ -143,7 +130,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         if (td.get(i) instanceof ImplementsList implementsList) {
             for (int j = 1; j < implementsList.size(); j += 2) {
-                ParameterizedType pt = parseType.parse(newContext, implementsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, implementsList.get(j));
                 builder.addInterfaceImplemented(pt);
             }
             i++;
@@ -175,12 +162,12 @@ public class ParseTypeDeclaration extends CommonParse {
 
             for (Node child : body.children()) {
                 if (child instanceof MethodDeclaration md) {
-                    MethodInfo methodInfo = parseMethodDeclaration.parse(newContext, md);
+                    MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
                     if (methodInfo != null) {
                         builder.addMethod(methodInfo);
                     } // else error
                 } else if (child instanceof ConstructorDeclaration cd) {
-                    MethodInfo constructor = parseConstructorDeclaration.parse(newContext, cd);
+                    MethodInfo constructor = parsers.parseConstructorDeclaration().parse(newContext, cd);
                     if (constructor != null) {
                         builder.addConstructor(constructor);
                     } // else error
@@ -194,13 +181,13 @@ public class ParseTypeDeclaration extends CommonParse {
 
             // FINALLY, do the fields
             for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-                FieldInfo field = parseFieldDeclaration.parse(newContext, fieldDeclaration);
+                FieldInfo field = parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration);
                 builder.addField(field);
             }
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
-                    MethodInfo methodInfo = parseAnnotationMethodDeclaration.parse(newContext, amd);
+                    MethodInfo methodInfo = parsers.parseAnnotationMethodDeclaration().parse(newContext, amd);
                     builder.addMethod(methodInfo);
                 }
             }
@@ -238,8 +225,7 @@ public class ParseTypeDeclaration extends CommonParse {
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (tp.get(1) instanceof TypeBound tb) {
-                Wildcard wildcard;
-                ParameterizedType typeBound = parseType.parse(context, tb.get(1));
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1));
                 builder.addTypeBound(typeBound);
             } else throw new UnsupportedOperationException();
         }

@@ -29,19 +29,9 @@ import static org.parsers.java.Token.TokenType.*;
 
 public class ParseExpression extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseExpression.class);
-    private final ParseMethodCall parseMethodCall;
-    private final ParseMethodReference parseMethodReference;
-    private final ParseConstructorCall parseConstructorCall;
-    private final ParseLambdaExpression parseLambdaExpression;
-    private final ParseType parseType;
 
-    public ParseExpression(Runtime runtime) {
-        super(runtime);
-        parseType = new ParseType(runtime);
-        parseMethodCall = new ParseMethodCall(runtime, this);
-        parseConstructorCall = new ParseConstructorCall(runtime, this);
-        parseMethodReference = new ParseMethodReference(runtime, this, parseType);
-        parseLambdaExpression = new ParseLambdaExpression(runtime, this);
+    public ParseExpression(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public Expression parse(Context context, String index, ForwardType forwardType, Node node) {
@@ -62,7 +52,7 @@ public class ParseExpression extends CommonParse {
             return parseDotName(context, index, dotName);
         }
         if (node instanceof MethodCall mc) {
-            return parseMethodCall.parse(context, index, mc);
+            return parsers.parseMethodCall().parse(context, index, mc);
         }
         if (node instanceof LiteralExpression le) {
             return parseLiteral(le);
@@ -114,13 +104,13 @@ public class ParseExpression extends CommonParse {
             return parseParentheses(context, index, forwardType, p);
         }
         if (node instanceof AllocationExpression ae) {
-            return parseConstructorCall.parse(context, index, ae);
+            return parsers.parseConstructorCall().parse(context, index, ae);
         }
         if (node instanceof MethodReference mr) {
-            return parseMethodReference.parse(context, comments, source, index, mr);
+            return parsers.parseMethodReference().parse(context, comments, source, index, mr);
         }
         if (node instanceof LambdaExpression le) {
-            return parseLambdaExpression.parse(context, comments, source, index, forwardType, le);
+            return parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
         }
         if (node instanceof PostfixExpression) {
             return plusPlusMinMin(context, index, comments, source, 0, 1, false, node);
@@ -294,7 +284,7 @@ public class ParseExpression extends CommonParse {
 
     private Cast parseCast(Context context, String index, List<Comment> comments, Source source, CastExpression castExpression) {
         // 0 = '(', 2 = ')'
-        ParameterizedType pt = parseType.parse(context, castExpression.get(1));
+        ParameterizedType pt = parsers.parseType().parse(context, castExpression.get(1));
         // can technically be anything
         ForwardType fwd = context.newForwardType(runtime.objectParameterizedType());
         Expression expression = parse(context, index, fwd, castExpression.get(3));

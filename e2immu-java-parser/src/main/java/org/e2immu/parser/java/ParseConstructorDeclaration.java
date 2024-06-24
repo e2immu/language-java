@@ -19,13 +19,8 @@ import java.util.List;
 public class ParseConstructorDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseConstructorDeclaration.class);
 
-    private final ParseType parseType;
-    private final ParseExpression parseExpression;
-
-    public ParseConstructorDeclaration(Runtime runtime) {
-        super(runtime);
-        parseExpression = new ParseExpression(runtime);
-        parseType = new ParseType(runtime);
+    public ParseConstructorDeclaration(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public MethodInfo parse(Context context, ConstructorDeclaration cd) {
@@ -111,7 +106,7 @@ public class ParseConstructorDeclaration extends CommonParse {
         ParameterizedType typeOfParameter;
         Node node0 = fp.get(0);
         if (node0 instanceof Type type) {
-            typeOfParameter = parseType.parse(context, type);
+            typeOfParameter = parsers.parseType().parse(context, type);
         } else {
             throw new UnsupportedOperationException();
         }

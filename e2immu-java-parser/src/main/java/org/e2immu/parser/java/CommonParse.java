@@ -13,9 +13,11 @@ import java.util.Objects;
 
 public abstract class CommonParse {
     protected final Runtime runtime;
+    protected final Parsers parsers;
 
-    protected CommonParse(Runtime runtime) {
+    protected CommonParse(Runtime runtime, Parsers parsers) {
         this.runtime = runtime;
+        this.parsers = parsers;
     }
 
     public List<Comment> comments(Node node) {

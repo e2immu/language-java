@@ -23,13 +23,11 @@ public class ParseCompilationUnit extends CommonParse {
 
     private final Context rootContext;
     private final TypeMap.Builder typeMap;
-    private final ParseTypeDeclaration parseTypeDeclaration;
 
     public ParseCompilationUnit(TypeMap.Builder typeMap, Context rootContext) {
-        super(rootContext.runtime());
+        super(rootContext.runtime(), new Parsers(rootContext.runtime()));
         this.rootContext = rootContext;
         this.typeMap = typeMap;
-        parseTypeDeclaration = new ParseTypeDeclaration(runtime);
     }
 
     public List<TypeInfo> parse(URI uri, CompilationUnit cu) {
@@ -67,7 +65,7 @@ public class ParseCompilationUnit extends CommonParse {
 
         List<TypeInfo> types = new ArrayList<>();
         while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {
-            TypeInfo typeInfo = parseTypeDeclaration.parse(newContext, Either.left(compilationUnit), cd);
+            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), cd);
             if (typeInfo != null) {
                 types.add(typeInfo);
             } // else: error...

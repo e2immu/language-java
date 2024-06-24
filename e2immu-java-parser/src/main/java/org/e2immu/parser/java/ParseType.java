@@ -14,7 +14,7 @@ import java.util.List;
 public class ParseType extends CommonParse {
 
     public ParseType(Runtime runtime) {
-        super(runtime);
+        super(runtime, null);
     }
 
     /*

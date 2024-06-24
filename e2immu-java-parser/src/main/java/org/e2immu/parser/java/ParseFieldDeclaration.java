@@ -18,13 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParseFieldDeclaration extends CommonParse {
-    private final ParseType parseType;
-    private final ParseAnnotationExpression parseAnnotationExpression;
 
-    public ParseFieldDeclaration(Runtime runtime) {
-        super(runtime);
-        parseType = new ParseType(runtime);
-        parseAnnotationExpression = new ParseAnnotationExpression(runtime);
+    public ParseFieldDeclaration(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public FieldInfo parse(Context context, FieldDeclaration fd) {
@@ -34,11 +30,11 @@ public class ParseFieldDeclaration extends CommonParse {
         Node fdi;
         while (!((fdi = fd.get(i)) instanceof Type)) {
             if (fdi instanceof Annotation a) {
-                annotations.add(parseAnnotationExpression.parse(context, a));
+                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (fdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof MarkerAnnotation a) {
-                        annotations.add(parseAnnotationExpression.parse(context, a));
+                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         fieldModifiers.add(modifier(keyWord));
                     }
@@ -54,7 +50,7 @@ public class ParseFieldDeclaration extends CommonParse {
 
         ParameterizedType parameterizedType;
         if (fd.get(i) instanceof Type type) {
-            parameterizedType = parseType.parse(context, type);
+            parameterizedType = parsers.parseType().parse(context, type);
             i++;
         } else throw new UnsupportedOperationException();
         String name;

@@ -25,11 +25,8 @@ import java.util.List;
 public class ParseMethodCall extends CommonParse {
     private final static Logger LOGGER = LoggerFactory.getLogger(ParseMethodCall.class);
 
-    private final ParseExpression parseExpression;
-
-    protected ParseMethodCall(Runtime runtime, ParseExpression parseExpression) {
-        super(runtime);
-        this.parseExpression = parseExpression;
+    protected ParseMethodCall(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public MethodCall parse(Context context, String index, org.parsers.java.ast.MethodCall mc) {
@@ -67,11 +64,11 @@ public class ParseMethodCall extends CommonParse {
         // (, lit expr, )  or  del mc del mc, del expr del expr, del
         expressions = new ArrayList<>();
         int p = 0;
-        if(ia.size()>2) {
+        if (ia.size() > 2) {
             for (int k = 1; k < ia.size(); k += 2) {
                 ParameterInfo pi = methodInfo.parameters().get(p);
                 ForwardType forwardType = context.newForwardType(pi.parameterizedType());
-                Expression e = parseExpression.parse(context, index, forwardType, ia.get(k));
+                Expression e = parsers.parseExpression().parse(context, index, forwardType, ia.get(k));
                 expressions.add(e);
                 p++;
             }

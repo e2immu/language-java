@@ -12,11 +12,9 @@ import org.parsers.java.ast.Statement;
 import java.util.List;
 
 public class ParseBlock extends CommonParse {
-    private final ParseStatement parseStatement;
 
-    public ParseBlock(Runtime runtime, ParseStatement parseStatement) {
-        super(runtime);
-        this.parseStatement = parseStatement;
+    public ParseBlock(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public Block parse(Context context, String index, CodeBlock codeBlock) {
@@ -31,7 +29,8 @@ public class ParseBlock extends CommonParse {
         for (Node child : codeBlock.children()) {
             if (child instanceof Statement s) {
                 String sIndex = (index.isEmpty() ? "" : index + ".") + count;
-                org.e2immu.language.cst.api.statement.Statement statement = parseStatement.parse(context, sIndex, s);
+                org.e2immu.language.cst.api.statement.Statement statement = parsers.parseStatement()
+                        .parse(context, sIndex, s);
                 builder.addStatement(statement);
                 count++;
             }

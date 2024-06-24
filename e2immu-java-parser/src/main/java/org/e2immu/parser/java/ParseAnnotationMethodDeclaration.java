@@ -9,11 +9,9 @@ import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 
 public class ParseAnnotationMethodDeclaration extends CommonParse {
-    private final ParseType parseType;
 
-    public ParseAnnotationMethodDeclaration(Runtime runtime) {
-        super(runtime);
-        parseType = new ParseType(runtime);
+    public ParseAnnotationMethodDeclaration(Runtime runtime, Parsers parsers) {
+        super(runtime, parsers);
     }
 
     public MethodInfo parse(Context context, AnnotationMethodDeclaration amd) {
@@ -29,7 +27,7 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         if (typeNode instanceof Type type) {
             // depending on the modifiers...
             methodType = runtime.methodTypeMethod();
-            returnType = parseType.parse(context, type);
+            returnType = parsers.parseType().parse(context, type);
             i++;
         } else throw new Summary.ParseException(context.info(), "Expect Type, got " + typeNode.getClass());
         String name;
