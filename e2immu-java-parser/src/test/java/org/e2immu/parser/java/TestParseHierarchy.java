@@ -51,7 +51,7 @@ public class TestParseHierarchy extends CommonTestParse {
 
         TypeInfo K = typeInfo.findSubType("K");
         TypeInfo D = typeInfo.findSubType("D");
-        assertEquals("K<Integer>", D.parentClass().toString());
+        assertEquals("Type a.b.C.K<Integer>", D.parentClass().toString());
         assertSame(K, D.parentClass().typeInfo());
         TypeInfo E = typeInfo.findSubType("E");
         assertEquals(1, E.typeParameters().size());

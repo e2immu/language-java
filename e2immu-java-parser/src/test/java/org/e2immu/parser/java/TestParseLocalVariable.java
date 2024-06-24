@@ -48,7 +48,7 @@ public class TestParseLocalVariable extends CommonTestParse {
             if (lv.assignmentExpression() instanceof ArrayLength al) {
                 if (al.scope() instanceof VariableExpression ve) {
                     assertEquals("args", ve.variable().simpleName());
-                    assertEquals("String[]", ve.variable().parameterizedType().toString());
+                    assertEquals("Type String[]", ve.variable().parameterizedType().toString());
                 } else fail();
             } else fail();
             assertEquals("args.length", lv.assignmentExpression().toString());

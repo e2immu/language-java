@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ParseLambdaExpression extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseLambdaExpression.class);
@@ -54,7 +55,7 @@ public class ParseLambdaExpression extends CommonParse {
         MethodInfo.Builder miBuilder = methodInfo.builder();
 
         parseParameters(context, forwardType, le, miBuilder, outputVariants, context);
-        Context newContext = context.newLambdaContext(anonymousType);
+        Context newContext = context.newLambdaContext(methodInfo);
         methodInfo.parameters().forEach(newContext.variableContext()::add);
         ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
 
@@ -88,8 +89,8 @@ public class ParseLambdaExpression extends CommonParse {
             // new we have  "class $1 implements Function<Integer, String>"
             anonymousType.builder().addInterfaceImplemented(concreteFunctionalType);
         } else if (le1 instanceof CodeBlock codeBlock) {
-            methodBody = null;
-            concreteReturnType = null;
+            methodBody = parsers.parseBlock().parse(newContext, "", codeBlock);
+            concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
         } else throw new Summary.ParseException(context.info(), "Expected either expression or code block");
 
 
@@ -98,8 +99,14 @@ public class ParseLambdaExpression extends CommonParse {
         miBuilder.setMethodBody(methodBody);
         miBuilder.setReturnType(concreteReturnType);
         miBuilder.commit();
-        anonymousType.builder().addMethod(methodInfo);
-        anonymousType.builder().commit();
+
+        List<ParameterizedType> types = methodInfo.parameters().stream().map(ParameterInfo::parameterizedType).toList();
+        ParameterizedType functionalType = singleAbstractMethod.inferFunctionalType(runtime, types, concreteReturnType);
+
+        anonymousType.builder()
+                .addMethod(methodInfo)
+                .addInterfaceImplemented(functionalType)
+                .commit();
 
         return builder
                 .setMethodInfo(methodInfo)
@@ -109,14 +116,42 @@ public class ParseLambdaExpression extends CommonParse {
                 .build();
     }
 
-    private void parseParameters(Context context, ForwardType forwardType, LambdaExpression le, MethodInfo.Builder miBuilder, List<Lambda.OutputVariant> outputVariants, Context newContext) {
+    private ParameterizedType mostSpecificReturnType(TypeInfo primaryType, Block methodBody) {
+        AtomicReference<ParameterizedType> mostSpecific = new AtomicReference<>();
+        methodBody.visit(statement -> {
+            if (statement instanceof org.e2immu.language.cst.api.statement.ReturnStatement returnStatement) {
+                Expression expression = returnStatement.expression();
+                if (expression.isEmpty()) {
+                    mostSpecific.set(runtime.voidParameterizedType());
+                } else if (expression.isNullConstant()) {
+                    if (mostSpecific.get() == null) {
+                        mostSpecific.set(runtime.objectParameterizedType());
+                    }
+                } else {
+                    ParameterizedType returnType = expression.parameterizedType();
+                    mostSpecific.set(mostSpecific.get() == null ? returnType : mostSpecific.get()
+                            .mostSpecific(runtime, primaryType, returnType));
+                }
+                return false;
+            }
+            return true;
+        });
+        return mostSpecific.get() == null ? runtime.voidParameterizedType() : mostSpecific.get();
+    }
+
+    private void parseParameters(Context context,
+                                 ForwardType forwardType,
+                                 LambdaExpression le,
+                                 MethodInfo.Builder miBuilder,
+                                 List<Lambda.OutputVariant> outputVariants,
+                                 Context newContext) {
         if (!(le.get(0) instanceof LambdaLHS lhs)) {
             throw new Summary.ParseException(context.info(), "Expected lambda lhs");
         }
         Node lhs0 = lhs.get(0);
         if (lhs0 instanceof Identifier identifier) {
             // single variable, no type given. we must extract it from the forward type, which must be a functional interface
-            ParameterizedType type = forwardType.type().parameters().get(0);
+            ParameterizedType type = forwardType.type().parameters().get(0).ensureBoxed(runtime);
             String parameterName = identifier.getSource();
             ParameterInfo pi = miBuilder.addParameter(parameterName, type);
             outputVariants.add(runtime.lambdaOutputVariantEmpty());
@@ -138,7 +173,7 @@ public class ParseLambdaExpression extends CommonParse {
                         outputVariant = runtime.lambdaOutputVariantTyped();
                     }
                     Identifier identifier = (Identifier) lp.get(1);
-                    ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type);
+                    ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type.ensureBoxed(runtime));
                     outputVariants.add(outputVariant);
                     pi.builder().commit();
                     newContext.variableContext().add(pi);
@@ -153,7 +188,7 @@ public class ParseLambdaExpression extends CommonParse {
             int paramIndex = 0;
             while (i < lhs.size()) {
                 if (lhs.get(i) instanceof Identifier identifier) {
-                    ParameterizedType type = forwardType.type().parameters().get(paramIndex);
+                    ParameterizedType type = forwardType.type().parameters().get(paramIndex).ensureBoxed(runtime);
                     String parameterName = identifier.getSource();
                     ParameterInfo pi = miBuilder.addParameter(parameterName, type);
                     outputVariants.add(runtime.lambdaOutputVariantEmpty());

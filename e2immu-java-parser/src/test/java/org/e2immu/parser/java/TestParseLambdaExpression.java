@@ -33,15 +33,15 @@ public class TestParseLambdaExpression extends CommonTestParse {
 
     private static void test(TypeInfo typeInfo) {
         MethodInfo mapper = typeInfo.findUniqueMethod("mapper", 1);
-        assertEquals("Function<C,String>", mapper.returnType().toString());
+        assertEquals("Type java.util.function.Function<a.b.C,String>", mapper.returnType().toString());
         if (mapper.methodBody().statements().get(1) instanceof ReturnStatement rs
             && rs.expression() instanceof Lambda lambda) {
             assertEquals("t->t+this.s+k+lv", lambda.toString());
-            assertEquals("a.b.C.$1.apply(C)", lambda.methodInfo().fullyQualifiedName());
-            assertEquals("String", lambda.methodInfo().returnType().toString());
-            assertEquals("String", lambda.concreteReturnType().toString());
+            assertEquals("a.b.C.$1.apply(a.b.C)", lambda.methodInfo().fullyQualifiedName());
+            assertEquals("Type String", lambda.methodInfo().returnType().toString());
+            assertEquals("Type String", lambda.concreteReturnType().toString());
             assertEquals(2, lambda.concreteFunctionalType().parameters().size());
-            assertEquals("Function<C,String>", lambda.concreteFunctionalType().toString());
+            assertEquals("Type java.util.function.Function<a.b.C,String>", lambda.concreteFunctionalType().toString());
         } else fail();
     }
 
