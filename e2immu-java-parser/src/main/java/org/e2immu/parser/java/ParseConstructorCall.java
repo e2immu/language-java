@@ -15,8 +15,8 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.parser.java.erasure.ConstructorCallErasure;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -33,10 +33,13 @@ public class ParseConstructorCall extends CommonParse {
         super(runtime, parsers);
     }
 
-    public ConstructorCall parse(Context context,
-                                 String index,
-                                 ForwardType forwardType,
-                                 org.parsers.java.ast.AllocationExpression ae) {
+    public Expression parse(Context context,
+                            String index,
+                            ForwardType forwardType,
+                            org.parsers.java.ast.AllocationExpression ae) {
+        if (forwardType.erasure()) {
+            return constructorCallErasure(context, ae);
+        }
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
         ParameterizedType typeAsIs = parsers.parseType().parse(context, ae.get(1));
         TypeInfo typeInfo = typeAsIs.typeInfo();
@@ -132,6 +135,33 @@ public class ParseConstructorCall extends CommonParse {
                 .setSource(source(context.info(), index, ae))
                 .addComments(comments(ae))
                 .build();
+    }
+
+
+    private ConstructorCallErasure constructorCallErasure(Context context, AllocationExpression ae) {
+        Context newContext;
+        Expression scope;
+      /*  if (ae.getScope().isPresent()) {
+            com.github.javaparser.ast.expr.Expression scopeExpr = objectCreationExpr.getScope().get();
+            scope = expressionContext.parseExpression(scopeExpr, forwardReturnTypeInfo); // TODO check forwardRTI
+            typeContext = expressionContext.newTypeContext("constructor call scope").typeContext();
+            TypeInfo bestType = scope.returnType().bestTypeInfo(expressionContext.typeContext());
+            if (bestType != null) {
+                TypeInspection typeInspection = expressionContext.typeContext().getTypeInspection(bestType);
+                for (TypeInfo sub : typeInspection.subTypes()) {
+                    typeContext.addToContext(sub);
+                }
+                // TODO are there other things we should add to this context??
+            }
+        } else {*/
+        newContext = context;
+        scope = null;
+        //  }
+
+        assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
+        ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(1));
+        ParameterizedType formalType = typeAsIs.typeInfo().asParameterizedType(runtime);
+        return new ConstructorCallErasure(runtime, formalType);
     }
 
     private ParameterizedType inferDiamond(Context context, TypeInfo formalType, ParameterizedType type) {

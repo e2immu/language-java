@@ -52,7 +52,7 @@ public class ParseExpression extends CommonParse {
             return parseDotName(context, index, dotName);
         }
         if (node instanceof MethodCall mc) {
-            return parsers.parseMethodCall().parse(context, index, mc);
+            return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
         }
         if (node instanceof LiteralExpression le) {
             return parseLiteral(le);
@@ -135,7 +135,7 @@ public class ParseExpression extends CommonParse {
         ForwardType forwardTypeOneArrayLess = context.newForwardType(oneFewer);
         for (int i = 1; i < arrayInitializer.size(); i += 2) {
             Node ai = arrayInitializer.get(i);
-            if(ai instanceof Delimiter) break; // empty expression list
+            if (ai instanceof Delimiter) break; // empty expression list
             Expression e = parse(context, index, forwardTypeOneArrayLess, ai);
             expressions.add(e);
             commonType = commonType == null ? e.parameterizedType() : runtime.commonType(commonType, e.parameterizedType());

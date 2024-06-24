@@ -1,7 +1,8 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.expression.MethodCall;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
@@ -13,14 +14,15 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
-import org.parsers.java.ast.Identifier;
-import org.parsers.java.ast.InvocationArguments;
-import org.parsers.java.ast.Name;
+import org.e2immu.parser.java.erasure.MethodCallErasure;
+import org.parsers.java.Token;
+import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ParseMethodCall extends CommonParse {
     private final static Logger LOGGER = LoggerFactory.getLogger(ParseMethodCall.class);
@@ -29,58 +31,29 @@ public class ParseMethodCall extends CommonParse {
         super(runtime, parsers);
     }
 
-    public MethodCall parse(Context context, String index, org.parsers.java.ast.MethodCall mc) {
-        MethodCall.Builder builder = runtime.newMethodCallBuilder();
-        Expression object;
+    public Expression parse(Context context, List<Comment> comments, Source source,
+                            String index, ForwardType forwardType, org.parsers.java.ast.MethodCall mc) {
+        List<Object> unparsedArguments = new ArrayList<>();
         int i = 0;
-        String methodName;
-        if (mc.get(i) instanceof Name name) {
-            // TypeExpression?
-            object = parseScope(context, name, name.size() - 2);
-            // name and possibly scope: System.out.println id, del, id, del, id
-            int nameIndex = name.size() - 1;
-            if (name.get(nameIndex) instanceof Identifier nameId) {
-                methodName = nameId.getSource();
-            } else throw new UnsupportedOperationException();
-            i++;
-        } else throw new UnsupportedOperationException();
-        int numArguments;
-        if (mc.get(i) instanceof InvocationArguments ia) {
-            numArguments = (ia.size() - 1) / 2;
-        } else throw new UnsupportedOperationException();
-
-        // now we have scope, methodName, and the number of arguments
-        // find a list of candidates
-        // choose the correct candidate, and evaluate arguments
-        // re-evaluate scope, and determine concrete return type
-        TypeInfo methodOwner = object.parameterizedType().typeInfo();
-        MethodInfo methodInfo = methodOwner.findUniqueMethod(methodName, numArguments);
-
-        ParameterizedType concreteReturnType = methodInfo.returnType();
-
-        // parse arguments
-        List<Expression> expressions;
-
-        // (, lit expr, )  or  del mc del mc, del expr del expr, del
-        expressions = new ArrayList<>();
-        int p = 0;
-        if (ia.size() > 2) {
-            for (int k = 1; k < ia.size(); k += 2) {
-                ParameterInfo pi = methodInfo.parameters().get(p);
-                ForwardType forwardType = context.newForwardType(pi.parameterizedType());
-                Expression e = parsers.parseExpression().parse(context, index, forwardType, ia.get(k));
-                expressions.add(e);
-                p++;
-            }
+        while (i < mc.size() && !(Token.TokenType.LPAREN.equals(mc.get(i).getType()))) i++;
+        String methodName = mc.get(i - 1).getSource();
+        Object unparsedObject = i == 1 ? null : mc.get(i - 3);
+        i++;
+        while (i < mc.size() && !(mc.get(i) instanceof Delimiter)) {
+            unparsedArguments.add(mc.get(i));
+            i += 2;
         }
-        return builder.setObject(object)
-                .setParameterExpressions(expressions)
-                .setMethodInfo(methodInfo)
-                .setConcreteReturnType(concreteReturnType)
-                .setSource(source(context.info(), index, mc))
-                .addComments(comments(mc))
-                .build();
+        if (forwardType.erasure()) {
+            Set<ParameterizedType> types = context.methodResolution().computeScope(context, index, methodName,
+                    unparsedObject, unparsedArguments);
+            LOGGER.debug("Erasure types: {}", types);
+            return new MethodCallErasure(runtime, types, methodName);
+        }
+        // now we should have a more correct forward type!
+        return context.methodResolution().resolveMethod(context, comments, source, index, forwardType, methodName,
+                unparsedObject, unparsedArguments);
     }
+
 
     /*
     Type

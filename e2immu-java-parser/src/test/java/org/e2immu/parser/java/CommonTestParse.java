@@ -202,20 +202,16 @@ public class CommonTestParse {
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
         TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
-        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
-        VariableContextImpl variableContext = new VariableContextImpl();
-        AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
-        Context rootContext = new ContextImpl(runtime, failFastSummary, genericsHelper, resolver, typeContext, variableContext,
-                anonymousTypeCounters, null);
+        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
+        Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
             parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        resolver.resolve();
+        rootContext.resolver().resolve();
         return rootContext;
     }
 
@@ -226,11 +222,7 @@ public class CommonTestParse {
         TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
         Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
         TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
-        VariableContextImpl variableContext = new VariableContextImpl();
-        AnonymousTypeCountersImpl anonymousTypeCounters = new AnonymousTypeCountersImpl();
-        GenericsHelper genericsHelper = new GenericsHelperImpl(runtime);
-        Context rootContext = new ContextImpl(runtime, failFastSummary, genericsHelper, resolver, typeContext, variableContext,
-                anonymousTypeCounters, null);
+        Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
         try {
             List<TypeInfo> types = parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
