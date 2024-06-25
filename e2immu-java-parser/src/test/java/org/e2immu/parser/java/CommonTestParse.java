@@ -105,11 +105,11 @@ public class CommonTestParse {
 
         @Override
         public TypeInfo get(String fullyQualifiedName) {
-            return runtime.getFullyQualified(fullyQualifiedName, true);
+            return runtime.getFullyQualified(fullyQualifiedName, false);
         }
 
         @Override
-        public boolean isPackagePrefix(PackagePrefix packagePrefix) {
+        public boolean isPackagePrefix(List<String> packagePrefix) {
             return false;
         }
 

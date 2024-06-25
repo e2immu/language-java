@@ -24,6 +24,7 @@ import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
 import org.e2immu.language.cst.impl.type.TypeParameterImpl;
 import org.e2immu.language.inspection.api.parser.TypeContext;
+import org.e2immu.language.inspection.api.parser.TypeParameterMap;
 import org.e2immu.support.Either;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +38,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testNormalTypeParameter() {
-        TypeInfo typeInfo = typeContext.getFullyQualified(Spliterator.class);
+        TypeInfo typeInfo = typeMap.get(Spliterator.class);
         assertEquals("java.util.Spliterator<T>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         assertEquals("java.util.Spliterator<>", typeInfo.asParameterizedType(runtime).
@@ -48,7 +49,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testWildcard() {
-        TypeInfo typeInfo = typeContext.getFullyQualified(Collection.class);
+        TypeInfo typeInfo = typeMap.get(Collection.class);
         assertEquals("java.util.Collection<E>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         MethodInfo containsAll = typeInfo.methods().stream()
@@ -58,18 +59,17 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testExtends1() {
-        TypeInfo typeInfo = typeContext.getFullyQualified(Collection.class);
+        TypeInfo typeInfo = typeMap.get(Collection.class);
         MethodInfo addAll = typeInfo.methods().stream().filter(m -> m.name().equals("addAll")).findFirst().orElseThrow();
         assertEquals("java.util.Collection.addAll(java.util.Collection<? extends E>)", addAll.fullyQualifiedName());
     }
 
     @Test
     public void testExtends2() throws URISyntaxException {
-        TypeInfo typeInfo = typeContext.getFullyQualified(EnumMap.class);
-        TypeContext newTypeContext = typeContext.newTypeContext();
+        TypeInfo typeInfo = typeMap.get(EnumMap.class);
 
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, newTypeContext, typeInfo,
+        ParseGenerics parseGenerics = new ParseGenerics(runtime, new TypeParameterContext(), typeInfo,
                 byteCodeInspector.localTypeMap(), LocalTypeMap.LoadMode.NOW);
         int expected = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>".length();
         int pos = parseGenerics.parseTypeGenerics(signature) + 1;
@@ -94,7 +94,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testSuper() {
-        TypeInfo sortedSet = typeContext.getFullyQualified(SortedSet.class);
+        TypeInfo sortedSet = typeMap.get(SortedSet.class);
         MethodInfo comparator = sortedSet.methods().stream().filter(m -> m.name().equals("comparator"))
                 .findFirst().orElseThrow();
         assertEquals("java.util.Comparator<? super E>",
@@ -108,7 +108,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
      */
     @Test
     public void testExtends3() {
-        TypeInfo typeInfo = typeContext.getFullyQualified(Spliterator.OfPrimitive.class);
+        TypeInfo typeInfo = typeMap.get(Spliterator.OfPrimitive.class);
         ParameterizedType pt = typeInfo.asParameterizedType(runtime);
 
         TypeParameter splitter = typeInfo.typeParameters().get(2);
@@ -123,15 +123,15 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testGenericsAbstractClassLoaderValue() throws URISyntaxException {
-        TypeContext newTypeContext = typeContext.newTypeContext();
+        TypeParameterContext context = new TypeParameterContext();
         TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().setPackageName("jdk.internal.loader").build(), "AbstractClassLoaderValue");
-        newTypeContext.addToContext(new TypeParameterImpl(0, "V", Either.left(typeInfo)).builder().commit());
-        newTypeContext.addToContext(new TypeParameterImpl(1, "CLV", Either.left(typeInfo)).builder().commit());
+        context.add(new TypeParameterImpl(0, "V", Either.left(typeInfo)).builder().commit());
+        context.add(new TypeParameterImpl(1, "CLV", Either.left(typeInfo)).builder().commit());
 
-        ByteCodeInspectorImpl byteCodeInspector = new ByteCodeInspectorImpl(runtime, classPath, null, newTypeContext);
-        typeContext.typeMap().add(typeInfo, STARTING_BYTECODE);
+        ByteCodeInspectorImpl byteCodeInspector = new ByteCodeInspectorImpl(runtime, classPath, null, typeMap);
+        typeMap.add(typeInfo, STARTING_BYTECODE);
 
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, newTypeContext, typeInfo,
+        ParseGenerics parseGenerics = new ParseGenerics(runtime, context, typeInfo,
                 byteCodeInspector.localTypeMap(), LocalTypeMap.LoadMode.NOW);
         String signature = "<K:Ljava/lang/Object;>Ljdk/internal/loader/AbstractClassLoaderValue<Ljdk/internal/loader/AbstractClassLoaderValue<TCLV;TV;>.Sub<TK;>;TV;>;";
 

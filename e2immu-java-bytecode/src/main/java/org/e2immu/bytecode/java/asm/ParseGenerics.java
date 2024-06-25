@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 record ParseGenerics(Runtime runtime,
-                     TypeContext typeContext,
+                     TypeParameterContext typeContext,
                      TypeInfo typeInfo,
                      LocalTypeMap findType,
                      LocalTypeMap.LoadMode loadMode) {
@@ -55,7 +55,7 @@ record ParseGenerics(Runtime runtime,
                         iterativeParsing,
                         name -> {
                             TypeParameter typeParameter = runtime.newTypeParameter(index.getAndIncrement(), name, typeInfo);
-                            typeContext.addToContext(typeParameter);
+                            typeContext.add(typeParameter);
                             typeInfo.builder().addTypeParameter(typeParameter);
                             return typeParameter;
                         },
@@ -136,7 +136,7 @@ record ParseGenerics(Runtime runtime,
                             MethodInfo methodInfo,
                             MethodInfo.Builder methodInspectionBuilder,
                             Runtime runtime,
-                            TypeContext methodContext) {
+                            TypeParameterContext methodContext) {
         IterativeParsing<TypeParameter> iterativeParsing = new IterativeParsing<>();
         while (true) {
             iterativeParsing.startPos = 1;
@@ -146,7 +146,7 @@ record ParseGenerics(Runtime runtime,
                         iterativeParsing, name -> {
                             TypeParameter typeParameter = runtime.newTypeParameter(index.getAndIncrement(), name, methodInfo);
                             methodInspectionBuilder.addTypeParameter(typeParameter);
-                            methodContext.addToContext(typeParameter);
+                            methodContext.add(typeParameter);
                             return typeParameter;
                         },
                         runtime,
@@ -162,7 +162,7 @@ record ParseGenerics(Runtime runtime,
         return iterativeParsing.endPos;
     }
 
-    List<ParameterizedType> parseParameterTypesOfMethod(TypeContext typeContext, String signature) {
+    List<ParameterizedType> parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature) {
         if (signature.startsWith("()")) {
             ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext,
                     findType, loadMode, signature.substring(2));
@@ -181,7 +181,7 @@ record ParseGenerics(Runtime runtime,
         return methodTypes;
     }
 
-    private IterativeParsing<ParameterizedType> iterativelyParseMethodTypes(TypeContext typeContext,
+    private IterativeParsing<ParameterizedType> iterativelyParseMethodTypes(TypeParameterContext typeContext,
                                                                             String signature,
                                                                             IterativeParsing<ParameterizedType> iterativeParsing) {
         ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,

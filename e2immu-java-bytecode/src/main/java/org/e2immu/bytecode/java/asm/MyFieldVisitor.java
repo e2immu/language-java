@@ -30,10 +30,10 @@ public class MyFieldVisitor extends FieldVisitor {
     private final FieldInfo fieldInfo;
     private final Runtime runtime;
     private final LocalTypeMap localTypeMap;
-    private final TypeContext typeContext;
+    private final TypeParameterContext typeContext;
 
     public MyFieldVisitor(Runtime runtime,
-                          TypeContext typeContext,
+                          TypeParameterContext typeContext,
                           FieldInfo fieldInfo,
                           LocalTypeMap localTypeMap) {
         super(ASM9);

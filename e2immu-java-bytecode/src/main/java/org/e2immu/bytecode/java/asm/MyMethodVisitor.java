@@ -25,7 +25,6 @@ import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.language.inspection.api.resource.AnnotationStore;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
@@ -113,7 +112,7 @@ public class MyMethodVisitor extends MethodVisitor {
     }
 
     private final Runtime runtime;
-    private final TypeContext typeContext;
+    private final TypeParameterContext typeContext;
     private final LocalTypeMap localTypeMap;
     private final TypeInfo typeInfo;
     private final MethodInfo methodInfo;
@@ -126,7 +125,7 @@ public class MyMethodVisitor extends MethodVisitor {
 
 
     public MyMethodVisitor(Runtime runtime,
-                           TypeContext typeContext,
+                           TypeParameterContext typeContext,
                            LocalTypeMap localTypeMap,
                            TypeInfo typeInfo,
                            MethodInfo methodInfo,

@@ -40,7 +40,8 @@ import static org.objectweb.asm.Opcodes.ASM9;
 
 public class MyClassVisitor extends ClassVisitor {
     private static final Logger LOGGER = LoggerFactory.getLogger(MyClassVisitor.class);
-    private final TypeContext typeContext;
+    private final TypeMap typeMap;
+    private final TypeParameterContext typeParameterContext;
     private final LocalTypeMap localTypeMap;
     private final AnnotationStore annotationStore;
     private final JetBrainsAnnotationTranslator jetBrainsAnnotationTranslator;
@@ -54,15 +55,17 @@ public class MyClassVisitor extends ClassVisitor {
     public MyClassVisitor(Runtime runtime,
                           LocalTypeMap localTypeMap,
                           AnnotationStore annotationStore,
-                          TypeContext typeContext,
+                          TypeMap typeMap,
+                          TypeParameterContext typeParameterContext,
                           SourceFile pathAndURI) {
         super(ASM9);
         this.runtime = runtime;
-        this.typeContext = typeContext;
+        this.typeMap = typeMap;
         this.localTypeMap = localTypeMap;
         this.pathAndURI = pathAndURI;
         this.annotationStore = annotationStore;
         jetBrainsAnnotationTranslator = annotationStore != null ? new JetBrainsAnnotationTranslator(runtime) : null;
+        this.typeParameterContext = typeParameterContext;
     }
 
     private TypeNature typeNatureFromOpCode(int opCode) {
@@ -83,7 +86,7 @@ public class MyClassVisitor extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         LOGGER.debug("Visit {} {} {} {} {} {}", version, access, name, signature, superName, interfaces);
-        String fqName = typeContext.typeMap().pathToFqn(name);
+        String fqName = typeMap.pathToFqn(name);
         assert fqName != null;
         assert Input.acceptFQN(fqName);
         TypeMap.InspectionAndState situation = localTypeMap.typeInspectionSituation(fqName);
@@ -110,7 +113,7 @@ public class MyClassVisitor extends ClassVisitor {
         }
         currentTypeBuilder.computeAccess();
 
-        String parentFqName = superName == null ? null : typeContext.typeMap().pathToFqn(superName);
+        String parentFqName = superName == null ? null : typeMap.pathToFqn(superName);
         if (parentFqName != null && !Input.acceptFQN(parentFqName)) {
             return;
         }
@@ -129,7 +132,7 @@ public class MyClassVisitor extends ClassVisitor {
             }
             if (interfaces != null) {
                 for (String interfaceName : interfaces) {
-                    String fqn = typeContext.typeMap().pathToFqn(interfaceName);
+                    String fqn = typeMap.pathToFqn(interfaceName);
                     if (Input.acceptFQN(fqn)) {
                         TypeInfo typeInfo = mustFindTypeInfo(fqn, interfaceName);
                         if (typeInfo == null) {
@@ -146,13 +149,13 @@ public class MyClassVisitor extends ClassVisitor {
             try {
                 int pos = 0;
                 if (signature.charAt(0) == '<') {
-                    ParseGenerics parseGenerics = new ParseGenerics(runtime, typeContext, currentType, localTypeMap,
+                    ParseGenerics parseGenerics = new ParseGenerics(runtime, typeParameterContext, currentType, localTypeMap,
                             LocalTypeMap.LoadMode.NOW);
                     pos = parseGenerics.parseTypeGenerics(signature) + 1;
                 }
                 {
                     String substring = signature.substring(pos);
-                    ParameterizedTypeFactory.Result res = ParameterizedTypeFactory.from(runtime, typeContext,
+                    ParameterizedTypeFactory.Result res = ParameterizedTypeFactory.from(runtime, typeParameterContext,
                             localTypeMap, LocalTypeMap.LoadMode.NOW, substring);
                     if (res == null) {
                         LOGGER.error("Stop inspection of {}, parent type unknown", currentType);
@@ -166,7 +169,7 @@ public class MyClassVisitor extends ClassVisitor {
                     for (int i = 0; i < interfaces.length; i++) {
                         String interfaceSignature = signature.substring(pos);
                         ParameterizedTypeFactory.Result interFaceRes = ParameterizedTypeFactory.from(runtime,
-                                typeContext, localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature);
+                                typeParameterContext, localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature);
                         if (interFaceRes == null) {
                             LOGGER.error("Stop inspection of {}, interface type unknown", currentType);
                             errorStateForType(interfaceSignature);
@@ -219,7 +222,7 @@ public class MyClassVisitor extends ClassVisitor {
                 name, descriptor, signature, value, synthetic);
         if (synthetic) return null;
 
-        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext, localTypeMap,
+        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeParameterContext, localTypeMap,
                 LocalTypeMap.LoadMode.QUEUE,
                 signature != null ? signature : descriptor);
         if (from == null) return null; // jdk
@@ -256,7 +259,7 @@ public class MyClassVisitor extends ClassVisitor {
             }
         }
 
-        return new MyFieldVisitor(runtime, typeContext, fieldInfo, localTypeMap);
+        return new MyFieldVisitor(runtime, typeParameterContext, fieldInfo, localTypeMap);
     }
 
     @Override
@@ -291,7 +294,7 @@ public class MyClassVisitor extends ClassVisitor {
 
         boolean lastParameterIsVarargs = (access & Opcodes.ACC_VARARGS) != 0;
 
-        TypeContext methodContext = typeContext.newTypeContext();
+        TypeParameterContext methodContext = typeParameterContext.newContext();
         ParseGenerics parseGenerics = new ParseGenerics(runtime, methodContext, currentType, localTypeMap,
                 LocalTypeMap.LoadMode.QUEUE);
 
@@ -324,7 +327,7 @@ public class MyClassVisitor extends ClassVisitor {
             }
         }
 
-        return new MyMethodVisitor(runtime, typeContext, localTypeMap, currentType, methodInfo,
+        return new MyMethodVisitor(runtime, typeParameterContext, localTypeMap, currentType, methodInfo,
                 types, lastParameterIsVarargs, methodItem, jetBrainsAnnotationTranslator);
     }
 
@@ -351,7 +354,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (name.equals(currentTypePath)) {
             checkTypeFlags(access, currentTypeBuilder);
         } else if (innerName != null && outerName != null) {
-            String fqnOuter = typeContext.typeMap().pathToFqn(outerName);
+            String fqnOuter = typeMap.pathToFqn(outerName);
             boolean stepDown = currentTypePath.equals(outerName);
             boolean stepSide = currentType.compilationUnitOrEnclosingType().isRight() &&
                                currentType.compilationUnitOrEnclosingType().getRight()
@@ -381,7 +384,7 @@ public class MyClassVisitor extends ClassVisitor {
                 if (!byteCodeInspectionStarted) {
                     checkTypeFlags(access, subTypeInspection.builder());
                     SourceFile newPath = new SourceFile(name + ".class", pathAndURI.uri());
-                    TypeInfo subType = localTypeMap.inspectFromPath(newPath, typeContext, LocalTypeMap.LoadMode.NOW);
+                    TypeInfo subType = localTypeMap.inspectFromPath(newPath, typeMap, LocalTypeMap.LoadMode.NOW);
 
                     if (subType != null) {
                         if (stepDown) {
@@ -413,7 +416,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (currentType == null) return null;
 
         LOGGER.debug("Have class annotation {} {}", descriptor, visible);
-        return new MyAnnotationVisitor<>(runtime, typeContext, localTypeMap, descriptor, currentTypeBuilder);
+        return new MyAnnotationVisitor<>(runtime, typeParameterContext, localTypeMap, descriptor, currentTypeBuilder);
     }
 
     // not overriding visitOuterClass

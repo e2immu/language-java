@@ -2,7 +2,6 @@ package org.e2immu.bytecode.java;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.InspectionState;
-import org.e2immu.language.inspection.api.parser.PackagePrefix;
 import org.e2immu.language.inspection.api.resource.Resources;
 import org.e2immu.language.inspection.api.resource.SourceFile;
 import org.e2immu.language.inspection.api.resource.TypeMap;
@@ -57,7 +56,7 @@ public class TypeMapImpl implements TypeMap {
     }
 
     @Override
-    public boolean isPackagePrefix(PackagePrefix packagePrefix) {
+    public boolean isPackagePrefix(List<String> packagePrefix) {
         return false;
     }
 

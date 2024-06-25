@@ -55,7 +55,11 @@ public class ParameterizedTypeFactory {
         }
     }
 
-    static Result from(Runtime runtime, TypeContext typeContext, LocalTypeMap findType, LocalTypeMap.LoadMode loadMode, String signature) {
+    static Result from(Runtime runtime,
+                       TypeParameterContext typeContext,
+                       LocalTypeMap findType,
+                       LocalTypeMap.LoadMode loadMode,
+                       String signature) {
         try {
             int firstCharPos = 0;
             char firstChar = signature.charAt(0);
@@ -94,7 +98,7 @@ public class ParameterizedTypeFactory {
             if (TYPE_PARAM_T == firstChar) {
                 int semiColon = signature.indexOf(SEMICOLON_END_NAME);
                 String typeParamName = signature.substring(firstCharPos + 1, semiColon);
-                NamedType namedType = typeContext.getFullyQualified(typeParamName, false);
+                TypeParameter namedType = typeContext.get(typeParamName);
                 if (namedType == null) {
                     // this is possible
                     // <T:Ljava/lang/Object;T_SPLITR::Ljava/util/Spliterator$OfPrimitive<TT;TT_CONS;TT_SPLITR;>;T_CONS:Ljava/lang/Object;>Ljava/util/stream/StreamSpliterators$SliceSpliterator<TT;TT_SPLITR;>;Ljava/util/Spliterator$OfPrimitive<TT;TT_CONS;TT_SPLITR;>;
@@ -102,10 +106,7 @@ public class ParameterizedTypeFactory {
                     ParameterizedType objectParameterizedType = runtime.objectParameterizedType();
                     return new Result(objectParameterizedType, semiColon + 1, true);
                 }
-                if (!(namedType instanceof TypeParameter))
-                    throw new RuntimeException("?? expected " + typeParamName + " to be a type parameter");
-                return new Result(runtime.newParameterizedType((TypeParameter) namedType,
-                        arrays, wildCard), semiColon + 1, false);
+                return new Result(runtime.newParameterizedType(namedType, arrays, wildCard), semiColon + 1, false);
             }
             ParameterizedType primitivePt = primitive(runtime, firstChar);
             if (arrays > 0) {
@@ -126,7 +127,7 @@ public class ParameterizedTypeFactory {
     // shows that we need to make this recursive or get the generics in a while loop
 
     private static Result normalType(Runtime runtime,
-                                     TypeContext typeContext,
+                                     TypeParameterContext typeContext,
                                      LocalTypeMap localTypeMap,
                                      LocalTypeMap.LoadMode loadMode,
                                      String signature,
@@ -206,7 +207,7 @@ public class ParameterizedTypeFactory {
     }
 
     private static IterativeParsing iterativelyParseTypes(Runtime runtime,
-                                                          TypeContext typeContext,
+                                                          TypeParameterContext typeContext,
                                                           LocalTypeMap findType,
                                                           LocalTypeMap.LoadMode loadMode,
                                                           String signature,

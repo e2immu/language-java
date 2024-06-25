@@ -2,21 +2,24 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
-import org.e2immu.language.cst.api.expression.Assignment;
-import org.e2immu.language.cst.api.expression.Cast;
+import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.expression.VariableExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
+import org.parsers.java.ast.ArrayInitializer;
 import org.parsers.java.ast.MethodCall;
 import org.parsers.java.ast.MethodReference;
 import org.slf4j.Logger;
@@ -76,14 +79,7 @@ public class ParseExpression extends CommonParse {
             return parseUnaryExpression(context, index, (org.parsers.java.ast.Expression) node);
         }
         if (node instanceof Name name) {
-            String nameAsString = name.getAsString();
-            if (nameAsString.endsWith(".length")) {
-                Variable array = parseVariable(context, nameAsString.substring(0, nameAsString.length() - 7));
-                assert array != null;
-                return runtime.newArrayLength(runtime.newVariableExpression(array));
-            }
-            Variable v = parseVariable(context, nameAsString);
-            return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
+            return parseName(context, comments, source, name.getAsString());
         }
         if (node instanceof CastExpression castExpression) {
             return parseCast(context, index, comments, source, castExpression);
@@ -125,6 +121,56 @@ public class ParseExpression extends CommonParse {
             return arrayInitializer(context, index, forwardType, comments, source, arrayInitializer);
         }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    /*
+    can be a type (scope of a method), or a variable
+     */
+    private Expression parseName(Context context, List<Comment> comments, Source source, String name) {
+        if (name.endsWith(".length")) {
+            Variable array = parseVariable(context, comments, source, name.substring(0, name.length() - 7));
+            assert array != null;
+            return runtime.newArrayLength(runtime.newVariableExpression(array));
+        }
+        int lastDot = name.lastIndexOf('.');
+        if (lastDot > 0) {
+            NamedType namedType = context.typeContext().get(name, false);
+            if (namedType instanceof TypeInfo typeInfo) {
+                ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
+                return runtime.newTypeExpression(pt, runtime.diamondNo());
+            } else if (namedType instanceof TypeParameter) {
+                throw new Summary.ParseException(context.info(), "?");
+            }
+            // since we don't have a type, we must have a variable
+            // this will set the recursion going, from right to left
+            Variable variable = parseVariable(context, comments, source, name);
+            return runtime.newVariableExpressionBuilder().setVariable(variable).setSource(source).build();
+        }
+        Variable v = context.variableContext().get(name, false);
+        if (v != null) {
+            return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
+        }
+        NamedType namedType = context.typeContext().get(name, false);
+        if (namedType instanceof TypeInfo typeInfo) {
+            ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
+            return runtime.newTypeExpression(parameterizedType, runtime.diamondShowAll());
+        } else if (namedType instanceof TypeParameter) {
+            throw new Summary.ParseException(context.info(), "should not be possible");
+        }
+        throw new Summary.ParseException(context.info(), "unknown name");
+    }
+
+    // result must be a variable
+    private Variable parseVariable(Context context, List<Comment> comments, Source source, String name) {
+        int lastDot = name.lastIndexOf('.');
+        if (lastDot < 0) {
+            return context.variableContext().get(name, true);
+        }
+        String varName = name.substring(lastDot + 1);
+        Expression expression = parseName(context, comments, source, name.substring(0, lastDot));
+        TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
+        FieldInfo fieldInfo = typeInfo.getFieldByName(varName, true);
+        return runtime.newFieldReference(fieldInfo, expression, fieldInfo.type());
     }
 
     private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,
@@ -291,10 +337,6 @@ public class ParseExpression extends CommonParse {
         ForwardType fwd = context.newForwardType(runtime.objectParameterizedType());
         Expression expression = parse(context, index, fwd, castExpression.get(3));
         return runtime.newCast(expression, pt);
-    }
-
-    private Variable parseVariable(Context context, String name) {
-        return context.variableContext().get(name, true);
     }
 
     private Expression parseAdditive(Context context, String index, AdditiveExpression ae) {

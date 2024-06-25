@@ -34,13 +34,13 @@ public class ParseMethodCall extends CommonParse {
     public Expression parse(Context context, List<Comment> comments, Source source,
                             String index, ForwardType forwardType, org.parsers.java.ast.MethodCall mc) {
         List<Object> unparsedArguments = new ArrayList<>();
-        int i = 0;
-        while (i < mc.size() && !(Token.TokenType.LPAREN.equals(mc.get(i).getType()))) i++;
-        String methodName = mc.get(i - 1).getSource();
-        Object unparsedObject = i == 1 ? null : mc.get(i - 3);
-        i++;
-        while (i < mc.size() && !(mc.get(i) instanceof Delimiter)) {
-            unparsedArguments.add(mc.get(i));
+        Name name = (Name) mc.get(0);
+        InvocationArguments ia = (InvocationArguments) mc.get(1);
+        String methodName = name.get(name.size() - 1).getSource();
+        Object unparsedObject = newNameObject(name);
+        int i = 1;
+        while (i < mc.size() && !(ia.get(i) instanceof Delimiter)) {
+            unparsedArguments.add(ia.get(i));
             i += 2;
         }
         if (forwardType.erasure()) {
@@ -52,6 +52,18 @@ public class ParseMethodCall extends CommonParse {
         // now we should have a more correct forward type!
         return context.methodResolution().resolveMethod(context, comments, source, index, forwardType, methodName,
                 unparsedObject, unparsedArguments);
+    }
+
+    private Object newNameObject(Name name) {
+        Name n = new Name();
+        for (int i = 0; i < name.size() - 2; i++) {
+            n.add(i, name.get(i));
+        }
+        n.setParent(name.getParent());
+        n.setTokenSource(name.getTokenSource());
+        n.setBeginOffset(name.getBeginOffset());
+        n.setEndOffset(name.get(name.size() - 3).getEndOffset());
+        return n;
     }
 
 
