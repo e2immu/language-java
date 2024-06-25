@@ -15,7 +15,6 @@
 package org.e2immu.bytecode.java.asm;
 
 import org.e2immu.bytecode.java.ExpressionFactory;
-import org.e2immu.bytecode.java.JetBrainsAnnotationTranslator;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
@@ -23,28 +22,19 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
-import org.e2immu.language.inspection.api.parser.TypeContext;
-import org.e2immu.language.inspection.api.resource.AnnotationStore;
-import org.e2immu.language.inspection.api.resource.Input;
 import org.e2immu.language.inspection.api.resource.SourceFile;
-import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
 import static org.objectweb.asm.Opcodes.ASM9;
 
 public class MyClassVisitor extends ClassVisitor {
     private static final Logger LOGGER = LoggerFactory.getLogger(MyClassVisitor.class);
-    private final TypeMap typeMap;
     private final TypeParameterContext typeParameterContext;
     private final LocalTypeMap localTypeMap;
-    private final AnnotationStore annotationStore;
-    private final JetBrainsAnnotationTranslator jetBrainsAnnotationTranslator;
     private final SourceFile pathAndURI;
     private final Runtime runtime;
     private TypeInfo currentType;
@@ -54,17 +44,12 @@ public class MyClassVisitor extends ClassVisitor {
 
     public MyClassVisitor(Runtime runtime,
                           LocalTypeMap localTypeMap,
-                          AnnotationStore annotationStore,
-                          TypeMap typeMap,
                           TypeParameterContext typeParameterContext,
                           SourceFile pathAndURI) {
         super(ASM9);
         this.runtime = runtime;
-        this.typeMap = typeMap;
         this.localTypeMap = localTypeMap;
         this.pathAndURI = pathAndURI;
-        this.annotationStore = annotationStore;
-        jetBrainsAnnotationTranslator = annotationStore != null ? new JetBrainsAnnotationTranslator(runtime) : null;
         this.typeParameterContext = typeParameterContext;
     }
 
@@ -76,23 +61,15 @@ public class MyClassVisitor extends ClassVisitor {
         return runtime.typeNatureClass();
     }
 
-    private String makeMethodSignature(String name, TypeInfo typeInfo, List<ParameterizedType> types) {
-        String methodName = "<init>".equals(name) ? typeInfo.simpleName() : name;
-        return methodName + "(" +
-               types.stream().map(ParameterizedType::detailedString).collect(Collectors.joining(", ")) +
-               ")";
-    }
-
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         LOGGER.debug("Visit {} {} {} {} {} {}", version, access, name, signature, superName, interfaces);
-        String fqName = typeMap.pathToFqn(name);
+        String fqName = localTypeMap.pathToFqn(name);
         assert fqName != null;
-        assert Input.acceptFQN(fqName);
-        TypeMap.InspectionAndState situation = localTypeMap.typeInspectionSituation(fqName);
-        assert situation != null && situation.state() == STARTING_BYTECODE;
+        assert localTypeMap.acceptFQN(fqName);
 
-        currentType = situation.typeInfo();
+        currentType = localTypeMap.getLocal(fqName);
+        assert currentType != null : "Must be in local map! " + fqName;
         currentTypeBuilder = currentType.builder();
         currentTypePath = name;
 
@@ -113,8 +90,8 @@ public class MyClassVisitor extends ClassVisitor {
         }
         currentTypeBuilder.computeAccess();
 
-        String parentFqName = superName == null ? null : typeMap.pathToFqn(superName);
-        if (parentFqName != null && !Input.acceptFQN(parentFqName)) {
+        String parentFqName = superName == null ? null : localTypeMap.pathToFqn(superName);
+        if (parentFqName != null && !localTypeMap.acceptFQN(parentFqName)) {
             return;
         }
         if (signature == null) {
@@ -132,8 +109,8 @@ public class MyClassVisitor extends ClassVisitor {
             }
             if (interfaces != null) {
                 for (String interfaceName : interfaces) {
-                    String fqn = typeMap.pathToFqn(interfaceName);
-                    if (Input.acceptFQN(fqn)) {
+                    String fqn = localTypeMap.pathToFqn(interfaceName);
+                    if (localTypeMap.acceptFQN(fqn)) {
                         TypeInfo typeInfo = mustFindTypeInfo(fqn, interfaceName);
                         if (typeInfo == null) {
                             LOGGER.debug("Stop inspection of {}, interface type {} unknown",
@@ -182,14 +159,8 @@ public class MyClassVisitor extends ClassVisitor {
                     }
                 }
             } catch (RuntimeException e) {
-                LOGGER.error("Caught exception parsing signature " + signature);
+                LOGGER.error("Caught exception parsing signature {}", signature);
                 throw e;
-            }
-        }
-        if (annotationStore != null) {
-            AnnotationStore.TypeItem typeItem = annotationStore.typeItemsByFQName(fqName);
-            if (typeItem != null && !typeItem.annotations().isEmpty()) {
-                jetBrainsAnnotationTranslator.mapAnnotations(typeItem.annotations(), currentTypeBuilder);
             }
         }
     }
@@ -248,17 +219,6 @@ public class MyClassVisitor extends ClassVisitor {
                 fieldInspectionBuilder.setInitializer(expression);
             }
         }
-
-        if (annotationStore != null) {
-            AnnotationStore.TypeItem typeItem = annotationStore.typeItemsByFQName(currentType.fullyQualifiedName());
-            if (typeItem != null) {
-                AnnotationStore.FieldItem fieldItem = typeItem.fieldItemMap().get(name);
-                if (fieldItem != null && !fieldItem.annotations().isEmpty()) {
-                    jetBrainsAnnotationTranslator.mapAnnotations(fieldItem.annotations(), fieldInspectionBuilder);
-                }
-            }
-        }
-
         return new MyFieldVisitor(runtime, typeParameterContext, fieldInfo, localTypeMap);
     }
 
@@ -315,20 +275,8 @@ public class MyClassVisitor extends ClassVisitor {
         }
         methodInspectionBuilder.setReturnType(types.get(types.size() - 1));
 
-        AnnotationStore.MethodItem methodItem = null;
-        if (annotationStore != null) {
-            AnnotationStore.TypeItem typeItem = annotationStore.typeItemsByFQName(currentType.fullyQualifiedName());
-            if (typeItem != null) {
-                String methodSignature = makeMethodSignature(name, currentType, types.subList(0, types.size() - 1));
-                methodItem = typeItem.methodItemMap().get(methodSignature);
-                if (methodItem != null && !methodItem.annotations().isEmpty()) {
-                    jetBrainsAnnotationTranslator.mapAnnotations(methodItem.annotations(), methodInspectionBuilder);
-                }
-            }
-        }
-
         return new MyMethodVisitor(runtime, typeParameterContext, localTypeMap, currentType, methodInfo,
-                types, lastParameterIsVarargs, methodItem, jetBrainsAnnotationTranslator);
+                types, lastParameterIsVarargs);
     }
 
     private MethodInfo.MethodType extractMethodType(int access) {
@@ -354,7 +302,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (name.equals(currentTypePath)) {
             checkTypeFlags(access, currentTypeBuilder);
         } else if (innerName != null && outerName != null) {
-            String fqnOuter = typeMap.pathToFqn(outerName);
+            String fqnOuter = localTypeMap.pathToFqn(outerName);
             boolean stepDown = currentTypePath.equals(outerName);
             boolean stepSide = currentType.compilationUnitOrEnclosingType().isRight() &&
                                currentType.compilationUnitOrEnclosingType().getRight()
@@ -366,7 +314,7 @@ public class MyClassVisitor extends ClassVisitor {
                 LOGGER.debug("Processing sub-type {} of/in {}, step side? {} step down? {}", fqn,
                         currentType.fullyQualifiedName(), stepSide, stepDown);
 
-                TypeMap.InspectionAndState situation = localTypeMap.typeInspectionSituation(fqn);
+                TypeInfo situation = localTypeMap.getLocal(fqn);
                 TypeInfo subTypeInspection;
                 TypeInfo subTypeInMap;
                 boolean byteCodeInspectionStarted;
@@ -377,14 +325,14 @@ public class MyClassVisitor extends ClassVisitor {
                     byteCodeInspectionStarted = false;
                     subTypeInMap = subTypeInspection; // prefer the existing one
                 } else {
-                    subTypeInspection = situation.typeInfo();
+                    subTypeInspection = situation;
                     subTypeInMap = subTypeInspection;
-                    byteCodeInspectionStarted = situation.state().ge(STARTING_BYTECODE);
+                    byteCodeInspectionStarted = true;
                 }
                 if (!byteCodeInspectionStarted) {
                     checkTypeFlags(access, subTypeInspection.builder());
                     SourceFile newPath = new SourceFile(name + ".class", pathAndURI.uri());
-                    TypeInfo subType = localTypeMap.inspectFromPath(newPath, typeMap, LocalTypeMap.LoadMode.NOW);
+                    TypeInfo subType = localTypeMap.inspectFromPath(null, newPath, LocalTypeMap.LoadMode.NOW);
 
                     if (subType != null) {
                         if (stepDown) {
@@ -433,7 +381,7 @@ public class MyClassVisitor extends ClassVisitor {
     public void visitEnd() {
         if (currentType != null) {
             try {
-                LOGGER.debug("Visit end of class " + currentType.fullyQualifiedName());
+                LOGGER.debug("Visit end of class {}", currentType.fullyQualifiedName());
                 if (currentTypeBuilder == null)
                     throw new UnsupportedOperationException("? was expecting a type inspection builder");
                 currentTypeBuilder.setSingleAbstractMethod(functionalInterface());

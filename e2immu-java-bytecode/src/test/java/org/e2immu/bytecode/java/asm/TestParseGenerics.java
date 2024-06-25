@@ -23,22 +23,19 @@ import org.e2immu.language.cst.impl.output.QualificationImpl;
 import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
 import org.e2immu.language.cst.impl.type.TypeParameterImpl;
-import org.e2immu.language.inspection.api.parser.TypeContext;
-import org.e2immu.language.inspection.api.parser.TypeParameterMap;
 import org.e2immu.support.Either;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testNormalTypeParameter() {
-        TypeInfo typeInfo = typeMap.get(Spliterator.class);
+        TypeInfo typeInfo = compiledTypesManager.get(Spliterator.class);
         assertEquals("java.util.Spliterator<T>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         assertEquals("java.util.Spliterator<>", typeInfo.asParameterizedType(runtime).
@@ -49,7 +46,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testWildcard() {
-        TypeInfo typeInfo = typeMap.get(Collection.class);
+        TypeInfo typeInfo = compiledTypesManager.get(Collection.class);
         assertEquals("java.util.Collection<E>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         MethodInfo containsAll = typeInfo.methods().stream()
@@ -59,14 +56,14 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testExtends1() {
-        TypeInfo typeInfo = typeMap.get(Collection.class);
+        TypeInfo typeInfo = compiledTypesManager.get(Collection.class);
         MethodInfo addAll = typeInfo.methods().stream().filter(m -> m.name().equals("addAll")).findFirst().orElseThrow();
         assertEquals("java.util.Collection.addAll(java.util.Collection<? extends E>)", addAll.fullyQualifiedName());
     }
 
     @Test
     public void testExtends2() throws URISyntaxException {
-        TypeInfo typeInfo = typeMap.get(EnumMap.class);
+        TypeInfo typeInfo = compiledTypesManager.get(EnumMap.class);
 
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
         ParseGenerics parseGenerics = new ParseGenerics(runtime, new TypeParameterContext(), typeInfo,
@@ -94,7 +91,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testSuper() {
-        TypeInfo sortedSet = typeMap.get(SortedSet.class);
+        TypeInfo sortedSet = compiledTypesManager.get(SortedSet.class);
         MethodInfo comparator = sortedSet.methods().stream().filter(m -> m.name().equals("comparator"))
                 .findFirst().orElseThrow();
         assertEquals("java.util.Comparator<? super E>",
@@ -108,7 +105,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
      */
     @Test
     public void testExtends3() {
-        TypeInfo typeInfo = typeMap.get(Spliterator.OfPrimitive.class);
+        TypeInfo typeInfo = compiledTypesManager.get(Spliterator.OfPrimitive.class);
         ParameterizedType pt = typeInfo.asParameterizedType(runtime);
 
         TypeParameter splitter = typeInfo.typeParameters().get(2);
@@ -128,8 +125,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         context.add(new TypeParameterImpl(0, "V", Either.left(typeInfo)).builder().commit());
         context.add(new TypeParameterImpl(1, "CLV", Either.left(typeInfo)).builder().commit());
 
-        ByteCodeInspectorImpl byteCodeInspector = new ByteCodeInspectorImpl(runtime, classPath, null, typeMap);
-        typeMap.add(typeInfo, STARTING_BYTECODE);
+        compiledTypesManager.add(typeInfo);
 
         ParseGenerics parseGenerics = new ParseGenerics(runtime, context, typeInfo,
                 byteCodeInspector.localTypeMap(), LocalTypeMap.LoadMode.NOW);

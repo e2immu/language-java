@@ -14,8 +14,6 @@
 
 package org.e2immu.bytecode.java.asm;
 
-
-import org.e2immu.bytecode.java.JetBrainsAnnotationTranslator;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
@@ -25,7 +23,6 @@ import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.resource.AnnotationStore;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -119,8 +116,6 @@ public class MyMethodVisitor extends MethodVisitor {
     private final List<ParameterizedType> types;
     private final ParamBuilder[] parameterInspectionBuilders;
     private final int numberOfParameters;
-    private final JetBrainsAnnotationTranslator jetBrainsAnnotationTranslator;
-    private final AnnotationStore.MethodItem methodItem;
     private final boolean lastParameterIsVarargs;
 
 
@@ -130,9 +125,7 @@ public class MyMethodVisitor extends MethodVisitor {
                            TypeInfo typeInfo,
                            MethodInfo methodInfo,
                            List<ParameterizedType> types,
-                           boolean lastParameterIsVarargs,
-                           AnnotationStore.MethodItem methodItem,
-                           JetBrainsAnnotationTranslator jetBrainsAnnotationTranslator) {
+                           boolean lastParameterIsVarargs) {
         super(ASM9);
         this.runtime = runtime;
         this.localTypeMap = localTypeMap;
@@ -140,8 +133,6 @@ public class MyMethodVisitor extends MethodVisitor {
         this.methodInfo = methodInfo;
         this.typeInfo = typeInfo;
         this.types = types;
-        this.jetBrainsAnnotationTranslator = jetBrainsAnnotationTranslator;
-        this.methodItem = methodItem;
         numberOfParameters = types.size() - 1;
         parameterInspectionBuilders = new ParamBuilder[numberOfParameters];
         for (int i = 0; i < numberOfParameters; i++) {
@@ -203,19 +194,6 @@ public class MyMethodVisitor extends MethodVisitor {
         } catch (RuntimeException e) {
             LOGGER.error("Caught exception parsing {}, method {}", typeInfo.fullyQualifiedName(), methodInfo.name());
             throw e;
-        }
-        if (methodItem != null) {
-            for (AnnotationStore.ParameterItem parameterItem : methodItem.parameterItems()) {
-                if (parameterItem.index() < parameterInspectionBuilders.length) {
-                    if (!parameterItem.annotations().isEmpty()) {
-                        jetBrainsAnnotationTranslator.mapAnnotations(parameterItem.annotations(),
-                                parameterInspectionBuilders[parameterItem.index()]);
-                    }
-                } else {
-                    LOGGER.debug("Ignoring parameter with index {} on method {}",
-                            parameterItem.index(), methodInfo.fullyQualifiedName());
-                }
-            }
         }
         methodInfo.builder().commit();
         if (methodInfo.isConstructor()) {

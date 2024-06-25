@@ -1,10 +1,10 @@
 package org.e2immu.bytecode.java.asm;
 
-import org.e2immu.bytecode.java.TypeMapImpl;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
+import org.e2immu.language.inspection.api.resource.CompiledTypesManager;
 import org.e2immu.language.inspection.api.resource.Resources;
-import org.e2immu.language.inspection.api.resource.TypeMap;
+import org.e2immu.language.inspection.resource.CompiledTypesManagerImpl;
 import org.e2immu.language.inspection.resource.ResourcesImpl;
 import org.junit.jupiter.api.BeforeAll;
 
@@ -15,22 +15,18 @@ public abstract class CommonJmodBaseTests {
     protected static Runtime runtime;
     protected static Resources classPath;
     protected static ByteCodeInspectorImpl byteCodeInspector;
-    protected static TypeMap typeMap;
+    protected static CompiledTypesManager compiledTypesManager;
+
     @BeforeAll
     public static void beforeClass() throws IOException {
         Resources cp = new ResourcesImpl();
         classPath = cp;
         cp.addJmod(new URL("jar:file:" + System.getProperty("java.home") + "/jmods/java.base.jmod!/"));
-        //Resources annotationResources = new Resources();
-        // AnnotationXmlReader annotationParser = new AnnotationXmlReader(annotationResources);
-        TypeMapImpl tmi = new TypeMapImpl(classPath);
+        CompiledTypesManagerImpl mgr = new CompiledTypesManagerImpl(runtime, classPath);
+        compiledTypesManager = mgr;
         runtime = new RuntimeImpl();
-        byteCodeInspector = new ByteCodeInspectorImpl(runtime, classPath, null, typeMap);
-        tmi.setByteCodeInspector(byteCodeInspector);
-        typeMap = tmi;
-        //typeContext.typeMap().setByteCodeInspector(byteCodeInspector);
-        //typeContext.loadPrimitives();
-        //Input.preload(typeContext, classPath, "java.util");
+        byteCodeInspector = new ByteCodeInspectorImpl(runtime, compiledTypesManager);
+        mgr.setByteCodeInspector(byteCodeInspector);
     }
 
 }

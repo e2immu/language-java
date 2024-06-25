@@ -7,7 +7,6 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
-import org.e2immu.language.inspection.api.InspectionState;
 import org.e2immu.language.inspection.api.parser.*;
 import org.e2immu.language.inspection.api.resource.*;
 import org.e2immu.language.inspection.impl.parser.*;
@@ -70,49 +69,10 @@ public class CommonTestParse {
     class CompiledTypesManagerImpl implements CompiledTypesManager {
 
         @Override
-        public ByteCodeInspector byteCodeInspector() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Resources classPath() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void add(TypeInfo typeInfo) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public SourceFile fqnToPath(String fqn, String suffix) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public TypeInfo get(String fullyQualifiedName) {
             return predefined(fullyQualifiedName, false);
         }
 
-        @Override
-        public TypeInfo getOrCreate(String fullyQualifiedName, boolean complain) {
-            return predefined(fullyQualifiedName, false);
-        }
-
-        @Override
-        public void ensureInspection(TypeInfo typeInfo) {
-            // do nothing
-        }
-
-        @Override
-        public TypeInfo load(SourceFile path) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void setLazyInspection(TypeInfo typeInfo) {
-            throw new UnsupportedOperationException();
-        }
     }
 
     protected CommonTestParse() {

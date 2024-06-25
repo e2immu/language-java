@@ -14,23 +14,15 @@
 
 package org.e2immu.bytecode.java.asm;
 
-import org.e2immu.bytecode.java.ByteCodeInspector;
-import org.e2immu.bytecode.java.TypeData;
-import org.e2immu.bytecode.java.TypeDataImpl;
 import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.language.inspection.api.*;
-import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.language.inspection.api.resource.*;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
-import static org.e2immu.language.inspection.api.InspectionState.STARTING_BYTECODE;
-import static org.e2immu.language.inspection.api.InspectionState.TRIGGER_BYTECODE_INSPECTION;
 
 
 /*
@@ -42,15 +34,11 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteCodeInspectorImpl.class);
 
     private final Runtime runtime;
-    private final Resources classPath;
-    private final TypeMap typeMap;
-    private final AnnotationStore annotationStore;
+    private final CompiledTypesManager compiledTypesManager;
 
-    public ByteCodeInspectorImpl(Runtime runtime, Resources classPath, AnnotationStore annotationStore, TypeMap typeMap) {
-        this.classPath = Objects.requireNonNull(classPath);
-        this.typeMap = Objects.requireNonNull(typeMap);
-        this.annotationStore = annotationStore;
+    public ByteCodeInspectorImpl(Runtime runtime, CompiledTypesManager compiledTypesManager) {
         this.runtime = runtime;
+        this.compiledTypesManager = compiledTypesManager;
     }
 
     /**
@@ -60,9 +48,9 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
      * @return one or more types; the first one is the main type of the .class file
      */
     @Override
-    public List<TypeData> inspectFromPath(SourceFile source) {
+    public List<TypeInfo> load(SourceFile source) {
         LocalTypeMapImpl localTypeMap = new LocalTypeMapImpl();
-        localTypeMap.inspectFromPath(source, typeMap, LocalTypeMap.LoadMode.NOW);
+        localTypeMap.inspectFromPath(null, source, LocalTypeMap.LoadMode.NOW);
         return localTypeMap.loaded();
     }
 
@@ -74,118 +62,123 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
 
     private class LocalTypeMapImpl implements LocalTypeMap {
 
-        private final Map<String, TypeData> localTypeMap = new LinkedHashMap<>();
+        private final Map<String, TypeInfo> localTypeMap = new LinkedHashMap<>();
 
         @Override
-        public TypeMap.InspectionAndState typeInspectionSituation(String fqn) {
-            TypeData local = localTypeMap.get(fqn);
-            if (local != null) {
-                return local.toInspectionAndState();
-            }
-            return typeMap.typeInspectionSituation(fqn);
+        public boolean acceptFQN(String fqName) {
+            return compiledTypesManager.acceptFQN(fqName);
+        }
+
+        @Override
+        public TypeInfo getLocal(String fqName) {
+            return localTypeMap.get(fqName);
+        }
+
+        @Override
+        public String pathToFqn(String name) {
+            return compiledTypesManager.classPath().pathToFqn(name);
         }
 
         @Override
         public TypeInfo getOrCreate(String fqn, LoadMode loadMode) {
-            if (!Input.acceptFQN(fqn)) {
+            if (!compiledTypesManager.acceptFQN(fqn)) {
                 return null;
             }
-            TypeData typeData = localTypeMap.get(fqn);
-            if (typeData != null) {
-                if (LoadMode.NOW != loadMode || typeData.getInspectionState().ge(STARTING_BYTECODE)) {
-                    if (loadMode == LoadMode.QUEUE) {
-                        typeMap.addToByteCodeQueue(fqn);
-                    }
-                    return typeData.getTypeInfo();
+            TypeInfo local = localTypeMap.get(fqn);
+            if (local != null) return local;
+            TypeInfo remote = compiledTypesManager.get(fqn);
+            if (remote == null) {
+                SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                if (source == null) {
+                    return null;
                 }
-                // START!
+                return inspectFromPath(null, source, loadMode);
             }
-            TypeMap.InspectionAndState remote = typeMap.typeInspectionSituation(fqn);
-            if (remote != null) {
-                if (LoadMode.NOW != loadMode || remote.state().ge(STARTING_BYTECODE)) {
-                    if (loadMode == LoadMode.QUEUE) {
-                        typeMap.addToByteCodeQueue(fqn);
-                    }
-                    return remote.typeInfo();
+            if (remote.hasBeenInspected()) return remote;
+            switch (loadMode) {
+                case QUEUE -> {
+                    compiledTypesManager.addToQueue(remote);
+                    return remote;
                 }
-                if (typeData == null) {
-                    localTypeMapPut(fqn, new TypeDataImpl(remote.typeInfo(), TRIGGER_BYTECODE_INSPECTION));
+                case NOW -> {
+                    SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                    assert source != null;
+                    return inspectFromPath(remote, source, loadMode);
+                }
+                case TRIGGER -> {
+                    remote.setOnDemandInspection(ti -> {
+                        SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                        assert source != null;
+                        inspectFromPath(ti, source, LoadMode.NOW);
+                    });
+                    return remote;
                 }
             }
-            SourceFile source = classPath.fqnToPath(fqn, ".class");
-            if (source == null) {
-                return null;
-            }
-            return inspectFromPath(source, typeMap, loadMode);
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public TypeInfo getOrCreate(TypeInfo subType) {
-            TypeData typeData = localTypeMap.get(subType.fullyQualifiedName());
-            if (typeData != null) {
-                return typeData.getTypeInfo();
-            }
-            TypeMap.InspectionAndState remote = typeMap.typeInspectionSituation(subType.fullyQualifiedName());
+            TypeInfo local = localTypeMap.get(subType.fullyQualifiedName());
+            if (local != null) return local; // already working on it
+            TypeInfo remote = compiledTypesManager.get(subType.fullyQualifiedName());
             if (remote != null) {
-                return remote.typeInfo();
+                if (remote.hasBeenInspected()) return remote;
+                remote.setOnDemandInspection(ti -> {
+                    SourceFile source = compiledTypesManager.classPath().sourceFileOfSubType(subType, ".class");
+                    assert source != null;
+                    inspectFromPath(ti, source, LoadMode.NOW);
+                });
+                return remote;
             }
-            TypeInfo typeInfoInMap = typeMap.addToTrie(subType);
-            TypeData newTypeData = new TypeDataImpl(typeInfoInMap, TRIGGER_BYTECODE_INSPECTION);
-            localTypeMapPut(typeInfoInMap.fullyQualifiedName(), newTypeData);
+            TypeInfo typeInfoInMap = compiledTypesManager.addToTrie(subType);
+            typeInfoInMap.setOnDemandInspection(ti -> {
+                SourceFile source = compiledTypesManager.classPath().sourceFileOfSubType(subType, ".class");
+                assert source != null;
+                inspectFromPath(ti, source, LoadMode.NOW);
+            });
             return typeInfoInMap;
         }
 
-        private void localTypeMapPut(String fullyQualifiedName, TypeData newTypeData) {
-            assert fullyQualifiedName.equals(newTypeData.getTypeInfo().fullyQualifiedName());
-            localTypeMap.put(fullyQualifiedName, newTypeData);
-        }
-
         @Override
-        public List<TypeData> loaded() {
+        public List<TypeInfo> loaded() {
             return localTypeMap.values().stream().toList();
         }
 
         @Override
-        public TypeInfo inspectFromPath(SourceFile path, TypeMap parentTypeContext, LoadMode loadMode) {
+        public TypeInfo inspectFromPath(TypeInfo typeInfoOrNull, SourceFile path, LoadMode loadMode) {
             assert path != null && path.path().endsWith(".class");
-
-            String fqn = typeMap.pathToFqn(path.stripDotClass());
-            TypeData typeDataInMap = localTypeMap.get(fqn);
-            if (typeDataInMap != null && typeDataInMap.getInspectionState().ge(STARTING_BYTECODE)) {
-                return typeDataInMap.getTypeInfo();
+            String fqn;
+            if (typeInfoOrNull != null) fqn = typeInfoOrNull.fullyQualifiedName();
+            else fqn = pathToFqn(path.stripDotClass());
+            TypeInfo typeDataInMap = localTypeMap.get(fqn);
+            if (typeDataInMap != null) {
+                return typeDataInMap; // already working on it
             }
-            TypeMap.InspectionAndState inspectionAndState = typeMap.typeInspectionSituation(fqn);
-            if (inspectionAndState != null && inspectionAndState.state().isDone()) {
-                return inspectionAndState.typeInfo();
-            }
-
-            TypeData typeData;
-            if (typeDataInMap == null) {
-                // create, but ensure that all enclosing are present FIRST: potential recursion
-                TypeInfo typeInfo = createTypeInfo(path, fqn, loadMode);
-                TypeData typeDataAgain = localTypeMap.get(fqn);
-                if (typeDataAgain == null) {
-                    typeData = new TypeDataImpl(typeInfo, TRIGGER_BYTECODE_INSPECTION);
-                    localTypeMapPut(fqn, typeData);
-                } else {
-                    typeData = typeDataAgain;
+            TypeInfo typeInfo;
+            if (typeInfoOrNull == null) {
+                typeInfo = createTypeInfo(path, fqn, loadMode);
+                TypeInfo inMapAgain = localTypeMap.get(fqn);
+                if (inMapAgain != null) {
+                    return inMapAgain;
                 }
             } else {
-                TypeInfo typeInfo = typeDataInMap.getTypeInfo();
+                typeInfo = typeInfoOrNull;
                 if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
-                    // ensure that the enclosing type is inspected first! (TestByteCodeInspectorCommonsPool)
                     getOrCreate(typeInfo.primaryType().fullyQualifiedName(), LoadMode.NOW);
                 }
-                typeData = typeDataInMap;
-            }
-            if (typeData.getInspectionState().ge(STARTING_BYTECODE)) {
-                return typeData.getTypeInfo();
             }
             if (loadMode == LoadMode.NOW) {
-                return continueLoadByteCodeAndStartASM(path, parentTypeContext, fqn, typeData);
+                return continueLoadByteCodeAndStartASM(path, fqn, typeInfo);
             }
-            LOGGER.debug("Stored type data for {}, state {}", fqn, typeData.getInspectionState());
-            return typeData.getTypeInfo();
+            if (loadMode == LoadMode.TRIGGER && !typeInfo.haveOnDemandInspection()) {
+                typeInfo.setOnDemandInspection(ti -> {
+                    SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                    assert source != null;
+                    inspectFromPath(ti, source, LoadMode.NOW);
+                });
+            }
+            return typeInfo;
         }
 
         private TypeInfo createTypeInfo(SourceFile source, String fqn, LoadMode loadMode) {
@@ -193,10 +186,9 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
             int dollar = path.lastIndexOf('$');
             TypeInfo typeInfo;
             if (dollar >= 0) {
-                String simpleName = path.substring(dollar + 1); // FIXME interaction with inspectFromPath
                 String newPath = SourceFile.ensureDotClass(path.substring(0, dollar));
                 SourceFile newSource = new SourceFile(newPath, source.uri());
-                typeInfo = inspectFromPath(newSource, typeMap, loadMode);
+                typeInfo = inspectFromPath(null, newSource, loadMode);
             } else {
                 int lastDot = fqn.lastIndexOf(".");
                 String packageName = fqn.substring(0, lastDot);
@@ -206,17 +198,15 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                         .setPackageName(packageName).build();
                 typeInfo = runtime.newTypeInfo(cu, simpleName);
             }
-            return typeMap.addToTrie(typeInfo);
+            return compiledTypesManager.addToTrie(typeInfo);
         }
 
         private TypeInfo continueLoadByteCodeAndStartASM(SourceFile path,
-                                                         TypeMap typeMap,
                                                          String fqn,
-                                                         TypeData typeData) {
-            assert typeData.getInspectionState() == TRIGGER_BYTECODE_INSPECTION;
-            typeData.setInspectionState(STARTING_BYTECODE);
+                                                         TypeInfo typeInfo) {
+            localTypeMap.put(fqn, typeInfo);
             try {
-                byte[] classBytes = classPath.loadBytes(path.path());
+                byte[] classBytes = compiledTypesManager.classPath().loadBytes(path.path());
                 if (classBytes == null) {
                     return null;
                 }
@@ -224,12 +214,11 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                 ClassReader classReader = new ClassReader(classBytes);
                 LOGGER.debug("Constructed class reader with {} bytes", classBytes.length);
 
-                MyClassVisitor myClassVisitor = new MyClassVisitor(runtime, this, annotationStore,
-                        typeMap, new TypeParameterContext(), path);
+                MyClassVisitor myClassVisitor = new MyClassVisitor(runtime, this, new TypeParameterContext(), path);
                 classReader.accept(myClassVisitor, 0);
-                typeData.setInspectionState(InspectionState.FINISHED_BYTECODE);
+                typeInfo.builder().commit();
                 LOGGER.debug("Finished bytecode inspection of {}", fqn);
-                return typeData.getTypeInfo();
+                return typeInfo;
             } catch (RuntimeException re) {
                 LOGGER.error("Path = {}", path);
                 LOGGER.error("FQN  = {}", fqn);
