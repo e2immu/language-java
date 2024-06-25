@@ -70,7 +70,8 @@ public class CommonTestParse {
 
         @Override
         public TypeInfo getOrCreate(String fqn, boolean complain) {
-            throw new UnsupportedOperationException();
+            if(complain) throw new UnsupportedOperationException();
+            return runtime.getFullyQualified(fqn, false);
         }
 
         @Override
@@ -149,14 +150,28 @@ public class CommonTestParse {
         pow.builder().addParameter("exponent", runtime.doubleParameterizedType());
         pow.builder().setReturnType(runtime.doubleParameterizedType());
         pow.builder().commit();
-        math.builder().addMethod(pow);
+        math.builder().addMethod(pow).setParentClass(runtime.objectParameterizedType());
         math.builder().commit();
 
-        MethodInfo println = runtime.newMethod(printStream, "println", runtime.methodTypeMethod());
-        println.builder().addParameter("string", runtime.stringParameterizedType());
-        println.builder().setReturnType(runtime.voidParameterizedType());
-        println.builder().commit();
-        printStream.builder().addMethod(println);
+        MethodInfo printlnString = runtime.newMethod(printStream, "println", runtime.methodTypeMethod());
+        printlnString.builder().addParameter("string", runtime.stringParameterizedType());
+        printlnString.builder().setReturnType(runtime.voidParameterizedType());
+        printlnString.builder().commit();
+        printStream.builder().addMethod(printlnString);
+
+        MethodInfo printlnInt = runtime.newMethod(printStream, "println", runtime.methodTypeMethod());
+        printlnInt.builder().addParameter("i", runtime.intParameterizedType());
+        printlnInt.builder().setReturnType(runtime.voidParameterizedType());
+        printlnInt.builder().commit();
+        printStream.builder().addMethod(printlnInt);
+
+        MethodInfo printlnObject = runtime.newMethod(printStream, "println", runtime.methodTypeMethod());
+        printlnObject.builder().addParameter("object", runtime.objectParameterizedType());
+        printlnObject.builder().setReturnType(runtime.voidParameterizedType());
+        printlnObject.builder().commit();
+        printStream.builder().addMethod(printlnObject);
+
+        printStream.builder().setParentClass(runtime.objectParameterizedType());
         printStream.builder().commit();
 
         FieldInfo out = runtime.newFieldInfo("out", true, printStream.asSimpleParameterizedType(), system);

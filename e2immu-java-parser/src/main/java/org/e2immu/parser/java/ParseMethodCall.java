@@ -39,7 +39,7 @@ public class ParseMethodCall extends CommonParse {
         String methodName = name.get(name.size() - 1).getSource();
         Object unparsedObject = newNameObject(name);
         int i = 1;
-        while (i < mc.size() && !(ia.get(i) instanceof Delimiter)) {
+        while (i < ia.size() && !(ia.get(i) instanceof Delimiter)) {
             unparsedArguments.add(ia.get(i));
             i += 2;
         }
@@ -55,6 +55,7 @@ public class ParseMethodCall extends CommonParse {
     }
 
     private Object newNameObject(Name name) {
+        if(name.size() == 1) return null;
         Name n = new Name();
         for (int i = 0; i < name.size() - 2; i++) {
             n.add(i, name.get(i));

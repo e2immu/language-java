@@ -116,6 +116,7 @@ public class ParseTypeDeclaration extends CommonParse {
             i++;
         }
 
+        builder.setParentClass(runtime.objectParameterizedType());
         if (td.get(i) instanceof ExtendsList extendsList) {
             for (int j = 1; j < extendsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j));

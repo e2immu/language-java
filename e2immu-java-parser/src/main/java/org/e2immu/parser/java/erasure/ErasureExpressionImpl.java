@@ -37,12 +37,13 @@ public abstract   class ErasureExpressionImpl implements ErasedExpression, Expre
 
     @Override
     public void visit(Predicate<Element> predicate) {
-        throw new UnsupportedOperationException();
+        predicate.test(this);
     }
 
     @Override
     public void visit(Visitor visitor) {
-        throw new UnsupportedOperationException();
+       visitor.beforeExpression(this);
+       visitor.afterExpression(this);
     }
 
     @Override
