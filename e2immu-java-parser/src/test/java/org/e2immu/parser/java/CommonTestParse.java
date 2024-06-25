@@ -9,8 +9,8 @@ import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.InspectionState;
 import org.e2immu.language.inspection.api.parser.*;
+import org.e2immu.language.inspection.api.resource.*;
 import org.e2immu.language.inspection.impl.parser.*;
-import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.language.inspection.impl.parser.ResolverImpl;
 import org.parsers.java.JavaParser;
 
@@ -66,62 +66,52 @@ public class CommonTestParse {
     protected final TypeInfo suppressWarnings;
     protected final TypeInfo override;
 
-    class TypeMapBuilder implements TypeMap.Builder {
+
+    class CompiledTypesManagerImpl implements CompiledTypesManager {
 
         @Override
-        public TypeInfo getOrCreate(String fqn, boolean complain) {
-            if(complain) throw new UnsupportedOperationException();
-            return runtime.getFullyQualified(fqn, false);
-        }
-
-        @Override
-        public void ensureInspection(TypeInfo typeInfo) {
-
-        }
-
-        @Override
-        public TypeInfo get(Class<?> clazz) {
+        public ByteCodeInspector byteCodeInspector() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public TypeInfo get(String name, boolean complain) {
-            return null;
+        public Resources classPath() {
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public void add(TypeInfo typeInfo, InspectionState inspectionState) {
-
+        public void add(TypeInfo typeInfo) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public void addToByteCodeQueue(String fqn) {
-
-        }
-
-        @Override
-        public TypeInfo addToTrie(TypeInfo subType) {
-            return null;
+        public SourceFile fqnToPath(String fqn, String suffix) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public TypeInfo get(String fullyQualifiedName) {
-            return runtime.getFullyQualified(fullyQualifiedName, false);
+            return predefined(fullyQualifiedName, false);
         }
 
         @Override
-        public boolean isPackagePrefix(List<String> packagePrefix) {
-            return false;
+        public TypeInfo getOrCreate(String fullyQualifiedName, boolean complain) {
+            return predefined(fullyQualifiedName, false);
         }
 
         @Override
-        public String pathToFqn(String interfaceName) {
-            return "";
+        public void ensureInspection(TypeInfo typeInfo) {
+            // do nothing
         }
 
         @Override
-        public InspectionAndState typeInspectionSituation(String fqn) {
-            return null;
+        public TypeInfo load(SourceFile path) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setLazyInspection(TypeInfo typeInfo) {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -216,11 +206,12 @@ public class CommonTestParse {
         Summary failFastSummary = new SummaryImpl(false);
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
-        TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
-        TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
+        SourceTypesImpl sourceTypes = new SourceTypesImpl();
+        CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
+        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);
         Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
-        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
+        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
         try {
             parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
         } catch (URISyntaxException e) {
@@ -234,11 +225,12 @@ public class CommonTestParse {
         Summary failFastSummary = new SummaryImpl(true);
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
-        TypeMap.Builder typeMapBuilder = new TypeMapBuilder();
         Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
-        TypeContextImpl typeContext = new TypeContextImpl(typeMapBuilder);
+        SourceTypesImpl sourceTypes = new SourceTypesImpl();
+        CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
+        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
-        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(typeMapBuilder, rootContext);
+        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
         try {
             List<TypeInfo> types = parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
             resolver.resolve();

@@ -192,7 +192,7 @@ public class ParseConstructorCall extends CommonParse {
         assert ia.size() == 2
                && Token.TokenType.LPAREN.equals(ia.get(0).getType())
                && Token.TokenType.RPAREN.equals(ia.get(1).getType());
-        Context newContext = context.newResolver();
+        Context newContext = context.newAnonymousClassBody();
         parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType,
                 builder);
         newContext.resolver().resolve();

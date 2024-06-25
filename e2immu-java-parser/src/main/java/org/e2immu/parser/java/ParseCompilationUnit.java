@@ -4,12 +4,9 @@ import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
-import org.e2immu.language.inspection.api.resource.TypeMap;
 import org.e2immu.support.Either;
-import org.parsers.java.ast.CompilationUnit;
-import org.parsers.java.ast.ImportDeclaration;
-import org.parsers.java.ast.PackageDeclaration;
-import org.parsers.java.ast.TypeDeclaration;
+import org.parsers.java.Token;
+import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,12 +19,10 @@ public class ParseCompilationUnit extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseCompilationUnit.class);
 
     private final Context rootContext;
-    private final TypeMap.Builder typeMap;
 
-    public ParseCompilationUnit(TypeMap.Builder typeMap, Context rootContext) {
+    public ParseCompilationUnit(Context rootContext) {
         super(rootContext.runtime(), new Parsers(rootContext.runtime()));
         this.rootContext = rootContext;
-        this.typeMap = typeMap;
     }
 
     public List<TypeInfo> parse(URI uri, CompilationUnit cu) {
@@ -36,6 +31,7 @@ public class ParseCompilationUnit extends CommonParse {
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
+            re.printStackTrace();
             LOGGER.error("Caught exception parsing compilation unit {}", uri);
             rootContext.summary().addParserError(re);
             return List.of();
@@ -60,7 +56,7 @@ public class ParseCompilationUnit extends CommonParse {
         }
         org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = builder.build();
 
-        Context newContext = rootContext.newCompilationUnit(rootContext.resolver(), typeMap, compilationUnit);
+        Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
         List<TypeInfo> types = new ArrayList<>();
@@ -75,7 +71,8 @@ public class ParseCompilationUnit extends CommonParse {
     }
 
     private ImportStatement parseImportDeclaration(ImportDeclaration id) {
-        String is = id.get(1).getSource();
-        return runtime.newImportStatement(is);
+        boolean isStatic = id.get(1) instanceof KeyWord kw && Token.TokenType.STATIC.equals(kw.getType());
+        String importString = id.get(isStatic ? 2 : 1).getSource();
+        return runtime.newImportStatement(importString, isStatic);
     }
 }

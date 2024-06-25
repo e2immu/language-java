@@ -139,6 +139,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         Node body = td.get(i);
         if (body instanceof ClassOrInterfaceBody cib) {
+            Context contextForBody = newContext.newTypeBody();
             parseBody(newContext, cib, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
