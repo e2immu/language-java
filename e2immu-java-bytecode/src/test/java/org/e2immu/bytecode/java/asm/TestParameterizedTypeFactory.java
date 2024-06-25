@@ -38,7 +38,8 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
     @Test
     public void testString() {
         ParameterizedType pt = create("[Ljava/lang/String;").parameterizedType;
-        assertEquals(runtime.stringTypeInfo(), pt.typeInfo());
+        // NOTE: we're not demanding "same", because
+        assertSame(runtime.stringTypeInfo(), pt.typeInfo());
         assertEquals(1, pt.arrays());
         assertNotNull(pt.typeInfo());
     }
@@ -47,7 +48,7 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
     public void testStringAndInt() {
         String desc = "[Ljava/lang/String;I";
         ParameterizedTypeFactory.Result res = create(desc);
-        assertEquals(runtime.stringTypeInfo(), res.parameterizedType.typeInfo());
+        assertSame(runtime.stringTypeInfo(), res.parameterizedType.typeInfo());
         assertEquals(1, res.parameterizedType.arrays());
         assertEquals('I', desc.charAt(res.nextPos));
     }
@@ -55,7 +56,7 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
     @Test
     public void testCharArray() {
         ParameterizedType pt = create("[C").parameterizedType;
-        assertEquals(runtime.charTypeInfo(), pt.typeInfo());
+        assertSame(runtime.charTypeInfo(), pt.typeInfo());
         assertEquals(1, pt.arrays());
     }
 

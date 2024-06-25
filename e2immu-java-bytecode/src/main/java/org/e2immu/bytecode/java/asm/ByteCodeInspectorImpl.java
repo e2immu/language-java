@@ -75,6 +75,13 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
         }
 
         @Override
+        public TypeInfo getLocalOrRemote(String fqn) {
+            TypeInfo local = localTypeMap.get(fqn);
+            if(local != null) return local;
+            return compiledTypesManager.get(fqn);
+        }
+
+        @Override
         public String pathToFqn(String name) {
             return compiledTypesManager.classPath().pathToFqn(name);
         }
@@ -212,11 +219,10 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                 }
 
                 ClassReader classReader = new ClassReader(classBytes);
-                LOGGER.debug("Constructed class reader with {} bytes", classBytes.length);
+                LOGGER.debug("Constructed class reader for {} with {} bytes", fqn, classBytes.length);
 
                 MyClassVisitor myClassVisitor = new MyClassVisitor(runtime, this, new TypeParameterContext(), path);
                 classReader.accept(myClassVisitor, 0);
-                typeInfo.builder().commit();
                 LOGGER.debug("Finished bytecode inspection of {}", fqn);
                 return typeInfo;
             } catch (RuntimeException re) {

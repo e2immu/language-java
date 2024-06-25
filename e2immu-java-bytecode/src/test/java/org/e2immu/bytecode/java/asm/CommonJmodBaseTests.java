@@ -22,9 +22,11 @@ public abstract class CommonJmodBaseTests {
         Resources cp = new ResourcesImpl();
         classPath = cp;
         cp.addJmod(new URL("jar:file:" + System.getProperty("java.home") + "/jmods/java.base.jmod!/"));
-        CompiledTypesManagerImpl mgr = new CompiledTypesManagerImpl(runtime, classPath);
+        CompiledTypesManagerImpl mgr = new CompiledTypesManagerImpl(classPath);
         compiledTypesManager = mgr;
         runtime = new RuntimeImpl();
+        compiledTypesManager.add(runtime.stringTypeInfo());
+        compiledTypesManager.add(runtime.objectTypeInfo());
         byteCodeInspector = new ByteCodeInspectorImpl(runtime, compiledTypesManager);
         mgr.setByteCodeInspector(byteCodeInspector);
     }

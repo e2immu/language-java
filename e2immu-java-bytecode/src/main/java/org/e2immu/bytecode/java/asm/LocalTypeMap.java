@@ -18,6 +18,8 @@ public interface LocalTypeMap {
     // get from local map, null otherwise
     TypeInfo getLocal(String fqName);
 
+    TypeInfo getLocalOrRemote(String fqn);
+
     // delegate to CTM
     String pathToFqn(String name);
 

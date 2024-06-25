@@ -314,39 +314,22 @@ public class MyClassVisitor extends ClassVisitor {
                 LOGGER.debug("Processing sub-type {} of/in {}, step side? {} step down? {}", fqn,
                         currentType.fullyQualifiedName(), stepSide, stepDown);
 
-                TypeInfo situation = localTypeMap.getLocal(fqn);
-                TypeInfo subTypeInspection;
-                TypeInfo subTypeInMap;
-                boolean byteCodeInspectionStarted;
-                if (situation == null) {
-                    TypeInfo subTypeInMapIn = runtime.newTypeInfo(stepDown ? currentType
-                            : currentType.compilationUnitOrEnclosingType().getRight(), innerName);
-                    subTypeInspection = localTypeMap.getOrCreate(subTypeInMapIn);
-                    byteCodeInspectionStarted = false;
-                    subTypeInMap = subTypeInspection; // prefer the existing one
-                } else {
-                    subTypeInspection = situation;
-                    subTypeInMap = subTypeInspection;
-                    byteCodeInspectionStarted = true;
-                }
-                if (!byteCodeInspectionStarted) {
-                    checkTypeFlags(access, subTypeInspection.builder());
+                TypeInfo localOrRemote = localTypeMap.getLocalOrRemote(fqn);
+                if (localOrRemote == null) {
+                    TypeInfo enclosing = stepDown ? currentType
+                            : currentType.compilationUnitOrEnclosingType().getRight();
+                    TypeInfo subType = runtime.newTypeInfo(enclosing, innerName);
+                    checkTypeFlags(access, subType.builder());
                     SourceFile newPath = new SourceFile(name + ".class", pathAndURI.uri());
-                    TypeInfo subType = localTypeMap.inspectFromPath(null, newPath, LocalTypeMap.LoadMode.NOW);
-
-                    if (subType != null) {
-                        if (stepDown) {
-                            currentTypeBuilder.addSubType(subType);
-                        }
-                    } else {
-                        errorStateForType(name);
+                    localTypeMap.inspectFromPath(subType, newPath, LocalTypeMap.LoadMode.NOW);
+                    if (stepDown) {
+                        currentTypeBuilder.addSubType(subType);
                     }
                 } else {
                     if (stepDown) {
-                        currentTypeBuilder.addSubType(subTypeInMap);
+                        currentTypeBuilder.addSubType(localOrRemote);
                     }
                 }
-
             } //else? potentially add: String fqn = pathToFqn(name); localTypeMap.getOrCreate(fqn, true);
         }
     }
