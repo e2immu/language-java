@@ -15,6 +15,7 @@
 package org.e2immu.bytecode.java.asm;
 
 
+import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -35,7 +36,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testNormalTypeParameter() {
-        TypeInfo typeInfo = compiledTypesManager.get(Spliterator.class);
+        TypeInfo typeInfo = compiledTypesManager.getOrLoad(Spliterator.class);
         assertEquals("java.util.Spliterator<T>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         assertEquals("java.util.Spliterator<>", typeInfo.asParameterizedType(runtime).
@@ -46,7 +47,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testWildcard() {
-        TypeInfo typeInfo = compiledTypesManager.get(Collection.class);
+        TypeInfo typeInfo = compiledTypesManager.getOrLoad(Collection.class);
         assertEquals("java.util.Collection<E>", typeInfo.asParameterizedType(runtime)
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         MethodInfo containsAll = typeInfo.methods().stream()
@@ -56,14 +57,15 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testExtends1() {
-        TypeInfo typeInfo = compiledTypesManager.get(Collection.class);
+        TypeInfo typeInfo = compiledTypesManager.getOrLoad(Collection.class);
         MethodInfo addAll = typeInfo.methods().stream().filter(m -> m.name().equals("addAll")).findFirst().orElseThrow();
         assertEquals("java.util.Collection.addAll(java.util.Collection<? extends E>)", addAll.fullyQualifiedName());
     }
 
     @Test
-    public void testExtends2() throws URISyntaxException {
-        TypeInfo typeInfo = compiledTypesManager.get(EnumMap.class);
+    public void testExtends2() {
+        CompilationUnit cu = runtime.newCompilationUnitBuilder().setPackageName("java.util").build();
+        TypeInfo typeInfo = runtime.newTypeInfo(cu, "EnumMap");
 
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
         ParseGenerics parseGenerics = new ParseGenerics(runtime, new TypeParameterContext(), typeInfo,
@@ -91,7 +93,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testSuper() {
-        TypeInfo sortedSet = compiledTypesManager.get(SortedSet.class);
+        TypeInfo sortedSet = compiledTypesManager.getOrLoad(SortedSet.class);
         MethodInfo comparator = sortedSet.methods().stream().filter(m -> m.name().equals("comparator"))
                 .findFirst().orElseThrow();
         assertEquals("java.util.Comparator<? super E>",
@@ -105,8 +107,10 @@ public class TestParseGenerics extends CommonJmodBaseTests {
      */
     @Test
     public void testExtends3() {
-        TypeInfo typeInfo = compiledTypesManager.get(Spliterator.OfPrimitive.class);
+        TypeInfo typeInfo = compiledTypesManager.getOrLoad(Spliterator.OfPrimitive.class);
         ParameterizedType pt = typeInfo.asParameterizedType(runtime);
+        String fqn = "java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR extends java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR>>";
+        assertEquals("Type " + fqn, pt.toString());
 
         TypeParameter splitter = typeInfo.typeParameters().get(2);
         ParameterizedType typeBoundSplitter = splitter.typeBounds().get(0);
@@ -114,8 +118,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
         assertSame(splitter, typeBoundSplitter.parameters().get(2).typeParameter());
 
-        assertEquals("java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR extends java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR>>",
-                pt.printForMethodFQN(false, DiamondEnum.SHOW_ALL));
+        assertEquals(fqn, pt.printForMethodFQN(false, DiamondEnum.SHOW_ALL));
     }
 
     @Test
