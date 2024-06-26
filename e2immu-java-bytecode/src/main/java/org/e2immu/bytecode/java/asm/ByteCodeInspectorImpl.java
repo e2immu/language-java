@@ -77,7 +77,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
         @Override
         public TypeInfo getLocalOrRemote(String fqn) {
             TypeInfo local = localTypeMap.get(fqn);
-            if(local != null) return local;
+            if (local != null) return local;
             return compiledTypesManager.get(fqn);
         }
 
@@ -108,13 +108,13 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                     return remote;
                 }
                 case NOW -> {
-                    SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                    SourceFile source = compiledTypesManager.classPath().sourceFileOfType(remote, ".class");
                     assert source != null;
                     return inspectFromPath(remote, source, loadMode);
                 }
                 case TRIGGER -> {
                     remote.setOnDemandInspection(ti -> {
-                        SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                        SourceFile source = compiledTypesManager.classPath().sourceFileOfType(remote, ".class");
                         assert source != null;
                         inspectFromPath(ti, source, LoadMode.NOW);
                     });
@@ -132,7 +132,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
             if (remote != null) {
                 if (remote.hasBeenInspected()) return remote;
                 remote.setOnDemandInspection(ti -> {
-                    SourceFile source = compiledTypesManager.classPath().sourceFileOfSubType(subType, ".class");
+                    SourceFile source = compiledTypesManager.classPath().sourceFileOfType(subType, ".class");
                     assert source != null;
                     inspectFromPath(ti, source, LoadMode.NOW);
                 });
@@ -140,7 +140,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
             }
             TypeInfo typeInfoInMap = compiledTypesManager.addToTrie(subType);
             typeInfoInMap.setOnDemandInspection(ti -> {
-                SourceFile source = compiledTypesManager.classPath().sourceFileOfSubType(subType, ".class");
+                SourceFile source = compiledTypesManager.classPath().sourceFileOfType(subType, ".class");
                 assert source != null;
                 inspectFromPath(ti, source, LoadMode.NOW);
             });
@@ -180,7 +180,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
             }
             if (loadMode == LoadMode.TRIGGER && !typeInfo.haveOnDemandInspection()) {
                 typeInfo.setOnDemandInspection(ti -> {
-                    SourceFile source = compiledTypesManager.classPath().fqnToPath(fqn, ".class");
+                    SourceFile source = compiledTypesManager.classPath().sourceFileOfType(ti, ".class");
                     assert source != null;
                     inspectFromPath(ti, source, LoadMode.NOW);
                 });
@@ -193,9 +193,11 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
             int dollar = path.lastIndexOf('$');
             TypeInfo typeInfo;
             if (dollar >= 0) {
-                String newPath = SourceFile.ensureDotClass(path.substring(0, dollar));
-                SourceFile newSource = new SourceFile(newPath, source.uri());
-                typeInfo = inspectFromPath(null, newSource, loadMode);
+                String simpleName = path.substring(dollar + 1);
+                String newPathWithoutSubType = SourceFile.ensureDotClass(path.substring(0, dollar));
+                SourceFile newSource = new SourceFile(newPathWithoutSubType, source.uri());
+                TypeInfo parent = inspectFromPath(null, newSource, loadMode);
+                typeInfo = runtime.newTypeInfo(parent, simpleName);
             } else {
                 int lastDot = fqn.lastIndexOf(".");
                 String packageName = fqn.substring(0, lastDot);
@@ -221,7 +223,8 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                 ClassReader classReader = new ClassReader(classBytes);
                 LOGGER.debug("Constructed class reader for {} with {} bytes", fqn, classBytes.length);
 
-                MyClassVisitor myClassVisitor = new MyClassVisitor(runtime, this, new TypeParameterContext(), path);
+                MyClassVisitor myClassVisitor = new MyClassVisitor(runtime, typeInfo, this,
+                        new TypeParameterContext(), path);
                 classReader.accept(myClassVisitor, 0);
                 LOGGER.debug("Finished bytecode inspection of {}", fqn);
                 return typeInfo;

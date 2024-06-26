@@ -15,6 +15,7 @@
 package org.e2immu.bytecode.java.asm;
 
 
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.junit.jupiter.api.Test;
 
@@ -39,9 +40,28 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
     public void testString() {
         ParameterizedType pt = create("[Ljava/lang/String;").parameterizedType;
         // NOTE: we're not demanding "same", because
-        assertSame(runtime.stringTypeInfo(), pt.typeInfo());
+        TypeInfo string = pt.typeInfo();
+        assertSame(runtime.stringTypeInfo(), string);
         assertEquals(1, pt.arrays());
-        assertNotNull(pt.typeInfo());
+        assertNotNull(string);
+        assertNotNull(string.source());
+        assertEquals("predefined://java/lang", string.compilationUnit().uri().toString());
+        assertSame(string.compilationUnit(), string.source().compilationUnit());
+    }
+
+    @Test
+    public void testMapEntry() {
+        ParameterizedType pt = create("Ljava/util/Map$Entry;").parameterizedType;
+        assertEquals("java.util.Map.Entry", pt.typeInfo().fullyQualifiedName());
+    }
+
+    @Test
+    public void testTypeDescriptor() {
+        ParameterizedType pt = create("Ljava/lang/invoke/TypeDescriptor$OfField;").parameterizedType;
+        assertEquals("Type java.lang.invoke.TypeDescriptor.OfField", pt.toString());
+        TypeInfo parent = pt.typeInfo().compilationUnitOrEnclosingType().getRight();
+        assertEquals("java.lang.invoke.TypeDescriptor", parent.fullyQualifiedName());
+        assertSame(pt.typeInfo(), parent.findSubType("OfField"));
     }
 
     @Test
@@ -79,7 +99,8 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
         assertEquals("java.lang.Class", pt.typeInfo().fullyQualifiedName());
         assertEquals(1, pt.parameters().size());
         ParameterizedType tp0 = pt.parameters().get(0);
-        assertNull(tp0.wildcard());
+        assertTrue(tp0.wildcard().isUnbound());
+        assertNull(pt.wildcard());
     }
 
     @Test

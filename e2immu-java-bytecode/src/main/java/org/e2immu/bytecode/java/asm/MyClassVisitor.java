@@ -37,12 +37,13 @@ public class MyClassVisitor extends ClassVisitor {
     private final LocalTypeMap localTypeMap;
     private final SourceFile pathAndURI;
     private final Runtime runtime;
-    private TypeInfo currentType;
+    private final TypeInfo currentType;
     private TypeInfo.Builder currentTypeBuilder;
     private String currentTypePath;
     private boolean currentTypeIsInterface;
 
     public MyClassVisitor(Runtime runtime,
+                          TypeInfo typeInfo,
                           LocalTypeMap localTypeMap,
                           TypeParameterContext typeParameterContext,
                           SourceFile pathAndURI) {
@@ -51,6 +52,7 @@ public class MyClassVisitor extends ClassVisitor {
         this.localTypeMap = localTypeMap;
         this.pathAndURI = pathAndURI;
         this.typeParameterContext = typeParameterContext;
+        this.currentType = typeInfo;
     }
 
     private TypeNature typeNatureFromOpCode(int opCode) {
@@ -68,8 +70,8 @@ public class MyClassVisitor extends ClassVisitor {
         assert fqName != null;
         assert localTypeMap.acceptFQN(fqName);
 
-        currentType = localTypeMap.getLocal(fqName);
         assert currentType != null : "Must be in local map! " + fqName;
+        assert currentType == localTypeMap.getLocal(fqName);
         currentTypeBuilder = currentType.builder();
         currentTypePath = name;
 
@@ -77,6 +79,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (!currentType.isJavaLangObject()) {
             currentTypeBuilder.setParentClass(runtime.objectParameterizedType());
         }
+        currentTypeBuilder.setSource(runtime.newCompiledClassSource(currentType.compilationUnit()));
 
         TypeNature currentTypeNature = typeNatureFromOpCode(access);
         currentTypeBuilder.setTypeNature(currentTypeNature);
@@ -369,8 +372,6 @@ public class MyClassVisitor extends ClassVisitor {
                     throw new UnsupportedOperationException("? was expecting a type inspection builder");
                 currentTypeBuilder.setSingleAbstractMethod(functionalInterface());
                 currentTypeBuilder.commit();
-
-                currentType = null;
                 currentTypeBuilder = null;
             } catch (RuntimeException rte) {
                 LOGGER.error("Caught exception bytecode inspecting type {}", currentType.fullyQualifiedName());
