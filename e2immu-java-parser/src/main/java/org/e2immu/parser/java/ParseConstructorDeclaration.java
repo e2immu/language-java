@@ -52,11 +52,10 @@ public class ParseConstructorDeclaration extends CommonParse {
         }
 
         MethodInfo.MethodType methodType;
-        ParameterizedType returnType;
         String name;
         if (cd.get(i) instanceof Identifier identifier) {
-            methodType = runtime.methodTypeConstructor();
-            returnType = runtime.parameterizedTypeReturnTypeOfConstructor();
+            boolean compact = cd instanceof CompactConstructorDeclaration;
+            methodType = compact ? runtime.methodTypeCompactConstructor() : runtime.methodTypeConstructor();
             name = identifier.getSource();
             i++;
         } else {
@@ -72,7 +71,12 @@ public class ParseConstructorDeclaration extends CommonParse {
                 }
             }
             i++;
-        } else throw new UnsupportedOperationException("Node " + cd.get(i).getClass());
+        } else if (cd instanceof CompactConstructorDeclaration) {
+            // a compact constructor does not have arguments
+            assert methodType.isCompactConstructor();
+        } else {
+            throw new UnsupportedOperationException("Node " + cd.get(i).getClass());
+        }
         ExplicitConstructorInvocation explicitConstructorInvocation;
         while (i < cd.size() && cd.get(i) instanceof Delimiter) i++;
         if (cd.get(i) instanceof org.parsers.java.ast.ExplicitConstructorInvocation eci) {
@@ -82,7 +86,9 @@ public class ParseConstructorDeclaration extends CommonParse {
             explicitConstructorInvocation = null;
         }
         Node toResolve;
-        if (cd.get(i) instanceof ExpressionStatement est) {
+        if (cd instanceof CompactConstructorDeclaration) {
+            toResolve = cd; // because the statements simply follow the identifier
+        } else if (cd.get(i) instanceof ExpressionStatement est) {
             toResolve = est;
         } else if (cd.get(i) instanceof CodeBlock codeBlock) {
             toResolve = codeBlock;

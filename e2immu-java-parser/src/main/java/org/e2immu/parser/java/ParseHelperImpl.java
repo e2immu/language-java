@@ -11,6 +11,7 @@ import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.ParseHelper;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -49,7 +50,15 @@ public class ParseHelperImpl implements ParseHelper {
             eci = parseEci(context, unparsedEci);
         }
         Element e;
-        if (expression instanceof CodeBlock codeBlock) {
+        if (expression instanceof CompactConstructorDeclaration ccd) {
+            int j = 0;
+            while (!Token.TokenType.LBRACE.equals(ccd.get(j).getType())) j++;
+            if (ccd.get(j) instanceof org.parsers.java.ast.Statement s) {
+                e = parseStatements(context, s, 0);
+            } else if (ccd.get(j) instanceof Delimiter) {
+                e = runtime.emptyBlock();
+            } else throw new Summary.ParseException(context.info(), "Expected either empty block, or statements");
+        } else if (expression instanceof CodeBlock codeBlock) {
             e = parsers.parseBlock().parse(context, "", codeBlock, eci == null ? 0 : 1);
         } else {
             e = parseStatements(context, forwardType, expression, eci != null);
@@ -83,30 +92,33 @@ public class ParseHelperImpl implements ParseHelper {
     private Element parseStatements(Context context, ForwardType forwardType, Object expression, boolean haveEci) {
         int start = haveEci ? 1 : 0;
         if (expression instanceof ExpressionStatement est) {
-            Statement firstStatement = parsers.parseStatement().parse(context, "" + start, est);
-
-            List<ExpressionStatement> siblings = new ArrayList<>();
-            while (est.nextSibling() instanceof ExpressionStatement next) {
-                siblings.add(next);
-                est = next;
-            }
-            if (siblings.isEmpty()) {
-                return firstStatement;
-            }
-            Block.Builder b = runtime.newBlockBuilder();
-            b.addStatement(firstStatement);
-            for (ExpressionStatement es : siblings) {
-                ++start;
-                Statement s2 = parsers.parseStatement().parse(context, "" + start, es);
-                b.addStatement(s2);
-            }
-            return b.build();
-
+            return parseStatements(context, est, start);
         }
         if (expression != null) {
             return parseExpression(context, "" + start, forwardType, expression);
         }
         return null;
+    }
+
+    private Statement parseStatements(Context context, org.parsers.java.ast.Statement first, int start) {
+        Statement firstStatement = parsers.parseStatement().parse(context, "" + start, first);
+
+        List<org.parsers.java.ast.Statement> siblings = new ArrayList<>();
+        while (first.nextSibling() instanceof org.parsers.java.ast.Statement next) {
+            siblings.add(next);
+            first = next;
+        }
+        if (siblings.isEmpty()) {
+            return firstStatement;
+        }
+        Block.Builder b = runtime.newBlockBuilder();
+        b.addStatement(firstStatement);
+        for (org.parsers.java.ast.Statement es : siblings) {
+            ++start;
+            Statement s2 = parsers.parseStatement().parse(context, "" + start, es);
+            b.addStatement(s2);
+        }
+        return b.build();
     }
 
     private org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation parseEci(Context context,

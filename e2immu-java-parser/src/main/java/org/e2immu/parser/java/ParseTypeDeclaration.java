@@ -12,6 +12,7 @@ import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.type.Wildcard;
+import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
@@ -45,6 +46,9 @@ public class ParseTypeDeclaration extends CommonParse {
             context.summary().addParserError(re);
             return null;
         }
+    }
+
+    private record RecordField(FieldInfo fieldInfo, boolean varargs) {
     }
 
     private TypeInfo internalParse(Context context,
@@ -116,6 +120,22 @@ public class ParseTypeDeclaration extends CommonParse {
             i++;
         }
 
+        List<RecordField> recordFields;
+        if (td.get(i) instanceof RecordHeader rh) {
+            assert typeNature.isRecord();
+            recordFields = new ArrayList<>();
+            for (int j = 1; j < rh.size(); j += 2) {
+                Node rhj = rh.get(j);
+                if (rhj instanceof Delimiter) break; // empty parameter list
+                if (rhj instanceof RecordComponent rc) {
+                    recordFields.add(parseRecordField(context, typeInfo, rc));
+                } else throw new Summary.ParseException(context.info(), "Expected record component");
+            }
+            i++;
+        } else {
+            recordFields = null;
+        }
+
         builder.setParentClass(runtime.objectParameterizedType());
         if (td.get(i) instanceof ExtendsList extendsList) {
             for (int j = 1; j < extendsList.size(); j += 2) {
@@ -138,9 +158,17 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         Node body = td.get(i);
-        if (body instanceof ClassOrInterfaceBody cib) {
+        if (body instanceof ClassOrInterfaceBody || body instanceof RecordBody) {
             Context contextForBody = newContext.newTypeBody();
-            parseBody(newContext, cib, typeNature, typeInfo, builder);
+            if (body instanceof RecordBody) {
+                assert recordFields != null;
+                for (RecordField rf : recordFields) {
+                    typeInfo.builder().addField(rf.fieldInfo);
+                    FieldReference fr = runtime.newFieldReference(rf.fieldInfo);
+                    contextForBody.variableContext().add(fr);
+                }
+            }
+            parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
@@ -152,6 +180,33 @@ public class ParseTypeDeclaration extends CommonParse {
 
         context.resolver().add(builder);
         return typeInfo;
+    }
+
+    private RecordField parseRecordField(Context context, TypeInfo typeInfo, RecordComponent rc) {
+        int i = 0;
+        ParameterizedType pt;
+        if (rc.get(i) instanceof Type type) {
+            pt = parsers.parseType().parse(context, type);
+            i++;
+        } else throw new Summary.ParseException(typeInfo, "Expected type in record component");
+        boolean varargs;
+        ParameterizedType ptWithVarArgs;
+        if (rc.get(i) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
+            varargs = true;
+            ptWithVarArgs = pt.copyWithArrays(pt.arrays() + 1);
+            i++;
+        } else {
+            varargs = false;
+            ptWithVarArgs = pt;
+        }
+        String name;
+        if (rc.get(i) instanceof Identifier identifier) {
+            name = identifier.getSource();
+        } else {
+            throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
+        }
+        FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
+        return new RecordField(fieldInfo, varargs);
     }
 
     private MethodInfo createEmptyConstructor(TypeInfo typeInfo, boolean privateEmptyConstructor) {
@@ -166,7 +221,7 @@ public class ParseTypeDeclaration extends CommonParse {
         return methodInfo;
     }
 
-    public void parseBody(Context newContext, ClassOrInterfaceBody body, TypeNature typeNature, TypeInfo typeInfo, TypeInfo.Builder builder) {
+    public void parseBody(Context newContext, Node body, TypeNature typeNature, TypeInfo typeInfo, TypeInfo.Builder builder) {
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         int countCompactConstructors = 0;
