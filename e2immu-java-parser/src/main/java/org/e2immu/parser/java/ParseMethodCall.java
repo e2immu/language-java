@@ -14,7 +14,9 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.parser.java.erasure.MethodCallErasure;
+import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -34,10 +36,12 @@ public class ParseMethodCall extends CommonParse {
     public Expression parse(Context context, List<Comment> comments, Source source,
                             String index, ForwardType forwardType, org.parsers.java.ast.MethodCall mc) {
         List<Object> unparsedArguments = new ArrayList<>();
-        Name name = (Name) mc.get(0);
-        InvocationArguments ia = (InvocationArguments) mc.get(1);
+        Node name = mc.get(0);
+        assert name instanceof Name || name instanceof DotName;
         String methodName = name.get(name.size() - 1).getSource();
         Object unparsedObject = newNameObject(name);
+
+        InvocationArguments ia = (InvocationArguments) mc.get(1);
         int i = 1;
         while (i < ia.size() && !(ia.get(i) instanceof Delimiter)) {
             unparsedArguments.add(ia.get(i));
@@ -54,8 +58,8 @@ public class ParseMethodCall extends CommonParse {
                 unparsedObject, unparsedArguments);
     }
 
-    private Object newNameObject(Name name) {
-        if(name.size() == 1) return null;
+    private Object newNameObject(Node name) {
+        if (name.size() == 1) return null;
         Name n = new Name();
         for (int i = 0; i < name.size() - 2; i++) {
             n.add(i, name.get(i));

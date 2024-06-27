@@ -79,7 +79,10 @@ public class ParseExpression extends CommonParse {
             return parseUnaryExpression(context, index, (org.parsers.java.ast.Expression) node);
         }
         if (node instanceof Name name) {
-            return parseName(context, comments, source, name.getAsString());
+            if (name.children().stream().allMatch(n -> n instanceof Delimiter || n instanceof Identifier)) {
+                return parseName(context, comments, source, name.getAsString());
+            }
+            return parse(context, index, forwardType, name.get(0));
         }
         if (node instanceof CastExpression castExpression) {
             return parseCast(context, index, comments, source, castExpression);
@@ -157,7 +160,7 @@ public class ParseExpression extends CommonParse {
         } else if (namedType instanceof TypeParameter) {
             throw new Summary.ParseException(context.info(), "should not be possible");
         }
-        throw new Summary.ParseException(context.info(), "unknown name");
+        throw new Summary.ParseException(context.info(), "unknown name '" + name + "'");
     }
 
     // result must be a variable
