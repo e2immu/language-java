@@ -227,6 +227,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector {
                         new TypeParameterContext(), path);
                 classReader.accept(myClassVisitor, 0);
                 LOGGER.debug("Finished bytecode inspection of {}", fqn);
+                compiledTypesManager.add(typeInfo);
                 return typeInfo;
             } catch (RuntimeException re) {
                 LOGGER.error("Path = {}", path);
