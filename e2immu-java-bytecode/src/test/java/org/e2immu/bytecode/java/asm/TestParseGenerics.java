@@ -69,7 +69,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
         ParseGenerics parseGenerics = new ParseGenerics(runtime, new TypeParameterContext(), typeInfo,
-                byteCodeInspector.localTypeMap(), LocalTypeMap.LoadMode.NOW);
+                byteCodeInspector, LocalTypeMap.LoadMode.NOW);
         int expected = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>".length();
         int pos = parseGenerics.parseTypeGenerics(signature) + 1;
         assertEquals(expected, pos);
@@ -130,8 +130,8 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
         compiledTypesManager.add(typeInfo);
 
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, context, typeInfo,
-                byteCodeInspector.localTypeMap(), LocalTypeMap.LoadMode.NOW);
+        ParseGenerics parseGenerics = new ParseGenerics(runtime, context, typeInfo, byteCodeInspector,
+                LocalTypeMap.LoadMode.NOW);
         String signature = "<K:Ljava/lang/Object;>Ljdk/internal/loader/AbstractClassLoaderValue<Ljdk/internal/loader/AbstractClassLoaderValue<TCLV;TV;>.Sub<TK;>;TV;>;";
 
         int expected = "<K:Ljava/lang/Object;>".length();

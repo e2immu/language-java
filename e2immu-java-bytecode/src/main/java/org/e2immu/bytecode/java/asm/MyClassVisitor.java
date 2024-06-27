@@ -317,7 +317,7 @@ public class MyClassVisitor extends ClassVisitor {
                 LOGGER.debug("Processing sub-type {} of/in {}, step side? {} step down? {}", fqn,
                         currentType.fullyQualifiedName(), stepSide, stepDown);
 
-                TypeInfo localOrRemote = localTypeMap.getLocalOrRemote(fqn);
+                TypeInfo localOrRemote = localTypeMap.getLocal(fqn);
                 if (localOrRemote == null) {
                     TypeInfo enclosing = stepDown ? currentType
                             : currentType.compilationUnitOrEnclosingType().getRight();

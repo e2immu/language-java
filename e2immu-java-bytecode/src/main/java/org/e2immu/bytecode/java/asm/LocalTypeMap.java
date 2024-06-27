@@ -18,8 +18,6 @@ public interface LocalTypeMap {
     // get from local map, null otherwise
     TypeInfo getLocal(String fqName);
 
-    TypeInfo getLocalOrRemote(String fqn);
-
     // delegate to CTM
     String pathToFqn(String name);
 
@@ -37,13 +35,6 @@ public interface LocalTypeMap {
     @Modified
     TypeInfo getOrCreate(String fqn, LoadMode loadMode);
 
-    /*
-    same as the string version, but here we already know the enclosure relation
-     */
-    @Modified
-    TypeInfo getOrCreate(TypeInfo subType);
-
-    List<TypeInfo> loaded();
     /*
      Call from My*Visitor back to ByteCodeInspector, as part of a `inspectFromPath(Source)` call.
      */
