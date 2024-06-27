@@ -79,12 +79,16 @@ public class ParseLambdaExpression extends CommonParse {
             Statement returnStatement = runtime.newReturnStatement(expression);
             methodBody = runtime.newBlockBuilder().addStatement(returnStatement).build();
             // returns either java.util.function.Function<T,R> or java.util.function.Supplier<R>
-            TypeInfo abstractFunctionalType = runtime.syntheticFunctionalType(methodInfo.parameters().size(), true);
+            boolean hasReturnValue = !concreteReturnType.isVoid();
+            TypeInfo abstractFunctionalType = runtime.syntheticFunctionalType(methodInfo.parameters().size(),
+                    hasReturnValue);
             List<ParameterizedType> concreteFtParams = new ArrayList<>();
             for (ParameterInfo pi : methodInfo.parameters()) {
                 concreteFtParams.add(pi.parameterizedType());
             }
-            concreteFtParams.add(concreteReturnType);
+            if (hasReturnValue) {
+                concreteFtParams.add(concreteReturnType);
+            }
             ParameterizedType concreteFunctionalType = runtime.newParameterizedType(abstractFunctionalType, concreteFtParams);
             // new we have  "class $1 implements Function<Integer, String>"
             anonymousType.builder().addInterfaceImplemented(concreteFunctionalType);
@@ -177,6 +181,8 @@ public class ParseLambdaExpression extends CommonParse {
                     outputVariants.add(outputVariant);
                     pi.builder().commit();
                     newContext.variableContext().add(pi);
+                } else if (lambdaParameters.get(i) instanceof Delimiter) {
+                    break;
                 } else throw new Summary.ParseException(context.info(), "Expected LambdaParameter");
                 if (Token.TokenType.RPAREN.equals(lambdaParameters.get(i + 1).getType())) break;
                 i += 2;
