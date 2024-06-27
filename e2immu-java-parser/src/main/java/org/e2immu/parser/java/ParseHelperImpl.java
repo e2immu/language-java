@@ -53,6 +53,7 @@ public class ParseHelperImpl implements ParseHelper {
         if (expression instanceof CompactConstructorDeclaration ccd) {
             int j = 0;
             while (!Token.TokenType.LBRACE.equals(ccd.get(j).getType())) j++;
+            j++;
             if (ccd.get(j) instanceof org.parsers.java.ast.Statement s) {
                 e = parseStatements(context, s, 0);
             } else if (ccd.get(j) instanceof Delimiter) {

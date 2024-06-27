@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
@@ -11,7 +12,6 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
-import org.e2immu.language.cst.api.type.Wildcard;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -48,7 +48,10 @@ public class ParseTypeDeclaration extends CommonParse {
         }
     }
 
-    private record RecordField(FieldInfo fieldInfo, boolean varargs) {
+    record RecordField(List<Comment> comments, Source source, FieldInfo fieldInfo, boolean varargs) {
+    }
+
+    record ConstructorCounts(int normal, int compact) {
     }
 
     private TypeInfo internalParse(Context context,
@@ -96,8 +99,10 @@ public class ParseTypeDeclaration extends CommonParse {
         } else {
             typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getRight(), simpleName);
         }
+        Source source = source(typeInfo, "", td);
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
+        builder.setSource(source);
         typeModifiers.forEach(builder::addTypeModifier);
         builder.addAnnotations(annotations);
         builder.computeAccess();
@@ -158,6 +163,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         Node body = td.get(i);
+        ConstructorCounts constructorCounts;
         if (body instanceof ClassOrInterfaceBody || body instanceof RecordBody) {
             Context contextForBody = newContext.newTypeBody();
             if (body instanceof RecordBody) {
@@ -168,7 +174,7 @@ public class ParseTypeDeclaration extends CommonParse {
                     contextForBody.variableContext().add(fr);
                 }
             }
-            parseBody(contextForBody, body, typeNature, typeInfo, builder);
+            constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
@@ -176,9 +182,27 @@ public class ParseTypeDeclaration extends CommonParse {
                     builder.addMethod(methodInfo);
                 }
             }
+            constructorCounts = new ConstructorCounts(0, 0);
         } else throw new UnsupportedOperationException("node " + td.get(i).getClass());
 
         context.resolver().add(builder);
+
+        /*
+        Ensure a constructor when the type is a record and there are no compact constructors.
+        (those without arguments, as in 'public record SomeRecord(...) { public Record { this.field = } ... }' )
+        and also no default constructor override.
+        The latter condition is verified in the builder.ensureConstructor() method.
+         */
+        if (typeNature.isRecord()) {
+            RecordSynthetics rs = new RecordSynthetics(runtime, typeInfo);
+            assert recordFields != null;
+            if (constructorCounts.normal == 0 && constructorCounts.compact == 0) {
+                MethodInfo cc = rs.createSyntheticConstructor(source, recordFields);
+                builder.addConstructor(cc);
+            }
+            // finally, add synthetic methods if needed
+            rs.createAccessors(recordFields).forEach(builder::addMethod);
+        }
         return typeInfo;
     }
 
@@ -206,7 +230,9 @@ public class ParseTypeDeclaration extends CommonParse {
             throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
-        return new RecordField(fieldInfo, varargs);
+        Source source = source(fieldInfo, "", rc);
+        List<Comment> comments = comments(rc);
+        return new RecordField(comments, source, fieldInfo, varargs);
     }
 
     private MethodInfo createEmptyConstructor(TypeInfo typeInfo, boolean privateEmptyConstructor) {
@@ -221,7 +247,11 @@ public class ParseTypeDeclaration extends CommonParse {
         return methodInfo;
     }
 
-    public void parseBody(Context newContext, Node body, TypeNature typeNature, TypeInfo typeInfo, TypeInfo.Builder builder) {
+    public ConstructorCounts parseBody(Context newContext,
+                                       Node body,
+                                       TypeNature typeNature,
+                                       TypeInfo typeInfo,
+                                       TypeInfo.Builder builder) {
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         int countCompactConstructors = 0;
@@ -271,6 +301,8 @@ public class ParseTypeDeclaration extends CommonParse {
 
         MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);
         builder.setSingleAbstractMethod(sam);
+
+        return new ConstructorCounts(countNormalConstructors, countCompactConstructors);
     }
 
     private TypeParameter parseTypeParameter(Context context, Node node, TypeInfo owner, int typeParameterIndex) {
