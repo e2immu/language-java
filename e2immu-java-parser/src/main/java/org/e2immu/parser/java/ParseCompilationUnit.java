@@ -27,18 +27,34 @@ public class ParseCompilationUnit extends CommonParse {
 
     public List<TypeInfo> parse(URI uri, CompilationUnit cu) {
         try {
-            return internalParse(uri, cu);
+            return internalParse(uri, null, cu);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
-            re.printStackTrace();
+            re.printStackTrace(System.err);
             LOGGER.error("Caught exception parsing compilation unit {}", uri);
             rootContext.summary().addParserError(re);
             return List.of();
         }
     }
 
-    private List<TypeInfo> internalParse(URI uri, CompilationUnit cu) {
+    // this version is for when the TypeInfo object has already been created, and must be reused
+    // Identity of the compilation unit is not that important, we'll overwrite the source in the TypeInfo builder.
+    public List<TypeInfo> parse(TypeInfo typeInfo, CompilationUnit cu) {
+        URI uri = typeInfo.compilationUnit().uri();
+        try {
+            return internalParse(uri, typeInfo, cu);
+        } catch (Summary.FailFastException ffe) {
+            throw ffe;
+        } catch (RuntimeException re) {
+            re.printStackTrace(System.err);
+            LOGGER.error("Caught exception parsing compilation unit {} from type {}", uri, typeInfo);
+            rootContext.summary().addParserError(re);
+            return List.of();
+        }
+    }
+
+    private List<TypeInfo> internalParse(URI uri, TypeInfo typeInfoOrNull, CompilationUnit cu) {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
         String packageName = packageDeclaration == null ? ""
                 : Objects.requireNonNullElse(packageDeclaration.getName(), "");
@@ -61,7 +77,8 @@ public class ParseCompilationUnit extends CommonParse {
 
         List<TypeInfo> types = new ArrayList<>();
         while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {
-            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), cd);
+            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, typeInfoOrNull,
+                    Either.left(compilationUnit), cd);
             if (typeInfo != null) {
                 types.add(typeInfo);
             } // else: error...

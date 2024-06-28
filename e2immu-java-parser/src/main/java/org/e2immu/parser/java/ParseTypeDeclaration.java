@@ -33,10 +33,11 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     public TypeInfo parse(Context context,
+                          TypeInfo typeInfoOrNull,
                           Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                           TypeDeclaration td) {
         try {
-            return internalParse(context, packageNameOrEnclosing, td);
+            return internalParse(context, typeInfoOrNull, packageNameOrEnclosing, td);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -55,6 +56,7 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     private TypeInfo internalParse(Context context,
+                                   TypeInfo typeInfoOrNull,
                                    Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                    TypeDeclaration td) {
         List<Comment> comments = comments(td);
@@ -94,8 +96,13 @@ public class ParseTypeDeclaration extends CommonParse {
             i++;
         } else throw new UnsupportedOperationException();
         TypeInfo typeInfo;
+
         if (packageNameOrEnclosing.isLeft()) {
-            typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getLeft(), simpleName);
+            if(typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
+                typeInfo = typeInfoOrNull; // we must re-use this object!!
+            } else {
+                typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getLeft(), simpleName);
+            }
         } else {
             typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getRight(), simpleName);
         }
@@ -267,7 +274,7 @@ public class ParseTypeDeclaration extends CommonParse {
         // FIRST, do subtypes
 
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
-            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration);
+            TypeInfo subTypeInfo = parse(newContext, null, Either.right(typeInfo), typeDeclaration);
             builder.addSubType(subTypeInfo);
             newContext.typeContext().addToContext(subTypeInfo);
         }
