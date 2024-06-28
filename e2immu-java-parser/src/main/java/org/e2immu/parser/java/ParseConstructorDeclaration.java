@@ -103,7 +103,7 @@ public class ParseConstructorDeclaration extends CommonParse {
         } else {
             toResolve = null;
         }
-        if (toResolve != null) {
+        if (toResolve != null || explicitConstructorInvocation != null) {
             Context newContext = context.newVariableContextForMethodBlock(methodInfo, null);
             context.resolver().add(builder, context.emptyForwardType(), explicitConstructorInvocation, toResolve,
                     newContext);
