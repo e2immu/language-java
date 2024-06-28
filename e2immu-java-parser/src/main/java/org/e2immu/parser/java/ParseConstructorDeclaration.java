@@ -1,5 +1,6 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.Access;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.MethodModifier;
@@ -39,15 +40,21 @@ public class ParseConstructorDeclaration extends CommonParse {
     private MethodInfo internalParse(Context context, ConstructorDeclaration cd) {
         int i = 0;
         List<MethodModifier> methodModifiers = new ArrayList<>();
+        List<AnnotationExpression> annotations = new ArrayList<>();
         if (cd.get(i) instanceof Modifiers modifiers) {
             for (Node node : modifiers.children()) {
                 if (node instanceof KeyWord keyWord) {
                     methodModifiers.add(modifier(keyWord));
+                } else if (node instanceof Annotation a) {
+                    annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                 }
             }
             i++;
         } else if (cd.get(i) instanceof KeyWord keyWord) {
             methodModifiers.add(modifier(keyWord));
+            i++;
+        } else if (cd.get(i) instanceof Annotation a) {
+            annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             i++;
         }
 
@@ -79,26 +86,32 @@ public class ParseConstructorDeclaration extends CommonParse {
         }
         ExplicitConstructorInvocation explicitConstructorInvocation;
         while (i < cd.size() && cd.get(i) instanceof Delimiter) i++;
-        if (cd.get(i) instanceof org.parsers.java.ast.ExplicitConstructorInvocation eci) {
+        if (i < cd.size() && cd.get(i) instanceof org.parsers.java.ast.ExplicitConstructorInvocation eci) {
             explicitConstructorInvocation = eci;
             i++;
         } else {
             explicitConstructorInvocation = null;
         }
         Node toResolve;
+        Node cdi = i >= cd.size() ? null : cd.get(i);
         if (cd instanceof CompactConstructorDeclaration) {
             toResolve = cd; // because the statements simply follow the identifier
-        } else if (cd.get(i) instanceof ExpressionStatement est) {
+        } else if (cdi instanceof ExpressionStatement est) {
             toResolve = est;
-        } else if (cd.get(i) instanceof CodeBlock codeBlock) {
+        } else if (cdi instanceof CodeBlock codeBlock) {
             toResolve = codeBlock;
         } else {
             toResolve = null;
         }
-        Context newContext = context.newVariableContextForMethodBlock(methodInfo, null);
-        context.resolver().add(builder, context.emptyForwardType(), explicitConstructorInvocation, toResolve,
-                newContext);
+        if (toResolve != null) {
+            Context newContext = context.newVariableContextForMethodBlock(methodInfo, null);
+            context.resolver().add(builder, context.emptyForwardType(), explicitConstructorInvocation, toResolve,
+                    newContext);
+        } else {
+            builder.setMethodBody(runtime.emptyBlock());
+        }
         builder.commitParameters();
+        builder.addAnnotations(annotations);
         methodModifiers.forEach(builder::addMethodModifier);
         Access access = access(methodModifiers);
         Access accessCombined = context.enclosingType().access().combine(access);
