@@ -3,7 +3,9 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.Wildcard;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -35,6 +37,14 @@ public class ParseType extends CommonParse {
             pt = nt.asSimpleParameterizedType();
         } else if (n0 instanceof ObjectType ot) {
             pt = parseObjectType(context, ot);
+        } else if (n0 instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
+            // ?, ? super T ==
+            if (nodes.size() > 1 && nodes.get(1) instanceof WildcardBounds bounds) {
+                pt = parseWildcardBounds(context, bounds);
+            } else {
+                // simply ?
+                pt = runtime.parameterizedTypeWildcard();
+            }
         } else {
             if (n0 instanceof PrimitiveType primitive && primitive.get(0) instanceof Primitive p) {
                 tt = p.getType();
@@ -55,6 +65,18 @@ public class ParseType extends CommonParse {
         } else {
             return pt.copyWithArrays(arrays);
         }
+    }
+
+    private ParameterizedType parseWildcardBounds(Context context, WildcardBounds bounds) {
+        Wildcard wildcard;
+        Node.NodeType type = bounds.get(0).getType();
+        if (Token.TokenType.EXTENDS.equals(type)) {
+            wildcard = runtime.wildcardExtends();
+        } else if (Token.TokenType.SUPER.equals(type)) {
+            wildcard = runtime.wildcardSuper();
+        } else throw new Summary.ParseException(context.info(), "Expect super or extends");
+        ParameterizedType pt = parse(context, bounds.get(1));
+        return pt.withWildcard(wildcard);
     }
 
     private ParameterizedType primitiveType(Token.TokenType tt) {

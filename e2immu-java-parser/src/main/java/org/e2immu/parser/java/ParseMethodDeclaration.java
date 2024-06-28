@@ -11,6 +11,7 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
+import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,19 +123,49 @@ public class ParseMethodDeclaration extends CommonParse {
 
     private void parseFormalParameter(Context context, MethodInfo.Builder builder, FormalParameter fp) {
         ParameterizedType typeOfParameter;
-        Node node0 = fp.get(0);
-        if (node0 instanceof Type type) {
-            typeOfParameter = parsers.parseType().parse(context, type);
+        List<AnnotationExpression> annotations = new ArrayList<>();
+        int i = 0;
+        Node node0 = fp.get(i);
+        if (node0 instanceof Modifiers) {
+            for (Node modifier : node0) {
+                if (modifier instanceof Annotation a) {
+                    annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                } else {
+                    throw new Summary.ParseException(context.info(), "Expect formal parameter's modifier to be an annotation");
+                }
+            }
+            ++i;
+        } else if (node0 instanceof Annotation a) {
+            annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+            ++i;
+        }
+        Node node1 = fp.get(i);
+        boolean varargs;
+        if (node1 instanceof Type type) {
+            ParameterizedType pt = parsers.parseType().parse(context, type);
+            if (fp.get(i + 1) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
+                ++i;
+                typeOfParameter = pt.copyWithArrays(pt.arrays() + 1);
+                varargs = true;
+            } else {
+                typeOfParameter = pt;
+                varargs = false;
+            }
+            ++i;
+        } else {
+            throw new Summary.ParseException(context.info(), "Expect formal parameter's type");
+        }
+        String parameterName;
+        Node node2 = fp.get(i);
+        if (node2 instanceof Identifier identifier) {
+            parameterName = identifier.getSource();
         } else {
             throw new UnsupportedOperationException();
         }
-        String parameterName;
-        Node node1 = fp.get(1);
-        if (node1 instanceof Identifier identifier) {
-            parameterName = identifier.getSource();
-        } else throw new UnsupportedOperationException();
         ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
         ParameterInfo.Builder piBuilder = pi.builder();
+        piBuilder.addAnnotations(annotations);
+        piBuilder.setVarArgs(varargs);
         // do not commit yet!
         context.variableContext().add(pi);
     }

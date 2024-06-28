@@ -89,7 +89,12 @@ public class ParseCompilationUnit extends CommonParse {
 
     private ImportStatement parseImportDeclaration(ImportDeclaration id) {
         boolean isStatic = id.get(1) instanceof KeyWord kw && Token.TokenType.STATIC.equals(kw.getType());
-        String importString = id.get(isStatic ? 2 : 1).getSource();
+        int i = isStatic ? 2 : 1;
+        String importString = id.get(i).getSource();
+        if (id.get(i + 1) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())
+            && id.get(i + 2) instanceof Operator o && Token.TokenType.STAR.equals(o.getType())) {
+            return runtime.newImportStatement(importString + ".*", isStatic);
+        }
         return runtime.newImportStatement(importString, isStatic);
     }
 }

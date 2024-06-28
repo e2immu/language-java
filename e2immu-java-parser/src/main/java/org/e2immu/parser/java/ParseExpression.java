@@ -58,7 +58,7 @@ public class ParseExpression extends CommonParse {
             return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
         }
         if (node instanceof LiteralExpression le) {
-            return parseLiteral(le);
+            return parseLiteral(context, le);
         }
         if (node instanceof ConditionalAndExpression || node instanceof ConditionalOrExpression) {
             return parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
@@ -458,7 +458,7 @@ public class ParseExpression extends CommonParse {
                 .build();
     }
 
-    private Expression parseLiteral(LiteralExpression le) {
+    private Expression parseLiteral(Context context, LiteralExpression le) {
         Node child = le.children().get(0);
         if (child instanceof IntegerLiteral il) {
             return runtime.newInt(il.getValue());
@@ -488,6 +488,9 @@ public class ParseExpression extends CommonParse {
         }
         if (child instanceof NullLiteral) {
             return runtime.nullConstant();
+        }
+        if(child instanceof ThisLiteral) {
+            return runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
     }
