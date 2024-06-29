@@ -1,12 +1,10 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
-import org.e2immu.language.cst.api.info.Access;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.MethodModifier;
-import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -43,7 +41,7 @@ public class ParseMethodDeclaration extends CommonParse {
         int i = 0;
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<MethodModifier> methodModifiers = new ArrayList<>();
-
+        List<Node> typeParametersToParse = new ArrayList<>();
         Node mdi;
         while (!((mdi = md.get(i)) instanceof ReturnType)) {
             if (mdi instanceof Annotation a) {
@@ -58,16 +56,16 @@ public class ParseMethodDeclaration extends CommonParse {
                 }
             } else if (mdi instanceof KeyWord keyWord) {
                 methodModifiers.add(modifier(keyWord));
+            } else if (mdi instanceof TypeParameters) {
+                int j = 1;
+                while (j < mdi.size()) {
+                    typeParametersToParse.add(mdi.get(j));
+                    j += 2;
+                }
             }
             i++;
         }
-
-        MethodInfo.MethodType methodType;
-        ParameterizedType returnType;
         if (md.get(i) instanceof ReturnType rt) {
-            // depending on the modifiers...
-            methodType = runtime.methodTypeMethod();
-            returnType = parsers.parseType().parse(context, rt);
             i++;
         } else throw new UnsupportedOperationException();
         String name;
@@ -75,11 +73,24 @@ public class ParseMethodDeclaration extends CommonParse {
             name = identifier.getSource();
             i++;
         } else throw new UnsupportedOperationException();
-        MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
-        MethodInfo.Builder builder = methodInfo.builder().setReturnType(returnType);
+        MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, runtime.methodTypeMethod());
+        MethodInfo.Builder builder = methodInfo.builder();
 
-        ForwardType forwardType = context.newForwardType(returnType);
-        Context newContext = context.newVariableContextForMethodBlock(methodInfo, forwardType);
+        Context contextWithTP = context.newTypeContext();
+
+        int tpIndex = 0;
+        for (Node unparsedTypeParameter : typeParametersToParse) {
+            TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, methodInfo, tpIndex);
+            contextWithTP.typeContext().addToContext(typeParameter);
+            builder.addTypeParameter(typeParameter);
+            tpIndex++;
+        }
+        // we need the type parameters in the context, because the return type may be one of them/contain one
+        ParameterizedType returnType = parsers.parseType().parse(contextWithTP, rt);
+        builder.setReturnType(returnType);
+
+        ForwardType forwardType = contextWithTP.newForwardType(returnType);
+        Context newContext = contextWithTP.newVariableContextForMethodBlock(methodInfo, forwardType);
 
         if (md.get(i) instanceof FormalParameters fps) {
             for (Node child : fps.children()) {
@@ -119,6 +130,27 @@ public class ParseMethodDeclaration extends CommonParse {
         builder.setSource(source(methodInfo, null, md));
         builder.addAnnotations(annotations);
         return methodInfo;
+    }
+
+    // code copied from ParseTypeDeclaration
+    private TypeParameter parseTypeParameter(Context context, Node node, MethodInfo owner, int typeParameterIndex) {
+        String name;
+        if (node instanceof Identifier) {
+            name = node.getSource();
+        } else if (node instanceof org.parsers.java.ast.TypeParameter tp) {
+            name = tp.get(0).getSource();
+        } else throw new UnsupportedOperationException();
+        TypeParameter typeParameter = runtime.newTypeParameter(typeParameterIndex, name, owner);
+        context.typeContext().addToContext(typeParameter);
+        // do type bounds
+        TypeParameter.Builder builder = typeParameter.builder();
+        if (node instanceof org.parsers.java.ast.TypeParameter tp) {
+            if (tp.get(1) instanceof TypeBound tb) {
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1));
+                builder.addTypeBound(typeBound);
+            } else throw new UnsupportedOperationException();
+        }
+        return builder.commit();
     }
 
     private void parseFormalParameter(Context context, MethodInfo.Builder builder, FormalParameter fp) {

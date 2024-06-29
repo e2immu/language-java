@@ -190,7 +190,7 @@ public class ParseExpression extends CommonParse {
             commonType = commonType == null ? e.parameterizedType() : runtime.commonType(commonType, e.parameterizedType());
         }
         if (commonType == null) {
-            commonType = forwardType.type();
+            commonType = forwardType.type().copyWithOneFewerArrays();
         }
         assert commonType != null;
         return runtime.newArrayInitializer(List.copyOf(expressions), commonType);
