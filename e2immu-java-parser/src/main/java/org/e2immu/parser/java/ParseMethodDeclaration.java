@@ -24,7 +24,7 @@ public class ParseMethodDeclaration extends CommonParse {
         super(runtime, parsers);
     }
 
-    public MethodInfo parse(Context context, MethodDeclaration md) {
+    public MethodInfo parse(Context context, Node md) {
         try {
             return internalParse(context, md);
         } catch (Summary.FailFastException ffe) {
@@ -37,13 +37,14 @@ public class ParseMethodDeclaration extends CommonParse {
         }
     }
 
-    private MethodInfo internalParse(Context context, MethodDeclaration md) {
+    private MethodInfo internalParse(Context context, Node md) {
         int i = 0;
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<MethodModifier> methodModifiers = new ArrayList<>();
         List<Node> typeParametersToParse = new ArrayList<>();
-        Node mdi;
-        while (!((mdi = md.get(i)) instanceof ReturnType)) {
+
+        while (true) {
+            Node mdi = md.get(i);
             if (mdi instanceof Annotation a) {
                 annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (mdi instanceof Modifiers modifiers) {
@@ -62,10 +63,18 @@ public class ParseMethodDeclaration extends CommonParse {
                     typeParametersToParse.add(mdi.get(j));
                     j += 2;
                 }
+            } else {
+                break;
             }
             i++;
         }
-        if (md.get(i) instanceof ReturnType rt) {
+        ReturnType rt;
+        boolean constructor = md instanceof ConstructorDeclaration;
+        boolean compactConstructor = md instanceof CompactConstructorDeclaration;
+        if (constructor) {
+            rt = null;
+        } else if (md.get(i) instanceof ReturnType) {
+            rt = (ReturnType) md.get(i);
             i++;
         } else throw new UnsupportedOperationException();
         String name;
@@ -73,7 +82,23 @@ public class ParseMethodDeclaration extends CommonParse {
             name = identifier.getSource();
             i++;
         } else throw new UnsupportedOperationException();
-        MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, runtime.methodTypeMethod());
+
+        MethodInfo.MethodType methodType;
+        if (compactConstructor) {
+            methodType = runtime.methodTypeCompactConstructor();
+        } else if (constructor) {
+            methodType = runtime.methodTypeConstructor();
+        } else if (methodModifiers.contains(runtime.methodModifierAbstract())) {
+            methodType = runtime.methodTypeAbstractMethod();
+        } else if (methodModifiers.contains(runtime.methodModifierDefault())) {
+            methodType = runtime.methodTypeDefaultMethod();
+        } else if (methodModifiers.contains(runtime.methodModifierStatic())) {
+            methodType = runtime.methodTypeStaticMethod();
+        } else {
+            methodType = runtime.methodTypeMethod();
+        }
+
+        MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder();
 
         Context contextWithTP = context.newTypeContext();
@@ -86,7 +111,8 @@ public class ParseMethodDeclaration extends CommonParse {
             tpIndex++;
         }
         // we need the type parameters in the context, because the return type may be one of them/contain one
-        ParameterizedType returnType = parsers.parseType().parse(contextWithTP, rt);
+        ParameterizedType returnType = rt == null ? runtime.parameterizedTypeReturnTypeOfConstructor()
+                : parsers.parseType().parse(contextWithTP, rt);
         builder.setReturnType(returnType);
 
         ForwardType forwardType = contextWithTP.newForwardType(returnType);
@@ -99,7 +125,9 @@ public class ParseMethodDeclaration extends CommonParse {
                 }
             }
             i++;
-        } else throw new UnsupportedOperationException("Node " + md.get(i).getClass());
+        } else if (!compactConstructor) {
+            throw new UnsupportedOperationException("Node " + md.get(i).getClass());
+        } // a constructor can be a "compact" one in records
         if (md.get(i) instanceof ThrowsList throwsList) {
             for (int j = 1; j < throwsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, throwsList.get(j));
@@ -108,19 +136,33 @@ public class ParseMethodDeclaration extends CommonParse {
             i++;
         }
         while (i < md.size() && md.get(i) instanceof Delimiter) i++;
-        if (i < md.size()) {
-            if (md.get(i) instanceof CodeBlock codeBlock) {
-                /*
-                 delay the parsing of the code-block for a second phase, when all methods are known so that they can
-                 be resolved
-                 */
-                newContext.resolver().add(builder, newContext.emptyForwardType(), null, codeBlock, newContext);
-            } else if (md.get(i) instanceof StatementExpression se) {
-                newContext.resolver().add(builder, newContext.emptyForwardType(), null, se, newContext);
-            } else throw new UnsupportedOperationException();
+
+        ExplicitConstructorInvocation explicitConstructorInvocation;
+        if (i < md.size() && md.get(i) instanceof org.parsers.java.ast.ExplicitConstructorInvocation eci) {
+            explicitConstructorInvocation = eci;
+            i++;
+        } else {
+            explicitConstructorInvocation = null;
+        }
+        Node toResolve;
+        Node cdi = i >= md.size() ? null : md.get(i);
+        if (compactConstructor) {
+            toResolve = md; // because the statements simply follow the identifier
+        } else if (cdi instanceof ExpressionStatement || cdi instanceof StatementExpression) {
+            toResolve = cdi;
+        } else if (cdi instanceof CodeBlock codeBlock) {
+            toResolve = codeBlock;
+        } else {
+            toResolve = null;
+        }
+        if (toResolve != null || explicitConstructorInvocation != null) {
+            Context resContext = context.newVariableContextForMethodBlock(methodInfo, null);
+            resContext.resolver().add(builder, resContext.emptyForwardType(), explicitConstructorInvocation, toResolve,
+                    newContext);
         } else {
             builder.setMethodBody(runtime.emptyBlock());
         }
+
         builder.commitParameters();
         methodModifiers.forEach(builder::addMethodModifier);
         Access access = access(methodModifiers);

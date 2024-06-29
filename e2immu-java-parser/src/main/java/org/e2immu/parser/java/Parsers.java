@@ -12,7 +12,6 @@ public class Parsers {
     private final ParseAnnotationMethodDeclaration parseAnnotationMethodDeclaration;
     private final ParseFieldDeclaration parseFieldDeclaration;
     private final ParseAnnotationExpression parseAnnotationExpression;
-    private final ParseConstructorDeclaration parseConstructorDeclaration;
     private final ParseMethodCall parseMethodCall;
     private final ParseMethodReference parseMethodReference;
     private final ParseConstructorCall parseConstructorCall;
@@ -29,7 +28,6 @@ public class Parsers {
         parseStatement = new ParseStatement(runtime, this);
         parseAnnotationExpression = new ParseAnnotationExpression(runtime, this);
         parseAnnotationMethodDeclaration = new ParseAnnotationMethodDeclaration(runtime, this);
-        parseConstructorDeclaration = new ParseConstructorDeclaration(runtime, this);
         parseMethodCall = new ParseMethodCall(runtime, this);
         parseMethodReference = new ParseMethodReference(runtime, this);
         parseConstructorCall = new ParseConstructorCall(runtime, this);
@@ -70,10 +68,6 @@ public class Parsers {
 
     public ParseAnnotationMethodDeclaration parseAnnotationMethodDeclaration() {
         return parseAnnotationMethodDeclaration;
-    }
-
-    public ParseConstructorDeclaration parseConstructorDeclaration() {
-        return parseConstructorDeclaration;
     }
 
     public ParseMethodDeclaration parseMethodDeclaration() {

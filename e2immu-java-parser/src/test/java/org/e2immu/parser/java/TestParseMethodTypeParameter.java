@@ -19,8 +19,10 @@ public class TestParseMethodTypeParameter extends CommonTestParse {
             import java.util.function.Function;
             class C {
               interface I {}
-              <T> T method(String s);
-              <T, S extends I> T method2(S s);
+              <T> T method(String s) { return null; }
+              <T, S extends I> T method2(S s) { return null; }
+              private <T> C(T t, int i) { }
+              <T> C(T t) { }
             }
             """;
 

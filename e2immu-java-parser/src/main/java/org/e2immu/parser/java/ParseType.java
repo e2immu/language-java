@@ -30,6 +30,9 @@ public class ParseType extends CommonParse {
         Token.TokenType tt;
         ParameterizedType pt;
         Node n0 = nodes.get(0);
+        if (n0 instanceof ReferenceType rt) {
+            return parse(context, rt);
+        }
         if (nodes instanceof ObjectType ot) {
             pt = parseObjectType(context, ot);
         } else if (n0 instanceof Identifier identifier) {

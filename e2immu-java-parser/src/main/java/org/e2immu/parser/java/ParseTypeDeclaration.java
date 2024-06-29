@@ -98,7 +98,7 @@ public class ParseTypeDeclaration extends CommonParse {
         TypeInfo typeInfo;
 
         if (packageNameOrEnclosing.isLeft()) {
-            if(typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
+            if (typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
                 typeInfo = typeInfoOrNull; // we must re-use this object!!
             } else {
                 typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getLeft(), simpleName);
@@ -288,7 +288,7 @@ public class ParseTypeDeclaration extends CommonParse {
                     builder.addMethod(methodInfo);
                 } // else error
             } else if (child instanceof ConstructorDeclaration cd) {
-                MethodInfo constructor = parsers.parseConstructorDeclaration().parse(newContext, cd);
+                MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd);
                 if (constructor != null) {
                     builder.addConstructor(constructor);
                 } // else error
