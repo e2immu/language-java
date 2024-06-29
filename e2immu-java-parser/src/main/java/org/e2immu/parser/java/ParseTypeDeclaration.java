@@ -65,20 +65,19 @@ public class ParseTypeDeclaration extends CommonParse {
         List<AnnotationExpression> annotations = new ArrayList<>();
         TypeNature typeNature = null;
         List<TypeModifier> typeModifiers = new ArrayList<>();
-        Node tdi;
-        while (!((tdi = td.get(i)) instanceof Identifier)) {
+        while (true) {
+            Node tdi = td.get(i);
             if (tdi instanceof Annotation a) {
                 annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
-                    if (node instanceof MarkerAnnotation a) {
+                    if (node instanceof Annotation a) {
                         annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         typeModifiers.add(getTypeModifier(keyWord.getType()));
                     }
                 }
-            }
-            if (tdi instanceof KeyWord keyWord) {
+            } else if (tdi instanceof KeyWord keyWord) {
                 TypeModifier tm = getTypeModifier(keyWord.getType());
                 if (tm != null) typeModifiers.add(tm);
                 TypeNature tn = getTypeNature(td, keyWord.getType());
@@ -86,7 +85,11 @@ public class ParseTypeDeclaration extends CommonParse {
                     assert typeNature == null;
                     typeNature = tn;
                 }
-            }
+            } else if (tdi instanceof Delimiter) {
+                if (!Token.TokenType.AT.equals(tdi.getType())) {
+                    throw new Summary.ParseException(context.info(), "Expect @ delimiter");
+                }
+            } else break;
             i++;
         }
         if (typeNature == null) throw new UnsupportedOperationException("Have not determined type nature");
@@ -254,7 +257,7 @@ public class ParseTypeDeclaration extends CommonParse {
         return methodInfo;
     }
 
-    public ConstructorCounts parseBody(Context newContext,
+    ConstructorCounts parseBody(Context newContext,
                                        Node body,
                                        TypeNature typeNature,
                                        TypeInfo typeInfo,
@@ -265,10 +268,12 @@ public class ParseTypeDeclaration extends CommonParse {
         int countNormalConstructors = 0;
 
         for (Node child : body.children()) {
-            if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
-            else if (child instanceof CompactConstructorDeclaration) ++countCompactConstructors;
-            else if (child instanceof ConstructorDeclaration) ++countNormalConstructors;
-            else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
+            if (!(child instanceof EmptyDeclaration)) {
+                if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
+                else if (child instanceof CompactConstructorDeclaration) ++countCompactConstructors;
+                else if (child instanceof ConstructorDeclaration) ++countNormalConstructors;
+                else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
+            }
         }
 
         // FIRST, do subtypes
@@ -282,16 +287,18 @@ public class ParseTypeDeclaration extends CommonParse {
         // THEN, all sorts of methods and constructors
 
         for (Node child : body.children()) {
-            if (child instanceof MethodDeclaration md) {
-                MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
-                if (methodInfo != null) {
-                    builder.addMethod(methodInfo);
-                } // else error
-            } else if (child instanceof ConstructorDeclaration cd) {
-                MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd);
-                if (constructor != null) {
-                    builder.addConstructor(constructor);
-                } // else error
+            if (!(child instanceof EmptyDeclaration)) {
+                if (child instanceof MethodDeclaration md) {
+                    MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
+                    if (methodInfo != null) {
+                        builder.addMethod(methodInfo);
+                    } // else error
+                } else if (child instanceof ConstructorDeclaration cd) {
+                    MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd);
+                    if (constructor != null) {
+                        builder.addConstructor(constructor);
+                    } // else error
+                }
             }
         }
 
