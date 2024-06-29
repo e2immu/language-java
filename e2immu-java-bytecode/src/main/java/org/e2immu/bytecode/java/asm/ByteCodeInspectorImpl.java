@@ -126,13 +126,14 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         }
         TypeInfo typeInfo;
         if (ts == null) {
-            typeInfo = createTypeInfo(path, fqn, loadMode);
+            typeInfo = typeInfoOrNull != null ? typeInfoOrNull : createTypeInfo(path, fqn, loadMode);
             TypeInfoAndStatus inMapAgain = localTypeMap.get(fqn);
             if (inMapAgain != null && (inMapAgain.status == Status.DONE || inMapAgain.status == Status.BEING_LOADED)) {
                 return inMapAgain.typeInfo;
             }
         } else {
             typeInfo = ts.typeInfo;
+            assert typeInfoOrNull == null || typeInfoOrNull == typeInfo;
             if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
                 getOrCreate(typeInfo.primaryType().fullyQualifiedName(), loadMode);
             }
