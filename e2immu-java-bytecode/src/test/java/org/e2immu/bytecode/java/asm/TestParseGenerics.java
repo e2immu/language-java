@@ -124,9 +124,11 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     @Test
     public void testGenericsAbstractClassLoaderValue() throws URISyntaxException {
         TypeParameterContext context = new TypeParameterContext();
-        TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().setPackageName("jdk.internal.loader").build(), "AbstractClassLoaderValue");
-        context.add(new TypeParameterImpl(0, "V", Either.left(typeInfo)).builder().commit());
-        context.add(new TypeParameterImpl(1, "CLV", Either.left(typeInfo)).builder().commit());
+        TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().
+                setPackageName("jdk.internal.loader")
+                .build(), "AbstractClassLoaderValue");
+        context.add(runtime.newTypeParameter(0, "V", typeInfo).builder().commit());
+        context.add(runtime.newTypeParameter(1, "CLV", typeInfo).builder().commit());
 
         compiledTypesManager.add(typeInfo);
 

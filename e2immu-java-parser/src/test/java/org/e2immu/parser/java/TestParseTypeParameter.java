@@ -30,7 +30,7 @@ public class TestParseTypeParameter extends CommonTestParse {
     @Language("java")
     private static final String INPUT2 = """
             package a.b;
-            public interface C<T, U extends Class<?>> {
+            public interface C<T, @SuppressWarnings("?") U extends Class<?>> {
               T t();
               U u();
             }
@@ -56,5 +56,8 @@ public class TestParseTypeParameter extends CommonTestParse {
         assertNull(typeBound.typeParameter());
         assertEquals("java.lang.Class", typeBound.typeInfo().fullyQualifiedName());
         assertEquals("U extends Class<?>", pt.fullyQualifiedName());
+
+        assertEquals(1, pt.typeParameter().annotations().size());
+        assertEquals("@SuppressWarnings(\"?\")", pt.typeParameter().annotations().get(0).toString());
     }
 }

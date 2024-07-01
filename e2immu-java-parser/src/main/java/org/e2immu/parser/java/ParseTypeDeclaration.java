@@ -319,26 +319,6 @@ public class ParseTypeDeclaration extends CommonParse {
         return new ConstructorCounts(countNormalConstructors, countCompactConstructors);
     }
 
-    private TypeParameter parseTypeParameter(Context context, Node node, TypeInfo owner, int typeParameterIndex) {
-        String name;
-        if (node instanceof Identifier) {
-            name = node.getSource();
-        } else if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            name = tp.get(0).getSource();
-        } else throw new UnsupportedOperationException();
-        TypeParameter typeParameter = runtime.newTypeParameter(typeParameterIndex, name, owner);
-        context.typeContext().addToContext(typeParameter);
-        // do type bounds
-        TypeParameter.Builder builder = typeParameter.builder();
-        if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            if (tp.get(1) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1));
-                builder.addTypeBound(typeBound);
-            } else throw new UnsupportedOperationException();
-        }
-        return builder.commit();
-    }
-
     private TypeNature getTypeNature(TypeDeclaration td, Token.TokenType tt) {
         return switch (tt) {
             case CLASS -> runtime.typeNatureClass();
