@@ -46,6 +46,7 @@ record ParseGenerics(Runtime runtime,
 
     int parseTypeGenerics(String signature) {
         IterativeParsing<TypeParameter> iterativeParsing = new IterativeParsing<>();
+        int infiniteLoopProtection = 0;
         while (true) {
             iterativeParsing.startPos = 1;
             AtomicInteger index = new AtomicInteger();
@@ -67,6 +68,10 @@ record ParseGenerics(Runtime runtime,
             } while (iterativeParsing.more);
             if (!iterativeParsing.typeNotFoundError) break;
             iterativeParsing = new IterativeParsing<>();
+            infiniteLoopProtection++;
+            if (infiniteLoopProtection > 100) {
+                throw new UnsupportedOperationException("In infinite loop");
+            }
         }
         return iterativeParsing.endPos;
     }

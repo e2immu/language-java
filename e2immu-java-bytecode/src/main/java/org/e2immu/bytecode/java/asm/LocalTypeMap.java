@@ -41,6 +41,7 @@ public interface LocalTypeMap {
 
     // do actual byte code inspection
     @Modified
-    TypeInfo inspectFromPath(TypeInfo typeInfo, SourceFile name, LoadMode loadMode);
+    TypeInfo inspectFromPath(TypeInfo typeInfo, SourceFile name,
+                             TypeParameterContext typeParameterContext, LoadMode loadMode);
 
 }

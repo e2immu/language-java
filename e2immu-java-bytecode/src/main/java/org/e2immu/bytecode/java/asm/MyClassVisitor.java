@@ -324,7 +324,7 @@ public class MyClassVisitor extends ClassVisitor {
                     TypeInfo subType = runtime.newTypeInfo(enclosing, innerName);
                     checkTypeFlags(access, subType.builder());
                     SourceFile newPath = new SourceFile(name + ".class", pathAndURI.uri());
-                    localTypeMap.inspectFromPath(subType, newPath, LocalTypeMap.LoadMode.NOW);
+                    localTypeMap.inspectFromPath(subType, newPath, typeParameterContext, LocalTypeMap.LoadMode.NOW);
                     if (stepDown) {
                         currentTypeBuilder.addSubType(subType);
                     }
