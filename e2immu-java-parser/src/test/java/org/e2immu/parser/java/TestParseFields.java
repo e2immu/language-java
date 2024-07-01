@@ -29,6 +29,7 @@ public class TestParseFields extends CommonTestParse {
               private String b;
               // a transient character
               transient char c = ' ';
+              @SuppressWarnings("!")
               public final double d = 3 + a;
               public int a() {
                   return a;
@@ -81,6 +82,7 @@ public class TestParseFields extends CommonTestParse {
                 assertTrue(fr.scopeIsThis());
             } else fail();
         } else fail();
+        assertEquals(1, d.annotations().size());
 
         MethodInfo methodInfo = typeInfo.methods().get(0);
         assertEquals("a", methodInfo.name());

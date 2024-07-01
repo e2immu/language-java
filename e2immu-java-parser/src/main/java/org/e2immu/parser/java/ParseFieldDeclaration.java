@@ -33,7 +33,7 @@ public class ParseFieldDeclaration extends CommonParse {
                 annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (fdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
-                    if (node instanceof MarkerAnnotation a) {
+                    if (node instanceof Annotation a) {
                         annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         fieldModifiers.add(modifier(keyWord));
