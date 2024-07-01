@@ -49,6 +49,13 @@ public class ParseType extends CommonParse {
                 pt = runtime.parameterizedTypeWildcard();
             }
         } else {
+            if (n0 instanceof PrimitiveArrayType pat && pat.get(0) instanceof PrimitiveType primitive && primitive.get(0) instanceof Primitive p) {
+                tt = p.getType();
+                int arrays = countArrays(pat);
+                ParameterizedType parameterizedType = primitiveType(tt);
+                assert parameterizedType != null;
+                return parameterizedType.copyWithArrays(arrays);
+            }
             if (n0 instanceof PrimitiveType primitive && primitive.get(0) instanceof Primitive p) {
                 tt = p.getType();
             } else if (n0 instanceof KeyWord keyWord && nodes.size() == 1) {
