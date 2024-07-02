@@ -140,4 +140,15 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         int pos = parseGenerics.parseTypeGenerics(signature) + 1;
         assertEquals(expected, pos);
     }
+
+    @Test
+    public void testEnumSet() {
+        TypeInfo enumSet = compiledTypesManager.getOrLoad(EnumSet.class);
+        MethodInfo constructor = enumSet.findConstructor(2);
+        ParameterizedType p0Type = constructor.parameters().get(0).parameterizedType();
+        assertEquals("Type Class<E extends Enum<E>>", p0Type.toString());
+        ParameterizedType tp0 = p0Type.parameters().get(0);
+        assertEquals("Type param E extends Enum<E>", tp0.toString());
+        assertEquals("E=TP#0 in EnumSet", tp0.typeParameter().toString());
+    }
 }
