@@ -157,8 +157,8 @@ public class ParseMethodDeclaration extends CommonParse {
         }
         if (toResolve != null || explicitConstructorInvocation != null) {
             Context resContext = context.newVariableContextForMethodBlock(methodInfo, null);
-            resContext.resolver().add(builder, resContext.emptyForwardType(), explicitConstructorInvocation, toResolve,
-                    newContext);
+            resContext.resolver().add(methodInfo, builder, resContext.emptyForwardType(), explicitConstructorInvocation,
+                    toResolve, newContext);
         } else {
             builder.setMethodBody(runtime.emptyBlock());
         }

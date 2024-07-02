@@ -81,7 +81,7 @@ public class ParseFieldDeclaration extends CommonParse {
         context.variableContext().add(fieldReference);
         if (expression != null) {
             ForwardType fwd = context.newForwardType(fieldInfo.type());
-            context.resolver().add(fieldInfo.builder(), fwd, null, expression, context);
+            context.resolver().add(fieldInfo, fieldInfo.builder(), fwd, null, expression, context);
         }
         return fieldInfo;
     }

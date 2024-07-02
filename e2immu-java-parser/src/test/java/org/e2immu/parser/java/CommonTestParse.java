@@ -169,7 +169,7 @@ public class CommonTestParse {
         SourceTypesImpl sourceTypes = new SourceTypesImpl();
         CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
         TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);
-        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
+        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
         try {
@@ -185,7 +185,7 @@ public class CommonTestParse {
         Summary failFastSummary = new SummaryImpl(true);
         JavaParser parser = new JavaParser(input);
         parser.setParserTolerant(false);
-        Resolver resolver = new ResolverImpl(new ParseHelperImpl(runtime));
+        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
         SourceTypesImpl sourceTypes = new SourceTypesImpl();
         CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
         TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);

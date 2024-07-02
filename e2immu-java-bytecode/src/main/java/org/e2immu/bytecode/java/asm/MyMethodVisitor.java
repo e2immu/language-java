@@ -195,6 +195,7 @@ public class MyMethodVisitor extends MethodVisitor {
             LOGGER.error("Caught exception parsing {}, method {}", typeInfo.fullyQualifiedName(), methodInfo.name());
             throw e;
         }
+        methodInfo.builder().setMethodBody(runtime.emptyBlock());
         methodInfo.builder().commit();
         if (methodInfo.isConstructor()) {
             typeInfo.builder().addConstructor(methodInfo);
