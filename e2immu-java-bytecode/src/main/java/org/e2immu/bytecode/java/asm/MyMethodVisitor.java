@@ -17,10 +17,7 @@ package org.e2immu.bytecode.java.asm;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
-import org.e2immu.language.cst.api.info.Access;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.ParameterInfo;
-import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.objectweb.asm.AnnotationVisitor;
@@ -31,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.ASM9;
 
@@ -117,7 +115,7 @@ public class MyMethodVisitor extends MethodVisitor {
     private final ParamBuilder[] parameterInspectionBuilders;
     private final int numberOfParameters;
     private final boolean lastParameterIsVarargs;
-
+    private final ComputeMethodOverrides computeMethodOverrides;
 
     public MyMethodVisitor(Runtime runtime,
                            TypeParameterContext typeContext,
@@ -139,6 +137,7 @@ public class MyMethodVisitor extends MethodVisitor {
             parameterInspectionBuilders[i] = new ParamBuilder(i);
         }
         this.lastParameterIsVarargs = lastParameterIsVarargs;
+        this.computeMethodOverrides = runtime.computeMethodOverrides();
     }
 
     @Override
@@ -196,6 +195,9 @@ public class MyMethodVisitor extends MethodVisitor {
             throw e;
         }
         methodInfo.builder().setMethodBody(runtime.emptyBlock());
+        Set<MethodInfo> overrides = computeMethodOverrides.overrides(methodInfo);
+        methodInfo.builder().addOverrides(overrides);
+
         methodInfo.builder().commit();
         if (methodInfo.isConstructor()) {
             typeInfo.builder().addConstructor(methodInfo);
