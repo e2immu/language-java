@@ -150,5 +150,9 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         ParameterizedType tp0 = p0Type.parameters().get(0);
         assertEquals("Type param E extends Enum<E>", tp0.toString());
         assertEquals("E=TP#0 in EnumSet", tp0.typeParameter().toString());
+        assertSame(enumSet.typeParameters().get(0), tp0.typeParameter());
+        
+        TypeInfo enumSetProxy = enumSet.findSubType("SerializationProxy");
+        assertEquals("E=TP#0 in SerializationProxy", enumSetProxy.typeParameters().get(0).toString());
     }
 }
