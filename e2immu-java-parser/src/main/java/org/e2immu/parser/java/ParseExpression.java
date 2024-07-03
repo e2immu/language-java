@@ -99,6 +99,9 @@ public class ParseExpression extends CommonParse {
             return runtime.newVariableExpressionBuilder().addComments(comments).setSource(source)
                     .setVariable(variable).build();
         }
+        if (node instanceof ClassLiteral cl) {
+            return parseClassLiteral(context, cl);
+        }
         if (node instanceof Parentheses p) {
             return parseParentheses(context, index, forwardType, p);
         }
@@ -120,10 +123,15 @@ public class ParseExpression extends CommonParse {
         if (node instanceof TernaryExpression) {
             return inlineConditional(context, index, forwardType, comments, source, node);
         }
-        if (node instanceof ArrayInitializer arrayInitializer) {
-            return arrayInitializer(context, index, forwardType, comments, source, arrayInitializer);
+        if (node instanceof ArrayInitializer || node instanceof MemberValueArrayInitializer) {
+            return arrayInitializer(context, index, forwardType, comments, source, node);
         }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    private Expression parseClassLiteral(Context context, ClassLiteral cl) {
+        ParameterizedType pt = parsers.parseType().parse(context, cl);
+        return runtime.newClassExpression(pt.typeInfo());
     }
 
     /*
@@ -177,10 +185,10 @@ public class ParseExpression extends CommonParse {
     }
 
     private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,
-                                        Source source, ArrayInitializer arrayInitializer) {
+                                        Source source, Node arrayInitializer) {
         List<Expression> expressions = new ArrayList<>();
         ParameterizedType commonType = null;
-        ParameterizedType oneFewer = forwardType.type().copyWithOneFewerArrays();
+        ParameterizedType oneFewer = forwardType.type() == null ? null : forwardType.type().copyWithOneFewerArrays();
         ForwardType forwardTypeOneArrayLess = context.newForwardType(oneFewer);
         for (int i = 1; i < arrayInitializer.size(); i += 2) {
             Node ai = arrayInitializer.get(i);
@@ -489,7 +497,7 @@ public class ParseExpression extends CommonParse {
         if (child instanceof NullLiteral) {
             return runtime.nullConstant();
         }
-        if(child instanceof ThisLiteral) {
+        if (child instanceof ThisLiteral) {
             return runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());

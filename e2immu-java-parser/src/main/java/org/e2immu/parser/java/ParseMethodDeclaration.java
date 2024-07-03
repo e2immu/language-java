@@ -215,7 +215,9 @@ public class ParseMethodDeclaration extends CommonParse {
         } else {
             throw new UnsupportedOperationException();
         }
-        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
+
+        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter, comments(fp),
+                source(context.info(), "", fp), annotations);
         ParameterInfo.Builder piBuilder = pi.builder();
         piBuilder.addAnnotations(annotations);
         piBuilder.setVarArgs(varargs);

@@ -19,7 +19,7 @@ public class TestParseMethods extends CommonTestParse {
             abstract class C {
               public abstract void methodA(String s);
               static class E {}
-              static void methodB(int j) throws E {
+              static void methodB(@SuppressWarnings("!!") int j) throws E {
                  throw new E();
               }
             }
@@ -49,8 +49,11 @@ public class TestParseMethods extends CommonTestParse {
         assertSame(E, mb.exceptionTypes().get(0).typeInfo());
         assertEquals(1, mb.methodBody().statements().size());
         if (mb.methodBody().statements().get(0) instanceof ThrowStatement throwStatement
-            && throwStatement.expression() instanceof ConstructorCall cc) {
+                && throwStatement.expression() instanceof ConstructorCall cc) {
             assertSame(E, cc.constructor().typeInfo());
         } else fail();
+        ParameterInfo pj = mb.parameters().get(0);
+        assertEquals(1, pj.annotations().size());
+        assertEquals("@SuppressWarnings(\"!!\")", pj.annotations().get(0).toString());
     }
 }
