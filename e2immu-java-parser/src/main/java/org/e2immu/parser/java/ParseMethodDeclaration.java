@@ -49,7 +49,7 @@ public class ParseMethodDeclaration extends CommonParse {
                 annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else if (mdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
-                    if (node instanceof MarkerAnnotation a) {
+                    if (node instanceof Annotation a) {
                         annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     } else if (node instanceof KeyWord keyWord) {
                         methodModifiers.add(modifier(keyWord));
