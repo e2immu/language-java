@@ -198,6 +198,10 @@ public class ParseTypeDeclaration extends CommonParse {
                         builder.addField(fieldInfo);
                         enumFields.add(fieldInfo);
                         contextForBody.variableContext().add(runtime.newFieldReference(fieldInfo));
+                        if (ec.size() >= 2 && ec.get(1) instanceof InvocationArguments ia) {
+                            context.resolver().add(fieldInfo, fieldInfo.builder(), context.newForwardType(typeInfo.asSimpleParameterizedType()),
+                                    null, ia, newContext);
+                        }
                     }
                 }
                 TypeInfo enumTypeInfo = runtime.getFullyQualified("java.lang.Enum", true);

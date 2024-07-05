@@ -62,4 +62,39 @@ public class TestParseEnum extends CommonTestParse {
         assertEquals("Type a.b.E", valueOf.returnType().toString());
     }
 
+    @Language("java")
+    private static final String INPUT2 = """
+            package a.b;
+            enum E {
+              A(true, "s"), B(false), C(false, "d");
+              private final boolean b;
+              private final String s;
+  
+              E(boolean b) { this(b, ""); }
+  
+              E(boolean b, String s) {
+                 this.b = b;
+                 this.s = s;
+              }
+              public String s() {
+                return s;
+              }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+        assertTrue(typeInfo.typeNature().isEnum());
+        assertFalse(typeInfo.isExtensible());
+
+        FieldInfo a = typeInfo.getFieldByName("A", true);
+        assertTrue(a.isStatic());
+        assertEquals("new E(true,\"s\")", a.initializer().toString());
+
+        FieldInfo b = typeInfo.getFieldByName("B", true);
+        assertTrue(b.isStatic());
+        assertEquals("new E(false)", b.initializer().toString());
+    }
+
 }

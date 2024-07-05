@@ -193,6 +193,18 @@ public class ParseConstructorCall extends CommonParse {
                 .setAnonymousClass(anonymousType).build();
     }
 
+    public Expression parseEnumConstructor(Context context, String index, TypeInfo enumType, InvocationArguments ia) {
+        List<Object> unparsedArguments = new ArrayList<>();
+        int j = 1;
+        while (j < ia.size() && !(ia.get(j) instanceof Delimiter)) {
+            unparsedArguments.add(ia.get(j));
+            j += 2;
+        }
+        ParameterizedType formalType = enumType.asSimpleParameterizedType();
+        return context.methodResolution().resolveConstructor(context, List.of(), null,
+                index, formalType, formalType, runtime.diamondNo(), unparsedArguments);
+    }
+
     /*
     Type
     a.b.c.Type

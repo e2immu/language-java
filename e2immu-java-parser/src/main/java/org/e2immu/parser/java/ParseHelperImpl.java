@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
@@ -34,6 +35,11 @@ public class ParseHelperImpl implements ParseHelper {
 
     @Override
     public Expression parseExpression(Context context, String index, ForwardType forward, Object expression) {
+        if (expression instanceof InvocationArguments ia) {
+            TypeInfo enumType = forward.type().typeInfo();
+            // we'll have to parse a constructor, new C(invocation arguments)
+            return parsers.parseConstructorCall().parseEnumConstructor(context, index, enumType, ia);
+        }
         return parsers.parseExpression().parse(context, index, forward, (Node) expression);
     }
 
