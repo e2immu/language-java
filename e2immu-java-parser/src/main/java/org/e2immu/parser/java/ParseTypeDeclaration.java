@@ -118,6 +118,7 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.computeAccess();
         builder.setTypeNature(typeNature);
         builder.setSource(source(typeInfo, null, td));
+        builder.setEnclosingMethod(context.enclosingMethod());
 
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
@@ -174,7 +175,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         Node body = td.get(i);
         ConstructorCounts constructorCounts;
-        if (body instanceof ClassOrInterfaceBody || body instanceof RecordBody) {
+        if (body instanceof ClassOrInterfaceBody || body instanceof RecordBody || body instanceof EnumBody) {
             Context contextForBody = newContext.newTypeBody();
             if (body instanceof RecordBody) {
                 assert recordFields != null;
@@ -183,6 +184,25 @@ public class ParseTypeDeclaration extends CommonParse {
                     FieldReference fr = runtime.newFieldReference(rf.fieldInfo);
                     contextForBody.variableContext().add(fr);
                 }
+            } else if (body instanceof EnumBody) {
+                List<FieldInfo> enumFields = new ArrayList<>();
+                ParameterizedType type = typeInfo.asSimpleParameterizedType();
+                for (Node child : body.children()) {
+                    if (child instanceof EnumConstant ec) {
+                        String name = ec.get(0).getSource();
+                        FieldInfo fieldInfo = runtime.newFieldInfo(name, true, type, typeInfo);
+                        fieldInfo.builder().addFieldModifier(runtime.fieldModifierFinal())
+                                .addFieldModifier(runtime.fieldModifierPublic())
+                                .addFieldModifier(runtime.fieldModifierStatic());
+                        // register evaluation of parameters as an object creation for the field
+                        builder.addField(fieldInfo);
+                        enumFields.add(fieldInfo);
+                        contextForBody.variableContext().add(runtime.newFieldReference(fieldInfo));
+                    }
+                }
+                TypeInfo enumTypeInfo = runtime.getFullyQualified("java.lang.Enum", true);
+                builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
+                new EnumSynthetics(runtime, typeInfo, builder).create(context, enumFields);
             }
             constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
@@ -258,10 +278,10 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     ConstructorCounts parseBody(Context newContext,
-                                       Node body,
-                                       TypeNature typeNature,
-                                       TypeInfo typeInfo,
-                                       TypeInfo.Builder builder) {
+                                Node body,
+                                TypeNature typeNature,
+                                TypeInfo typeInfo,
+                                TypeInfo.Builder builder) {
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         int countCompactConstructors = 0;

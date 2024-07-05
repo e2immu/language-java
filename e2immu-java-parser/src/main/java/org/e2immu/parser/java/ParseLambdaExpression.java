@@ -110,6 +110,7 @@ public class ParseLambdaExpression extends CommonParse {
         anonymousType.builder()
                 .addMethod(methodInfo)
                 .addInterfaceImplemented(functionalType)
+                .setEnclosingMethod(context.enclosingMethod())
                 .commit();
 
         return builder

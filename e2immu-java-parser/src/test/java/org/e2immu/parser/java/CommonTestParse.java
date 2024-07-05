@@ -31,6 +31,7 @@ public class CommonTestParse {
             case "java.lang.System" -> system;
             case "java.lang.Math" -> math;
             case "java.lang.Exception" -> exception;
+            case "java.lang.Enum" -> enumTypeInfo;
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
             case "java.util.function.BiConsumer" -> biConsumer;
@@ -64,6 +65,7 @@ public class CommonTestParse {
     protected final TypeInfo biConsumer;
     protected final TypeInfo suppressWarnings;
     protected final TypeInfo override;
+    protected final TypeInfo enumTypeInfo;
 
 
     class CompiledTypesManagerImpl implements CompiledTypesManager {
@@ -82,6 +84,7 @@ public class CommonTestParse {
 
         suppressWarnings = runtime.newTypeInfo(javaLang, "SuppressWarnings");
         clazz = runtime.newTypeInfo(javaLang, "Class");
+        enumTypeInfo = runtime.newTypeInfo(javaLang, "Enum");
         math = runtime.newTypeInfo(javaLang, "Math");
         override = runtime.newTypeInfo(javaLang, "Override");
         printStream = runtime.newTypeInfo(javaIo, "PrintStream");
@@ -94,6 +97,15 @@ public class CommonTestParse {
 
         defineFunction();
         defineBiConsumer();
+
+        MethodInfo equals = runtime.newMethod(runtime.objectTypeInfo(), "equals", runtime.methodTypeMethod());
+        equals.builder().addParameter("other", runtime.objectParameterizedType());
+        equals.builder()
+                .setAccess(runtime.accessPublic())
+                .addMethodModifier(runtime.methodModifierPublic())
+                .setReturnType(runtime.booleanParameterizedType())
+                .commitParameters().commit();
+        runtime.objectTypeInfo().builder().addMethod(equals);
 
         MethodInfo pow = runtime.newMethod(math, "pow", runtime.methodTypeStaticMethod());
         pow.builder().addParameter("base", runtime.doubleParameterizedType());
@@ -129,6 +141,11 @@ public class CommonTestParse {
         system.builder().commit();
 
         override.builder().setTypeNature(runtime.typeNatureAnnotation());
+
+        enumTypeInfo.builder()
+                .setParentClass(runtime.objectParameterizedType())
+                .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo));
+        enumTypeInfo.builder().commit();
     }
 
     private void defineFunction() {
