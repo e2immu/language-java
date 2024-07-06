@@ -137,11 +137,9 @@ public class TestParseSplitExpression0 extends CommonTestParse {
             if (mc.parameterExpressions().get(2) instanceof EnclosedExpression ee) {
                 assertEquals("this.j=k+2", ee.inner().toString());
                 if (ee.inner() instanceof Assignment assignment) {
-                    if (assignment.target() instanceof VariableExpression ve) {
-                        assertEquals("j", ve.variable().simpleName());
-                        if (ve.variable() instanceof FieldReference fr) {
-                            assertSame(runtime.intTypeInfo(), fr.parameterizedType().typeInfo());
-                        } else fail();
+                    assertEquals("j", assignment.variableTarget().simpleName());
+                    if (assignment.variableTarget() instanceof FieldReference fr) {
+                        assertSame(runtime.intTypeInfo(), fr.parameterizedType().typeInfo());
                     } else fail();
                     assertSame(runtime.intTypeInfo(), assignment.parameterizedType().typeInfo());
                 } else fail();

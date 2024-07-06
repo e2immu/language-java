@@ -222,6 +222,9 @@ public class ParseExpression extends CommonParse {
                                        List<Comment> comments,
                                        Source source) {
         Expression target = parse(context, index, context.emptyForwardType(), assignmentExpression.get(0));
+        if (!(target instanceof VariableExpression targetVE)) {
+            throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
+        }
         ForwardType fwd = context.newForwardType(target.parameterizedType());
         Expression value = parse(context, index, fwd, assignmentExpression.get(2));
         MethodInfo assignmentOperator;
@@ -243,7 +246,7 @@ public class ParseExpression extends CommonParse {
             binaryOperator = runtime.divideOperatorInt();
             assignmentOperator = runtime.assignDivideOperatorInt();
         } else throw new UnsupportedOperationException("NYI");
-        return runtime.newAssignmentBuilder().setValue(value).setTarget(target)
+        return runtime.newAssignmentBuilder().setValue(value).setTarget(targetVE)
                 .setBinaryOperator(binaryOperator)
                 .setAssignmentOperator(assignmentOperator)
                 .setAssignmentOperatorIsPlus(false)// not relevant for +=, =
@@ -255,6 +258,9 @@ public class ParseExpression extends CommonParse {
                                       int expressionIndex, int opIndex, boolean pre, Node node) {
         ForwardType fwd = context.newForwardType(runtime.intParameterizedType());
         Expression target = parse(context, index, fwd, node.get(expressionIndex));
+        if (!(target instanceof VariableExpression targetVE)) {
+            throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
+        }
         MethodInfo binaryOperator;
         MethodInfo assignmentOperator;
         boolean isPlus;
@@ -268,7 +274,7 @@ public class ParseExpression extends CommonParse {
                 assignmentOperator = runtime.assignMinusOperatorInt();
                 binaryOperator = runtime.minusOperatorInt();
             } else throw new UnsupportedOperationException();
-            return runtime.newAssignmentBuilder().setValue(runtime.intOne()).setTarget(target)
+            return runtime.newAssignmentBuilder().setValue(runtime.intOne()).setTarget(targetVE)
                     .setAssignmentOperator(assignmentOperator).setAssignmentOperatorIsPlus(isPlus)
                     .setBinaryOperator(binaryOperator)
                     .setPrefixPrimitiveOperator(pre)
