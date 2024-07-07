@@ -7,11 +7,13 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
+import org.e2immu.language.cst.api.statement.SwitchStatementNewStyle;
 import org.e2immu.language.cst.api.statement.SwitchStatementOldStyle;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -272,7 +274,14 @@ public class ParseStatement extends CommonParse {
                     .setExpression(expression).build();
         }
         if (statement instanceof SwitchStatement) {
-            return parseOldStyleSwitch(context, index, statement, comments, source);
+            int no = countStatementsInOldStyleSwitch(statement);
+            if (no > 0) {
+                return parseOldStyleSwitch(context, index, statement, comments, source, no);
+            }
+            int nn = countStatementsInNewStyleSwitch(statement);
+            if (nn > 0) {
+                return parseNewStyleSwitch(context, index, statement, comments, source, nn);
+            }
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
@@ -281,15 +290,58 @@ public class ParseStatement extends CommonParse {
         return (int) tryStatement.children().stream().filter(n -> n instanceof CatchBlock).count();
     }
 
+    private SwitchStatementNewStyle parseNewStyleSwitch(Context context, String index, Statement statement,
+                                                        List<Comment> comments, Source source, int n) {
+        Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
+                statement.get(2));
+        List<SwitchStatementNewStyle.Entry> entries = new ArrayList<>();
+        Context newContext = context.newVariableContext("switch-new-style");
+        int count = 0;
+        for (Node child : statement) {
+            if (child instanceof NewCaseStatement ncs) {
+                SwitchStatementNewStyle.EntryBuilder entryBuilder = runtime.newSwitchStatementNewStyleEntryBuilder();
+                if (ncs.get(0) instanceof NewSwitchLabel nsl) {
+                    List<Expression> conditions = new ArrayList<>();
+                    if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
+                        conditions.add(runtime.newEmptyExpression());
+                    } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
+                        throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
+                    }
+                    int j = 1;
+                    while (j < nsl.size() - 1) {
+                        Expression c = parsers.parseExpression().parse(newContext, index, newContext.emptyForwardType(), nsl.get(j));
+                        conditions.add(c);
+                        Node next = nsl.get(j + 1);
+                        if (!Token.TokenType.COMMA.equals(next.getType())) break;
+                        j += 2;
+                    }
+                    entryBuilder.addConditions(conditions);
+                } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
+                Expression whenExpression = runtime.newEmptyExpression(); // FIXME
+                if (ncs.get(1) instanceof CodeBlock cb) {
+                    String newIndex = index + "." + CommonParse.pad(count, n);
+                    entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, cb));
+                } else if (ncs.get(1) instanceof Statement st) {
+                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    entryBuilder.setStatement(parse(newContext, newIndex, st));
+                } else throw new Summary.ParseException(newContext.info(), "Expect statement");
+                count++;
+                entries.add(entryBuilder.setWhenExpression(whenExpression).build());
+            }
+        }
+        return runtime.newSwitchStatementNewStyleBuilder().addComments(comments).setSource(source)
+                .setSelector(selector).addSwitchEntries(entries).build();
+    }
+
     private SwitchStatementOldStyle parseOldStyleSwitch(Context context, String index, Statement statement,
-                                                        List<Comment> comments, Source source) {
+                                                        List<Comment> comments, Source source, int n) {
         Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
                 statement.get(2));
         Block.Builder builder = runtime.newBlockBuilder();
         List<SwitchStatementOldStyle.SwitchLabel> switchLabels = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-old-style");
         int pos = 0;
-        int n = countStatementsInOldStyleSwitch(statement);
+
         for (int i = 5; i < statement.size(); i++) {
             if (statement.get(i) instanceof ClassicCaseStatement ccs) {
                 if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
@@ -341,6 +393,10 @@ public class ParseStatement extends CommonParse {
             }
         }
         return n;
+    }
+
+    private static int countStatementsInNewStyleSwitch(Statement statement) {
+        return statement.children().stream().mapToInt(n -> n instanceof NewCaseStatement ? 1 : 0).sum();
     }
 
     private Block parseBlockOrStatement(Context context, String index, Node node) {
