@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
+import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -145,6 +146,11 @@ public class ParseExpression extends CommonParse {
         ForwardType selectorTypeFwd = context.newForwardType(selector.parameterizedType());
         List<SwitchEntry> entries = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-expression");
+        TypeInfo selectorTypeInfo = selector.parameterizedType().bestTypeInfo();
+        if (selectorTypeInfo.typeNature().isEnum()) {
+            selectorTypeInfo.fields().stream().filter(Info::isSynthetic)
+                    .forEach(f -> newContext.variableContext().add(runtime.newFieldReference(f)));
+        }
         int count = 0;
         ParameterizedType commonType = null;
         for (Node child : node) {
@@ -168,16 +174,23 @@ public class ParseExpression extends CommonParse {
                     entryBuilder.addConditions(conditions);
                 } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
-                if (ncs.get(1) instanceof CodeBlock cb) {
+                Node ncs1 = ncs.get(1);
+                if (ncs1 instanceof CodeBlock cb) {
                     String newIndex = index + "." + CommonParse.pad(count, n);
                     entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, cb));
-                } else if (ncs.get(1) instanceof org.parsers.java.ast.Expression expression) {
+                } else if (ncs1 instanceof Statement statement) {
+                    // throw statement is allowed!
                     String newIndex = index + "." + CommonParse.pad(count, n) + "0";
-                    Expression pe = parsers.parseExpression().parse(newContext, newIndex, forwardType, expression);
+                    org.e2immu.language.cst.api.statement.Statement st = parsers.parseStatement()
+                            .parse(newContext, newIndex, statement);
+                    entryBuilder.setStatement(st);
+                } else if (ncs1 instanceof org.parsers.java.ast.Expression expression) {
+                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    Expression pe = parse(newContext, newIndex, forwardType, expression);
                     entryBuilder.setStatement(runtime.newExpressionAsStatement(pe));
                     commonType = commonType == null ? pe.parameterizedType()
                             : runtime.commonType(commonType, pe.parameterizedType());
-                } else throw new Summary.ParseException(newContext.info(), "Expect statement");
+                } else throw new Summary.ParseException(newContext.info(), "Expect statement, got " + ncs1.getClass());
                 count++;
                 entries.add(entryBuilder.setWhenExpression(whenExpression).build());
             }

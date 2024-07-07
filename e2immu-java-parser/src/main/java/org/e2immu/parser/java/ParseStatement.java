@@ -3,6 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.*;
@@ -304,6 +305,9 @@ public class ParseStatement extends CommonParse {
                     .setExpression(e).setSource(source).addComments(comments)
                     .build();
         }
+        if(statement instanceof CodeBlock cb) {
+            return parsers.parseBlock().parse(context, index, cb);
+        }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
 
@@ -318,6 +322,11 @@ public class ParseStatement extends CommonParse {
         ForwardType selectorTypeFwd = context.newForwardType(selector.parameterizedType());
         List<SwitchEntry> entries = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-new-style");
+        TypeInfo selectorTypeInfo = selector.parameterizedType().bestTypeInfo();
+        if(selectorTypeInfo.typeNature().isEnum()) {
+            selectorTypeInfo.fields().stream().filter(Info::isSynthetic)
+                    .forEach(f -> newContext.variableContext().add(runtime.newFieldReference(f)));
+        }
         int count = 0;
         for (Node child : statement) {
             if (child instanceof NewCaseStatement ncs) {

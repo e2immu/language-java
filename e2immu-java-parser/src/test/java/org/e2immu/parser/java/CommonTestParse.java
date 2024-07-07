@@ -31,6 +31,7 @@ public class CommonTestParse {
             case "java.lang.System" -> system;
             case "java.lang.Math" -> math;
             case "java.lang.Exception" -> exception;
+            case "java.lang.RuntimeException" -> runtimeException;
             case "java.lang.Enum" -> enumTypeInfo;
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
@@ -60,6 +61,7 @@ public class CommonTestParse {
     protected final TypeInfo math;
     protected final TypeInfo system;
     protected final TypeInfo exception;
+    protected final TypeInfo runtimeException;
     protected final TypeInfo printStream;
     protected final TypeInfo function;
     protected final TypeInfo biConsumer;
@@ -90,6 +92,7 @@ public class CommonTestParse {
         printStream = runtime.newTypeInfo(javaIo, "PrintStream");
         system = runtime.newTypeInfo(javaLang, "System");
         exception = runtime.newTypeInfo(javaLang, "Exception");
+        runtimeException = runtime.newTypeInfo(javaLang, "RuntimeException");
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
 
@@ -146,6 +149,14 @@ public class CommonTestParse {
                 .setParentClass(runtime.objectParameterizedType())
                 .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo));
         enumTypeInfo.builder().commit();
+
+        MethodInfo rteConstructor = runtime.newConstructor(runtimeException);
+        rteConstructor.builder()
+                .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())
+                .commitParameters().commit();
+        runtimeException.builder().setParentClass(runtime.newParameterizedType(exception, 0))
+                .addConstructor(rteConstructor);
+
     }
 
     private void defineFunction() {

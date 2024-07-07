@@ -191,7 +191,9 @@ public class ParseTypeDeclaration extends CommonParse {
                     if (child instanceof EnumConstant ec) {
                         String name = ec.get(0).getSource();
                         FieldInfo fieldInfo = runtime.newFieldInfo(name, true, type, typeInfo);
-                        fieldInfo.builder().addFieldModifier(runtime.fieldModifierFinal())
+                        fieldInfo.builder()
+                                .setSynthetic(true) // to distinguish them from normal, non-enum fields
+                                .addFieldModifier(runtime.fieldModifierFinal())
                                 .addFieldModifier(runtime.fieldModifierPublic())
                                 .addFieldModifier(runtime.fieldModifierStatic());
                         // register evaluation of parameters as an object creation for the field
