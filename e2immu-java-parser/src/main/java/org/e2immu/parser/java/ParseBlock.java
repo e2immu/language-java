@@ -26,9 +26,10 @@ public class ParseBlock extends CommonParse {
         List<Comment> comments = comments(codeBlock);
         Block.Builder builder = runtime.newBlockBuilder();
         int count = startCount;
-        for (Node child : codeBlock.children()) {
+        int n = codeBlock.size() - 2; // delimiters at front and back: '{', '}'
+        for (Node child : codeBlock) {
             if (child instanceof Statement s) {
-                String sIndex = (index.isEmpty() ? "" : index + ".") + count;
+                String sIndex = (index.isEmpty() ? "" : index + ".") + CommonParse.pad(count, n);
                 org.e2immu.language.cst.api.statement.Statement statement = parsers.parseStatement()
                         .parse(context, sIndex, s);
                 builder.addStatement(statement);

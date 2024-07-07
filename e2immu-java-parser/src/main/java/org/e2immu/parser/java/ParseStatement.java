@@ -142,7 +142,9 @@ public class ParseStatement extends CommonParse {
                 i += 2;
             }
             Context newContext = context.newVariableContext("tryBlock");
-            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, tryStatement.get(i));
+            int n = countCatchBlocks(tryStatement) + 2;
+            String firstIndex = index + "." + CommonParse.pad(0, n);
+            Block block = parseBlockOrStatement(newContext, firstIndex, tryStatement.get(i));
             i++;
             org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder()
                     .setBlock(block)
@@ -150,7 +152,8 @@ public class ParseStatement extends CommonParse {
             int blockCount = 1;
             while (tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
-                org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder = runtime.newCatchClauseBuilder();
+                org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
+                        = runtime.newCatchClauseBuilder();
                 int j = 2;
                 if (catchBlock.get(j) instanceof Type type) {
                     ParameterizedType pt = parsers.parseType().parse(context, type);
@@ -163,7 +166,8 @@ public class ParseStatement extends CommonParse {
                 }
                 j++; // ) delimiter
                 if (catchBlock.get(j) instanceof CodeBlock cb) {
-                    Block cbb = parsers.parseBlock().parse(catchContext, index + "." + blockCount, cb);
+                    String newIndex = index + "." + CommonParse.pad(blockCount, n);
+                    Block cbb = parsers.parseBlock().parse(catchContext, newIndex, cb);
                     blockCount++;
                     builder.addCatchClause(ccBuilder.setBlock(cbb).build());
                 } else throw new UnsupportedOperationException();
@@ -172,7 +176,8 @@ public class ParseStatement extends CommonParse {
             Block finallyBlock;
             if (tryStatement.get(i) instanceof FinallyBlock fb) {
                 Context finallyContext = context.newVariableContext("finallyBlock");
-                finallyBlock = parseBlockOrStatement(finallyContext, index + "." + blockCount, fb.get(1));
+                String newIndex = index + "." + CommonParse.pad(blockCount, n);
+                finallyBlock = parseBlockOrStatement(finallyContext, newIndex, fb.get(1));
             } else {
                 finallyBlock = runtime.emptyBlock();
             }
@@ -272,6 +277,10 @@ public class ParseStatement extends CommonParse {
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
 
+    private static int countCatchBlocks(TryStatement tryStatement) {
+        return (int) tryStatement.children().stream().filter(n -> n instanceof CatchBlock).count();
+    }
+
     private SwitchStatementOldStyle parseOldStyleSwitch(Context context, String index, Statement statement,
                                                         List<Comment> comments, Source source) {
         Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
@@ -280,7 +289,7 @@ public class ParseStatement extends CommonParse {
         List<SwitchStatementOldStyle.SwitchLabel> switchLabels = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-old-style");
         int pos = 0;
-
+        int n = countStatementsInOldStyleSwitch(statement);
         for (int i = 5; i < statement.size(); i++) {
             if (statement.get(i) instanceof ClassicCaseStatement ccs) {
                 if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
@@ -292,7 +301,8 @@ public class ParseStatement extends CommonParse {
                     } else {
                         assert Token.TokenType.CASE.equals(csl.get(0).getType());
                         for (int k = 1; k < csl.size(); k += 2) {
-                            Expression literal = parsers.parseExpression().parse(newContext, index + ".0." + pos,
+                            String newIndex = index + ".0." + CommonParse.pad(pos, n);
+                            Expression literal = parsers.parseExpression().parse(newContext, newIndex,
                                     newContext.emptyForwardType(), csl.get(k));
                             SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos,
                                     null, runtime.newEmptyExpression());
@@ -302,8 +312,9 @@ public class ParseStatement extends CommonParse {
                 }
                 for (int j = 1; j < ccs.size(); j++) {
                     if (ccs.get(j) instanceof Statement s) {
+                        String newIndex = index + ".0." + CommonParse.pad(pos, n);
                         org.e2immu.language.cst.api.statement.Statement st
-                                = parse(context, index + ".0." + pos, s);
+                                = parse(context, newIndex, s);
                         builder.addStatement(st);
                         pos++;
                     }
@@ -316,6 +327,20 @@ public class ParseStatement extends CommonParse {
                 .setBlock(builder.build())
                 .addSwitchLabels(switchLabels)
                 .build();
+    }
+
+    private static int countStatementsInOldStyleSwitch(Statement statement) {
+        int n = 0;
+        for (int i = 5; i < statement.size(); i++) {
+            if (statement.get(i) instanceof ClassicCaseStatement ccs) {
+                for (int j = 1; j < ccs.size(); j++) {
+                    if (ccs.get(j) instanceof Statement s) {
+                        n++;
+                    }
+                }
+            }
+        }
+        return n;
     }
 
     private Block parseBlockOrStatement(Context context, String index, Node node) {

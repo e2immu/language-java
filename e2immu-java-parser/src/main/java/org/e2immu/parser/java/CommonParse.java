@@ -1,5 +1,6 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.annotation.NotNull;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
@@ -78,4 +79,33 @@ public abstract class CommonParse {
         return builder.commit();
     }
 
+
+    public static final String AWFULLY_LONG_METHOD = "?? awfully long method";
+
+    /*
+    n <= 10  >> 0..9
+    n <=100  >> 00..99
+    n <=1000 >> 000..999
+     */
+    @NotNull
+    public static String pad(int i, int n) {
+        String s = Integer.toString(i);
+        if (n <= 10) return s;
+        if (n <= 100) {
+            if (i < 10) return "0" + s;
+            return s;
+        }
+        if (n <= 1_000) {
+            if (i < 10) return "00" + s;
+            if (i < 100) return "0" + s;
+            return s;
+        }
+        if (n <= 10_000) {
+            if (i < 10) return "000" + s;
+            if (i < 100) return "00" + s;
+            if (i < 1_000) return "0" + s;
+            return s;
+        }
+        throw new UnsupportedOperationException(AWFULLY_LONG_METHOD);
+    }
 }
