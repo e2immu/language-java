@@ -5,10 +5,7 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.language.cst.api.statement.Block;
-import org.e2immu.language.cst.api.statement.LocalVariableCreation;
-import org.e2immu.language.cst.api.statement.SwitchStatementNewStyle;
-import org.e2immu.language.cst.api.statement.SwitchStatementOldStyle;
+import org.e2immu.language.cst.api.statement.*;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
@@ -17,6 +14,16 @@ import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
+import org.parsers.java.ast.AssertStatement;
+import org.parsers.java.ast.BreakStatement;
+import org.parsers.java.ast.ContinueStatement;
+import org.parsers.java.ast.ReturnStatement;
+import org.parsers.java.ast.Statement;
+import org.parsers.java.ast.SynchronizedStatement;
+import org.parsers.java.ast.ThrowStatement;
+import org.parsers.java.ast.TryStatement;
+import org.parsers.java.ast.WhileStatement;
+import org.parsers.java.ast.YieldStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -283,6 +290,20 @@ public class ParseStatement extends CommonParse {
                 return parseNewStyleSwitch(context, index, statement, comments, source, nn);
             }
         }
+        if (statement instanceof YieldStatement ys) {
+            ForwardType forwardType = context.newForwardType(context.enclosingMethod().returnType());
+            Expression e;
+            if (ys.size() == 2) {
+                assert ys.get(1) instanceof Delimiter;
+                e = runtime.newEmptyExpression();
+            } else {
+                e = parsers.parseExpression().parse(context, index, forwardType, ys.get(1));
+            }
+            assert e != null;
+            return runtime.newYieldBuilder()
+                    .setExpression(e).setSource(source).addComments(comments)
+                    .build();
+        }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
 
@@ -294,12 +315,13 @@ public class ParseStatement extends CommonParse {
                                                         List<Comment> comments, Source source, int n) {
         Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
                 statement.get(2));
-        List<SwitchStatementNewStyle.Entry> entries = new ArrayList<>();
+        ForwardType selectorTypeFwd = context.newForwardType(selector.parameterizedType());
+        List<SwitchEntry> entries = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-new-style");
         int count = 0;
         for (Node child : statement) {
             if (child instanceof NewCaseStatement ncs) {
-                SwitchStatementNewStyle.EntryBuilder entryBuilder = runtime.newSwitchStatementNewStyleEntryBuilder();
+                SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
                     if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
@@ -309,7 +331,7 @@ public class ParseStatement extends CommonParse {
                     }
                     int j = 1;
                     while (j < nsl.size() - 1) {
-                        Expression c = parsers.parseExpression().parse(newContext, index, newContext.emptyForwardType(), nsl.get(j));
+                        Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, nsl.get(j));
                         conditions.add(c);
                         Node next = nsl.get(j + 1);
                         if (!Token.TokenType.COMMA.equals(next.getType())) break;

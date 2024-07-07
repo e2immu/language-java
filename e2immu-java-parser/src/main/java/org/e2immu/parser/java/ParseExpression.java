@@ -8,6 +8,7 @@ import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.SwitchEntry;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -126,7 +127,68 @@ public class ParseExpression extends CommonParse {
         if (node instanceof ArrayInitializer || node instanceof MemberValueArrayInitializer) {
             return arrayInitializer(context, index, forwardType, comments, source, node);
         }
+        if (node instanceof org.parsers.java.ast.SwitchExpression) {
+            return parseSwitchExpression(context, index, forwardType, comments, source, node.get(0));
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    private Expression parseSwitchExpression(Context context,
+                                             String index,
+                                             ForwardType forwardType,
+                                             List<Comment> comments, Source source, Node node) {
+        Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
+                node.get(2));
+        int n = (int) node.children().stream()
+                .filter(child -> child instanceof NewCaseStatement)
+                .count();
+        ForwardType selectorTypeFwd = context.newForwardType(selector.parameterizedType());
+        List<SwitchEntry> entries = new ArrayList<>();
+        Context newContext = context.newVariableContext("switch-expression");
+        int count = 0;
+        ParameterizedType commonType = null;
+        for (Node child : node) {
+            if (child instanceof NewCaseStatement ncs) {
+                SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
+                if (ncs.get(0) instanceof NewSwitchLabel nsl) {
+                    List<Expression> conditions = new ArrayList<>();
+                    if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
+                        conditions.add(runtime.newEmptyExpression());
+                    } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
+                        throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
+                    }
+                    int j = 1;
+                    while (j < nsl.size() - 1) {
+                        Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, nsl.get(j));
+                        conditions.add(c);
+                        Node next = nsl.get(j + 1);
+                        if (!Token.TokenType.COMMA.equals(next.getType())) break;
+                        j += 2;
+                    }
+                    entryBuilder.addConditions(conditions);
+                } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
+                Expression whenExpression = runtime.newEmptyExpression(); // FIXME
+                if (ncs.get(1) instanceof CodeBlock cb) {
+                    String newIndex = index + "." + CommonParse.pad(count, n);
+                    entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, cb));
+                } else if (ncs.get(1) instanceof org.parsers.java.ast.Expression expression) {
+                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    Expression pe = parsers.parseExpression().parse(newContext, newIndex, forwardType, expression);
+                    entryBuilder.setStatement(runtime.newExpressionAsStatement(pe));
+                    commonType = commonType == null ? pe.parameterizedType()
+                            : runtime.commonType(commonType, pe.parameterizedType());
+                } else throw new Summary.ParseException(newContext.info(), "Expect statement");
+                count++;
+                entries.add(entryBuilder.setWhenExpression(whenExpression).build());
+            }
+        }
+        assert commonType != null;
+        ParameterizedType parameterizedType = commonType.mostSpecific(runtime, context.enclosingType().primaryType(),
+                forwardType.type());
+        return runtime.newSwitchExpressionBuilder().addComments(comments).setSource(source)
+                .setParameterizedType(parameterizedType)
+                .setSelector(selector)
+                .addSwitchEntries(entries).build();
     }
 
     private Expression parseClassLiteral(Context context, ClassLiteral cl) {
