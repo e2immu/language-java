@@ -7,6 +7,7 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
+import org.e2immu.language.cst.api.statement.SwitchStatementOldStyle;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -53,7 +55,13 @@ public class ParseStatement extends CommonParse {
         }
         if (statement instanceof ReturnStatement rs) {
             ForwardType forwardType = context.newForwardType(context.enclosingMethod().returnType());
-            Expression e = parsers.parseExpression().parse(context, index, forwardType, rs.get(1));
+            Expression e;
+            if (rs.size() == 2) {
+                assert rs.get(1) instanceof Delimiter;
+                e = runtime.newEmptyExpression();
+            } else {
+                e = parsers.parseExpression().parse(context, index, forwardType, rs.get(1));
+            }
             assert e != null;
             return runtime.newReturnBuilder()
                     .setExpression(e).setSource(source).addComments(comments)
@@ -258,7 +266,54 @@ public class ParseStatement extends CommonParse {
                     .addComments(comments).setSource(source)
                     .setExpression(expression).build();
         }
+        if (statement instanceof SwitchStatement) {
+            return parseOldStyleSwitch(context, index, statement, comments, source);
+        }
         throw new UnsupportedOperationException("Node " + statement.getClass());
+    }
+
+    private SwitchStatementOldStyle parseOldStyleSwitch(Context context, String index, Statement statement,
+                                                        List<Comment> comments, Source source) {
+        Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
+                statement.get(2));
+        Block.Builder builder = runtime.newBlockBuilder();
+        List<SwitchStatementOldStyle.SwitchLabel> switchLabels = new ArrayList<>();
+        Context newContext = context.newVariableContext("switch-old-style");
+        int pos = 0;
+
+        for (int i = 5; i < statement.size(); i++) {
+            if (statement.get(i) instanceof ClassicCaseStatement ccs) {
+                if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
+                    if (Token.TokenType._DEFAULT.equals(csl.get(0).getType())) {
+                        SwitchStatementOldStyle.SwitchLabel sld
+                                = runtime.newSwitchLabelOldStyle(runtime.newEmptyExpression(), pos);
+                        switchLabels.add(sld);
+                    } else {
+                        assert Token.TokenType.CASE.equals(csl.get(0).getType());
+                        for (int k = 1; k < csl.size(); k += 2) {
+                            Expression literal = parsers.parseExpression().parse(newContext, index + ".0." + pos,
+                                    newContext.emptyForwardType(), csl.get(k));
+                            SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos);
+                            switchLabels.add(sl);
+                        }
+                    }
+                }
+                for (int j = 1; j < ccs.size(); j++) {
+                    if (ccs.get(j) instanceof Statement s) {
+                        org.e2immu.language.cst.api.statement.Statement st
+                                = parse(context, index + ".0." + pos, s);
+                        builder.addStatement(st);
+                        pos++;
+                    }
+                }
+            }
+        }
+        return runtime.newSwitchStatementOldStyleBuilder()
+                .addComments(comments).setSource(source)
+                .setSelector(selector)
+                .setBlock(builder.build())
+                .addSwitchLabels(switchLabels)
+                .build();
     }
 
     private Block parseBlockOrStatement(Context context, String index, Node node) {
