@@ -24,6 +24,7 @@ public class CommonTestParse {
         return switch (fullyQualifiedName) {
             case "java.lang.Class" -> clazz;
             case "java.lang.Object" -> runtime.objectTypeInfo();
+            case "java.lang.Long" -> runtime.boxedLongTypeInfo();
             case "java.lang.String" -> runtime.stringTypeInfo();
             case "java.lang.Override" -> override;
             case "java.lang.Integer" -> runtime.integerTypeInfo();

@@ -58,4 +58,30 @@ public class TestExplicitConstructorInvocation extends CommonTestParse {
         assertEquals(2, c2.methodBody().statements().size());
         assertEquals("1", c2.methodBody().statements().get(1).source().index());
     }
+
+    @Language("java")
+    private static final String INPUT2 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class ExplicitConstructorInvocation_0 {
+
+                public final int n;
+
+                public ExplicitConstructorInvocation_0() {
+                    this(3);
+                }
+
+                public ExplicitConstructorInvocation_0(int n) {
+                    this.n = n;
+                }
+
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+    }
+
+
 }

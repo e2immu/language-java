@@ -15,6 +15,7 @@ import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -123,6 +124,8 @@ public class ParseTypeDeclaration extends CommonParse {
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
 
+        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), td);
+
         if (td.get(i) instanceof TypeParameters typeParameters) {
             int j = 1;
             int typeParameterIndex = 0;
@@ -169,6 +172,13 @@ public class ParseTypeDeclaration extends CommonParse {
             for (int j = 1; j < implementsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, implementsList.get(j));
                 builder.addInterfaceImplemented(pt);
+            }
+            i++;
+        }
+        if (td.get(i) instanceof PermitsList permitsList) {
+            for (int j = 1; j < permitsList.size(); j += 2) {
+                ParameterizedType pt = parsers.parseType().parse(newContext, permitsList.get(j));
+                builder.addPermittedType(pt.typeInfo());
             }
             i++;
         }
@@ -240,6 +250,16 @@ public class ParseTypeDeclaration extends CommonParse {
             rs.createAccessors(recordFields).forEach(builder::addMethod);
         }
         return typeInfo;
+    }
+
+    /*
+     Important: we'll be creating TypeInfo objects, which we MUST re-use!
+     FIXME implement!
+     */
+    private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext, TypeDeclaration td) {
+        td.descendantsOfType(TypeDeclaration.class).forEach(sub -> {
+            LOGGER.debug("Encountering {}", sub.getSource());
+        });
     }
 
     private RecordField parseRecordField(Context context, TypeInfo typeInfo, RecordComponent rc) {

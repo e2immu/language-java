@@ -65,11 +65,14 @@ public class ParseExpression extends CommonParse {
         if (node instanceof ConditionalAndExpression || node instanceof ConditionalOrExpression) {
             return parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
         }
-        if (node instanceof MultiplicativeExpression me) {
-            return parseMultiplicative(context, index, me);
-        }
         if (node instanceof AdditiveExpression ae) {
             return parseAdditive(context, index, ae);
+        }
+        if (node instanceof MultiplicativeExpression
+            || node instanceof AndExpression
+            || node instanceof InclusiveOrExpression
+            || node instanceof ExclusiveOrExpression) {
+            return parseMultiplicative(context, index, node);
         }
         if (node instanceof RelationalExpression re) {
             return parseRelational(context, index, re);
@@ -467,7 +470,7 @@ public class ParseExpression extends CommonParse {
         return accumulated;
     }
 
-    private Expression parseMultiplicative(Context context, String index, MultiplicativeExpression me) {
+    private Expression parseMultiplicative(Context context, String index, Node me) {
         ForwardType fwd = context.newForwardType(runtime.intParameterizedType());
         Expression accumulated = parse(context, index, fwd, me.get(0));
         int i = 2;
@@ -481,6 +484,8 @@ public class ParseExpression extends CommonParse {
                 operator = runtime.divideOperatorInt();
             } else if (token.equals(REM)) {
                 operator = runtime.remainderOperatorInt();
+            } else if (token.equals(BIT_AND)) {
+                operator = runtime.andOperatorInt();
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -493,7 +498,7 @@ public class ParseExpression extends CommonParse {
                     .setSource(source(context.info(), index, me))
                     .addComments(comments(me))
                     .build();
-            i++;
+            i += 2;
         }
         return accumulated;
     }

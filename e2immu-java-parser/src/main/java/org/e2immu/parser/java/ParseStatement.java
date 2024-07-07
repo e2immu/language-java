@@ -80,9 +80,17 @@ public class ParseStatement extends CommonParse {
 
         // type declarator delimiter declarator
         if (statement instanceof NoVarDeclaration nvd) {
-            ParameterizedType type = parsers.parseType().parse(context, nvd.get(0));
+            int i = 0;
             LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            int i = 1;
+            while (nvd.get(i) instanceof KeyWord) {
+                if (Token.TokenType.FINAL.equals(nvd.get(i).getType())) {
+                    builder.addModifier(runtime.localVariableModifierFinal());
+                } else throw new Summary.ParseException(context.info(), "Expect final");
+                i++;
+            }
+            ParameterizedType type = parsers.parseType().parse(context, nvd.get(i));
+            i++;
+            boolean first = true;
             while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
                 Identifier identifier = (Identifier) vd.get(0);
                 Expression expression;
@@ -95,8 +103,12 @@ public class ParseStatement extends CommonParse {
                 String variableName = identifier.getSource();
                 LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
                 context.variableContext().add(lv);
-                if (i == 1) builder.setLocalVariable(lv);
-                else builder.addOtherLocalVariable(lv);
+                if (first) {
+                    builder.setLocalVariable(lv);
+                    first = false;
+                } else {
+                    builder.addOtherLocalVariable(lv);
+                }
                 i += 2;
             }
             return builder.setSource(source).addComments(comments).build();
@@ -305,8 +317,20 @@ public class ParseStatement extends CommonParse {
                     .setExpression(e).setSource(source).addComments(comments)
                     .build();
         }
-        if(statement instanceof CodeBlock cb) {
+        if (statement instanceof CodeBlock cb) {
             return parsers.parseBlock().parse(context, index, cb);
+        }
+        if (statement instanceof VarDeclaration varDeclaration) {
+            LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
+            Identifier identifier = (Identifier) varDeclaration.get(1);
+            ForwardType forwardType = context.emptyForwardType();
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(3));
+            String variableName = identifier.getSource();
+            ParameterizedType type = expression.parameterizedType();
+            LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
+            context.variableContext().add(lv);
+            builder.setLocalVariable(lv);
+            return builder.setSource(source).addComments(comments).build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
@@ -323,7 +347,7 @@ public class ParseStatement extends CommonParse {
         List<SwitchEntry> entries = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-new-style");
         TypeInfo selectorTypeInfo = selector.parameterizedType().bestTypeInfo();
-        if(selectorTypeInfo.typeNature().isEnum()) {
+        if (selectorTypeInfo.typeNature().isEnum()) {
             selectorTypeInfo.fields().stream().filter(Info::isSynthetic)
                     .forEach(f -> newContext.variableContext().add(runtime.newFieldReference(f)));
         }

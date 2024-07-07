@@ -54,4 +54,50 @@ public class TestParseRecord extends CommonTestParse {
         assertTrue(ccR.methodType().isCompactConstructor());
         assertEquals(2, ccR.methodBody().statements().size());
     }
+
+    private static final String INPUT2 = """
+            package a.b;
+            public class Record_0 {
+                interface OutputElement {
+                }
+                record QualifiedName(String name, QualifiedName.Required required) implements OutputElement {
+                    public enum Required {
+                        YES, // always write
+                        NO_FIELD, // don't write unless a field-related option says so
+                        NO_METHOD, // don't write unless a method-related option says so
+                        NEVER // never write
+                    }
+                }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+        assertTrue(typeInfo.typeNature().isRecord());
+    }
+
+    // difference with INPUT2 is the absence of the qualifier QualifiedName.Required in the 2nd parameter/field declaration
+    private static final String INPUT3 = """
+            package a.b;
+            public class Record_1 {
+                interface OutputElement {
+                }
+                record QualifiedName(String name, Required required) implements OutputElement {
+                    public enum Required {
+                        YES, // always write
+                        NO_FIELD, // don't write unless a field-related option says so
+                        NO_METHOD, // don't write unless a method-related option says so
+                        NEVER // never write
+                    }
+                }
+
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+        assertTrue(typeInfo.typeNature().isRecord());
+    }
 }
