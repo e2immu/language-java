@@ -286,14 +286,16 @@ public class ParseStatement extends CommonParse {
                 if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
                     if (Token.TokenType._DEFAULT.equals(csl.get(0).getType())) {
                         SwitchStatementOldStyle.SwitchLabel sld
-                                = runtime.newSwitchLabelOldStyle(runtime.newEmptyExpression(), pos);
+                                = runtime.newSwitchLabelOldStyle(runtime.newEmptyExpression(), pos, null,
+                                runtime.newEmptyExpression());
                         switchLabels.add(sld);
                     } else {
                         assert Token.TokenType.CASE.equals(csl.get(0).getType());
                         for (int k = 1; k < csl.size(); k += 2) {
                             Expression literal = parsers.parseExpression().parse(newContext, index + ".0." + pos,
                                     newContext.emptyForwardType(), csl.get(k));
-                            SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos);
+                            SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos,
+                                    null, runtime.newEmptyExpression());
                             switchLabels.add(sl);
                         }
                     }
