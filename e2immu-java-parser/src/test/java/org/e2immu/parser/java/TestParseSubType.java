@@ -62,4 +62,86 @@ public class TestParseSubType extends CommonTestParse {
         Block block = i2.methodBody();
         assertEquals(1, block.statements().size());
     }
+
+    @Language("java")
+    private static final String INPUT2 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class SubType_5 {
+
+                interface Iterator<T> {
+                    T next();
+                }
+
+                static class ArrayList<T> {
+
+                    private final T t;
+
+                    public ArrayList(T t) {
+                        this.t = t;
+                    }
+
+                    private class Itr implements Iterator<T> {
+                        @Override
+                        public T next() {
+                            return t;
+                        }
+                    }
+                }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+    }
+
+
+    @Language("java")
+    private static final String INPUT3 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class SubType_3 {
+
+                public static class O {
+                    public interface PP {
+                        void theFirstMethod();
+                    }
+
+                    void someMethod(PP pp) {
+
+                    }
+                }
+
+                private interface PP extends O.PP {
+                    void oneMoreMethod();
+                }
+
+                private final PP pp = makePP();
+
+                void method() {
+                    new O().someMethod(pp);
+                }
+
+                private PP makePP() {
+                    return new PP() {
+                        @Override
+                        public void theFirstMethod() {
+
+                        }
+
+                        @Override
+                        public void oneMoreMethod() {
+
+                        }
+                    };
+                }
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+    }
+
 }
