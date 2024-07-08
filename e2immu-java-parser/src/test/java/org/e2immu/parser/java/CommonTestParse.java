@@ -158,6 +158,13 @@ public class CommonTestParse {
         runtimeException.builder().setParentClass(runtime.newParameterizedType(exception, 0))
                 .addConstructor(rteConstructor);
 
+        MethodInfo valueOf = runtime.newMethod(runtime.boxedLongTypeInfo(), "valueOf", runtime.methodTypeStaticMethod());
+        valueOf.builder()
+                .setReturnType(runtime.newParameterizedType(runtime.boxedLongTypeInfo(), 0))
+                .addParameter("l", runtime.longParameterizedType());
+        valueOf.builder().commitParameters().commit();
+        runtime.boxedLongTypeInfo().builder().addMethod(valueOf);
+
     }
 
     private void defineFunction() {
