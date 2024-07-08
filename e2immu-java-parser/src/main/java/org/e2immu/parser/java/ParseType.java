@@ -25,6 +25,7 @@ public class ParseType extends CommonParse {
     ObjectType (Identifier) (Identifier, TypeArguments)
     PrimitiveType (Primitive)
     ObjectType + Delimiter + Delimiter (3 children, nodes is a ReferenceType)
+
      */
     public ParameterizedType parse(Context context, List<Node> nodes) {
         Token.TokenType tt;
@@ -122,26 +123,31 @@ public class ParseType extends CommonParse {
         NamedType nt = context.typeContext().get(qualifiedName, true);
         ParameterizedType withoutTypeParameters = nt.asSimpleParameterizedType();
         if (ot.size() > i && ot.get(i) instanceof TypeArguments tas) {
-            List<ParameterizedType> typeArguments = new ArrayList<>();
-            int j = 1;
-            while (j < tas.size()) {
-                if (tas.get(j) instanceof TypeArgument ta) {
-                    ParameterizedType arg = parse(context, ta);
-                    typeArguments.add(arg);
-                } else if (tas.get(j) instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
-                    typeArguments.add(runtime.parameterizedTypeWildcard());
-                } else if (tas.get(j) instanceof Type type) {
-                    ParameterizedType arg = parse(context, type);
-                    typeArguments.add(arg);
-                } else throw new UnsupportedOperationException();
-                j += 2;
-
-            }
+            List<ParameterizedType> typeArguments = parseTypeArguments(context, tas);
             if (!typeArguments.isEmpty()) {
                 return withoutTypeParameters.withParameters(List.copyOf(typeArguments));
             }
         }
         return withoutTypeParameters;
+    }
+
+    public List<ParameterizedType> parseTypeArguments(Context context, TypeArguments tas) {
+        List<ParameterizedType> typeArguments = new ArrayList<>();
+        int j = 1;
+        while (j < tas.size()) {
+            if (tas.get(j) instanceof TypeArgument ta) {
+                ParameterizedType arg = parse(context, ta);
+                typeArguments.add(arg);
+            } else if (tas.get(j) instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
+                typeArguments.add(runtime.parameterizedTypeWildcard());
+            } else if (tas.get(j) instanceof Type type) {
+                ParameterizedType arg = parse(context, type);
+                typeArguments.add(arg);
+            } else throw new UnsupportedOperationException();
+            j += 2;
+
+        }
+        return typeArguments;
     }
 
     private int countArrays(List<Node> nodes) {

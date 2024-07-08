@@ -14,6 +14,7 @@ import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
+import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
@@ -134,7 +135,28 @@ public class ParseExpression extends CommonParse {
         if (node instanceof org.parsers.java.ast.SwitchExpression) {
             return parseSwitchExpression(context, index, forwardType, comments, source, node.get(0));
         }
+        if (node instanceof InstanceOfExpression ioe) {
+            return parseInstanceOf(context, index, forwardType, comments, source, ioe);
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    private Expression parseInstanceOf(Context context, String index, ForwardType forwardType,
+                                       List<Comment> comments, Source source, InstanceOfExpression ioe) {
+        Expression expression = parse(context, index, forwardType, ioe.get(0));
+        assert INSTANCEOF.equals(ioe.get(1).getType());
+        ParameterizedType testType;
+        LocalVariable patternVariable;
+        if (ioe.get(2) instanceof NoVarDeclaration nvd) {
+            testType = parsers.parseType().parse(context, nvd.get(0));
+            String lvName = nvd.get(1).getSource();
+            patternVariable = runtime.newLocalVariable(lvName, testType);
+            context.variableContext().add(patternVariable);
+        } else {
+            testType = parsers.parseType().parse(context, ioe.get(2));
+            patternVariable = null;
+        }
+        return runtime.newInstanceOf(expression, testType, patternVariable);
     }
 
     private Expression parseSwitchExpression(Context context,
@@ -272,7 +294,7 @@ public class ParseExpression extends CommonParse {
         if (fieldInfo != null) return fieldInfo;
         if (typeInfo.parentClass() != null && !typeInfo.parentClass().isJavaLangObject()) {
             FieldInfo fi = findRecursively(typeInfo.parentClass().typeInfo(), name);
-            if(fi != null) return fi;
+            if (fi != null) return fi;
         }
         if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
             FieldInfo fi = findRecursively(typeInfo.compilationUnitOrEnclosingType().getRight(), name);

@@ -13,6 +13,7 @@ import org.e2immu.language.cst.api.type.Diamond;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
+import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.ForwardType;
@@ -41,7 +42,16 @@ public class ParseConstructorCall extends CommonParse {
                             ForwardType forwardType,
                             org.parsers.java.ast.AllocationExpression ae) {
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
-        ParameterizedType typeAsIs = parsers.parseType().parse(context, ae.get(1));
+        int i = 1;
+        List<ParameterizedType> methodTypeArguments;
+        // new <String>Parameterized(...) == generics on the constructor, see TestConstructor,2
+        if (ae.get(1) instanceof TypeArguments tas) {
+            methodTypeArguments = parsers.parseType().parseTypeArguments(context, tas);
+            ++i;
+        } else {
+            methodTypeArguments = List.of();
+        }
+        ParameterizedType typeAsIs = parsers.parseType().parse(context, ae.get(i));
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
         ParameterizedType formalType = typeInfo.asParameterizedType(runtime);
@@ -51,7 +61,7 @@ public class ParseConstructorCall extends CommonParse {
         }
 
         Diamond diamond;
-        int i = 2;
+        ++i;
         ParameterizedType expectedConcreteType;
         if (ae.get(i) instanceof DiamondOperator) {
             diamond = runtime.diamondYes();
@@ -80,7 +90,7 @@ public class ParseConstructorCall extends CommonParse {
                 j += 2;
             }
             Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
-                    index, formalType, expectedConcreteType, diamond, unparsedArguments);
+                    index, formalType, expectedConcreteType, diamond, unparsedArguments, methodTypeArguments);
             if (constructorCall == null) {
                 return new ConstructorCallErasure(runtime, formalType);
             }
@@ -204,7 +214,7 @@ public class ParseConstructorCall extends CommonParse {
         }
         ParameterizedType formalType = enumType.asSimpleParameterizedType();
         return context.methodResolution().resolveConstructor(context, List.of(), null,
-                index, formalType, formalType, runtime.diamondNo(), unparsedArguments);
+                index, formalType, formalType, runtime.diamondNo(), unparsedArguments, List.of());
     }
 
     /*
