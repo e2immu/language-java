@@ -198,6 +198,7 @@ public class ParseLambdaExpression extends CommonParse {
             int paramIndex = 0;
             while (i < lhs.size()) {
                 if (lhs.get(i) instanceof Identifier identifier) {
+                    // FIXME we should take the types of the parameters of the sam, not of the forward type!!!
                     ParameterizedType type = forwardType.type().parameters().get(paramIndex).ensureBoxed(runtime);
                     String parameterName = identifier.getSource();
                     ParameterInfo pi = miBuilder.addParameter(parameterName, type);
@@ -236,10 +237,13 @@ public class ParseLambdaExpression extends CommonParse {
     private int countParameters(LambdaLHS lhs) {
         if (lhs.get(0) instanceof Identifier) return 1;
         if (lhs.get(0) instanceof LambdaParameters lp) {
+            // () ->
             if (Token.TokenType.RPAREN.equals(lp.get(1).getType())) return 0;
             return (int) lp.stream().filter(n -> Token.TokenType.COMMA.equals(n.getType())).count() + 1;
         }
-        throw new UnsupportedOperationException();
+        // () ->
+        if (Token.TokenType.RPAREN.equals(lhs.get(1).getType())) return 0;
+        return (int) lhs.stream().filter(n -> Token.TokenType.COMMA.equals(n.getType())).count() + 1;
     }
 
     private IsVoid computeIsVoid(LambdaExpression le) {
@@ -268,6 +272,16 @@ public class ParseLambdaExpression extends CommonParse {
             if (!(ni instanceof ThrowStatement) && !(ni instanceof Delimiter)) {
                 if (ni instanceof StatementExpression || ni instanceof ExpressionStatement) {
                     return IsVoid.YES;
+                }
+                if (ni instanceof IfStatement) {
+                    IsVoid iv;
+                    if (ni.get(4) instanceof CodeBlock cb2) {
+                        iv = recursiveComputeIsVoid(cb2);
+                    } else throw new UnsupportedOperationException();
+                    if (iv != null) return iv;
+                    if (ni.size() > 6 && ni.get(6) instanceof CodeBlock cb3) {
+                        return recursiveComputeIsVoid(cb3);
+                    }
                 }
                 throw new UnsupportedOperationException("IMPLEMENT! " + ni.getClass());
             }

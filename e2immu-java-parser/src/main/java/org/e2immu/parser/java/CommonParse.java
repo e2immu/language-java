@@ -8,13 +8,16 @@ import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
+import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 
 import java.util.*;
@@ -116,37 +119,96 @@ public abstract class CommonParse {
         Map<String, TypeInfo> map = new HashMap<>();
         for (Node node : body) {
             if (node instanceof TypeDeclaration td) {
-                Identifier identifier = null;
-                Node sub = null;
-                for (Node child : td.children()) {
-                    if (child instanceof Identifier id) {
-                        identifier = id;
-                    }
-                    if (child instanceof ClassOrInterfaceBody || child instanceof RecordBody || child instanceof EnumBody) {
-                        sub = child;
-                        break;
-                    }
-                }
-                assert identifier != null;
-                String typeName = td.firstChildOfType(Identifier.class).getSource();
-                TypeInfo typeInfo;
-                if (parent.isLeft()) {
-                    if(typeInfoOrNull != null) {
-                        typeInfo = typeInfoOrNull;
-                        assert typeInfo.simpleName().equals(typeName);
-                    } else {
-                        typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
-                    }
-                } else {
-                    typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
-                }
-                map.put(typeInfo.fullyQualifiedName(), typeInfo);
-                if(sub != null) {
-                    map.putAll(recursivelyFindTypes(Either.right(typeInfo),  typeInfoOrNull, sub));
-                }
+                handleTypeDeclaration(parent, typeInfoOrNull, td, map);
             }
         }
         return Map.copyOf(map);
+    }
+
+    /*
+    We extract type nature and type modifiers here, because we'll need them in sibling subtype declarations.
+     */
+    private void handleTypeDeclaration(Either<CompilationUnit, TypeInfo> parent,
+                                       TypeInfo typeInfoOrNull,
+                                       TypeDeclaration td,
+                                       Map<String, TypeInfo> map) {
+        Identifier identifier = null;
+        Node sub = null;
+        TypeNature typeNature = null;
+        List<TypeModifier> typeModifiers = new ArrayList<>();
+        for (Node child : td.children()) {
+            if (child instanceof Modifiers modifiers) {
+                for (Node child2 : modifiers) {
+                    if (child2 instanceof KeyWord keyWord) {
+                        TypeNature tn = getTypeNature(td, keyWord.getType());
+                        if (tn != null) {
+                            assert typeNature == null;
+                            typeNature = tn;
+                        }
+                        TypeModifier tm = getTypeModifier(keyWord.getType());
+                        if (tm != null) typeModifiers.add(tm);
+                    }
+                }
+            } else if (child instanceof KeyWord keyWord) {
+                TypeNature tn = getTypeNature(td, keyWord.getType());
+                if (tn != null) {
+                    assert typeNature == null;
+                    typeNature = tn;
+                }
+                TypeModifier tm = getTypeModifier(keyWord.getType());
+                if (tm != null) typeModifiers.add(tm);
+            } else if (child instanceof Identifier id) {
+                identifier = id;
+            } else if (child instanceof ClassOrInterfaceBody || child instanceof RecordBody || child instanceof EnumBody) {
+                sub = child;
+                break;
+            }
+        }
+        assert identifier != null;
+        String typeName = td.firstChildOfType(Identifier.class).getSource();
+        TypeInfo typeInfo;
+        if (parent.isLeft()) {
+            if (typeInfoOrNull != null) {
+                typeInfo = typeInfoOrNull;
+                assert typeInfo.simpleName().equals(typeName);
+            } else {
+                typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
+            }
+        } else {
+            typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
+        }
+        typeInfo.builder().setTypeNature(typeNature);
+        typeModifiers.forEach(typeInfo.builder()::addTypeModifier);
+        map.put(typeInfo.fullyQualifiedName(), typeInfo);
+        if (sub != null) {
+            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub));
+        }
+    }
+
+
+    private TypeNature getTypeNature(TypeDeclaration td, Token.TokenType tt) {
+        return switch (tt) {
+            case CLASS -> runtime.typeNatureClass();
+            case INTERFACE -> td instanceof AnnotationTypeDeclaration
+                    ? runtime.typeNatureAnnotation() : runtime.typeNatureInterface();
+            case ENUM -> runtime.typeNatureEnum();
+            case RECORD -> runtime.typeNatureRecord();
+            default -> null;
+        };
+    }
+
+    private TypeModifier getTypeModifier(Token.TokenType tt) {
+        return switch (tt) {
+            case PUBLIC -> runtime.typeModifierPublic();
+            case PRIVATE -> runtime.typeModifierPrivate();
+            case PROTECTED -> runtime.typeModifierProtected();
+            case FINAL -> runtime.typeModifierFinal();
+            case SEALED -> runtime.typeModifierSealed();
+            case ABSTRACT -> runtime.typeModifierAbstract();
+            case NON_SEALED -> runtime.typeModifierNonSealed();
+            case STATIC -> runtime.typeModifierStatic();
+            default -> null;
+        };
     }
 
 }

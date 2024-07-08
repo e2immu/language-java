@@ -68,8 +68,6 @@ public class ParseTypeDeclaration extends CommonParse {
 
         int i = 0;
         List<AnnotationExpression> annotations = new ArrayList<>();
-        TypeNature typeNature = null;
-        List<TypeModifier> typeModifiers = new ArrayList<>();
         while (true) {
             Node tdi = td.get(i);
             if (tdi instanceof Annotation a) {
@@ -78,26 +76,17 @@ public class ParseTypeDeclaration extends CommonParse {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
                         annotations.add(parsers.parseAnnotationExpression().parse(context, a));
-                    } else if (node instanceof KeyWord keyWord) {
-                        typeModifiers.add(getTypeModifier(keyWord.getType()));
                     }
-                }
-            } else if (tdi instanceof KeyWord keyWord) {
-                TypeModifier tm = getTypeModifier(keyWord.getType());
-                if (tm != null) typeModifiers.add(tm);
-                TypeNature tn = getTypeNature(td, keyWord.getType());
-                if (tn != null) {
-                    assert typeNature == null;
-                    typeNature = tn;
                 }
             } else if (tdi instanceof Delimiter) {
                 if (!Token.TokenType.AT.equals(tdi.getType())) {
                     throw new Summary.ParseException(context.info(), "Expect @ delimiter");
                 }
-            } else break;
+            } else if (!(tdi instanceof KeyWord)) {
+                break;
+            }
             i++;
         }
-        if (typeNature == null) throw new UnsupportedOperationException("Have not determined type nature");
         String simpleName;
         if (td.get(i) instanceof Identifier identifier) {
             simpleName = identifier.getSource();
@@ -117,10 +106,8 @@ public class ParseTypeDeclaration extends CommonParse {
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
         builder.setSource(source);
-        typeModifiers.forEach(builder::addTypeModifier);
         builder.addAnnotations(annotations);
         builder.computeAccess();
-        builder.setTypeNature(typeNature);
         builder.setSource(source(typeInfo, null, td));
         builder.setEnclosingMethod(context.enclosingMethod());
 
@@ -142,6 +129,7 @@ public class ParseTypeDeclaration extends CommonParse {
             i++;
         }
 
+        TypeNature typeNature = builder.typeNature();
         List<RecordField> recordFields;
         if (td.get(i) instanceof RecordHeader rh) {
             assert typeNature.isRecord();
@@ -418,28 +406,4 @@ public class ParseTypeDeclaration extends CommonParse {
         return new ConstructorCounts(countNormalConstructors, countCompactConstructors);
     }
 
-    private TypeNature getTypeNature(TypeDeclaration td, Token.TokenType tt) {
-        return switch (tt) {
-            case CLASS -> runtime.typeNatureClass();
-            case INTERFACE -> td instanceof AnnotationTypeDeclaration
-                    ? runtime.typeNatureAnnotation() : runtime.typeNatureInterface();
-            case ENUM -> runtime.typeNatureEnum();
-            case RECORD -> runtime.typeNatureRecord();
-            default -> null;
-        };
-    }
-
-    private TypeModifier getTypeModifier(Token.TokenType tt) {
-        return switch (tt) {
-            case PUBLIC -> runtime.typeModifierPublic();
-            case PRIVATE -> runtime.typeModifierPrivate();
-            case PROTECTED -> runtime.typeModifierProtected();
-            case FINAL -> runtime.typeModifierFinal();
-            case SEALED -> runtime.typeModifierSealed();
-            case ABSTRACT -> runtime.typeModifierAbstract();
-            case NON_SEALED -> runtime.typeModifierNonSealed();
-            case STATIC -> runtime.typeModifierStatic();
-            default -> null;
-        };
-    }
 }

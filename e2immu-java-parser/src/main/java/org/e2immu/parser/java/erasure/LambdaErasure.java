@@ -42,7 +42,7 @@ public class LambdaErasure extends ErasureExpressionImpl {
     @Override
     public Set<ParameterizedType> erasureTypes() {
         return counts.stream()
-                .map(count -> runtime.syntheticFunctionalType(count.parameters, count.isVoid))
+                .map(count -> runtime.syntheticFunctionalType(count.parameters, !count.isVoid))
                 .map(ti -> ti.asParameterizedType(runtime))
                 .collect(Collectors.toUnmodifiableSet());
     }
