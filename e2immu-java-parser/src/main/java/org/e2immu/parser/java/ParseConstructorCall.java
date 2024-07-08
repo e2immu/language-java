@@ -21,6 +21,7 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.parser.java.erasure.ConstructorCallErasure;
 import org.e2immu.support.Either;
+import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -40,7 +41,17 @@ public class ParseConstructorCall extends CommonParse {
     public Expression parse(Context context,
                             String index,
                             ForwardType forwardType,
-                            org.parsers.java.ast.AllocationExpression ae) {
+                            org.parsers.java.ast.AllocationExpression aeIn) {
+        AllocationExpression ae;
+        Node unparsedObject;
+        if (aeIn instanceof DotNew dn) {
+            unparsedObject = dn.get(0);
+            assert Token.TokenType.DOT.equals(dn.get(1).getType());
+            ae = (AllocationExpression) dn.get(2);
+        } else {
+            ae = aeIn;
+            unparsedObject = null;
+        }
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
         int i = 1;
         List<ParameterizedType> methodTypeArguments;
@@ -90,7 +101,8 @@ public class ParseConstructorCall extends CommonParse {
                 j += 2;
             }
             Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
-                    index, formalType, expectedConcreteType, diamond, unparsedArguments, methodTypeArguments);
+                    index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedArguments,
+                    methodTypeArguments);
             if (constructorCall == null) {
                 return new ConstructorCallErasure(runtime, formalType);
             }
@@ -215,7 +227,7 @@ public class ParseConstructorCall extends CommonParse {
         }
         ParameterizedType formalType = enumType.asSimpleParameterizedType();
         return context.methodResolution().resolveConstructor(context, List.of(), null,
-                index, formalType, formalType, runtime.diamondNo(), unparsedArguments, List.of());
+                index, formalType, formalType, runtime.diamondNo(), null, unparsedArguments, List.of());
     }
 
     /*
