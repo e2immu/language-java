@@ -334,6 +334,7 @@ public class ParseTypeDeclaration extends CommonParse {
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         int countCompactConstructors = 0;
         int countNormalConstructors = 0;
+        int countStaticInializers = 0;
 
         for (Node child : body.children()) {
             if (!(child instanceof EmptyDeclaration)) {
@@ -366,17 +367,36 @@ public class ParseTypeDeclaration extends CommonParse {
                     if (constructor != null) {
                         builder.addConstructor(constructor);
                     } // else error
-                } else if (child instanceof Initializer i && i.get(0) instanceof CodeBlock cb) {
-                    Context initializerContext = newContext.newSubType(typeInfo);
-                    MethodInfo constructor = runtime.newConstructor(typeInfo);
-                    constructor.builder()
-                            .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())
-                            .setAccess(runtime.accessPublic())
-                            .commitParameters();
-                    builder.addConstructor(constructor);
-                    initializerContext.resolver().add(constructor, constructor.builder(),
-                            initializerContext.emptyForwardType(), null, cb, initializerContext);
-                    countNormalConstructors++;
+                } else if (child instanceof Initializer i) {
+                    boolean staticInitializer = Token.TokenType.STATIC.equals(i.get(0).getType());
+                    if (staticInitializer) {
+                        if (i.get(1) instanceof CodeBlock cb) {
+                            Source cbSource = source(typeInfo, "", cb);
+                            String name = "<static_" + (countStaticInializers++) + ">";
+                            MethodInfo staticMethod = runtime.newMethod(typeInfo, name,
+                                    runtime.methodTypeStaticBlock());
+                            staticMethod.builder()
+                                    .setReturnType(runtime.voidParameterizedType())
+                                    .setAccess(runtime.accessPrivate())
+                                    .commitParameters();
+                            newContext.resolver().add(staticMethod, staticMethod.builder(),
+                                    newContext.emptyForwardType(), null, cb, newContext);
+                            builder.addMethod(staticMethod);
+                        } else {
+                            throw new Summary.ParseException(newContext.info(), "Unknown node in static initializer");
+                        }
+                    } else if (i.get(0) instanceof CodeBlock cb) {
+                        Context initializerContext = newContext.newSubType(typeInfo);
+                        MethodInfo constructor = runtime.newConstructor(typeInfo);
+                        constructor.builder()
+                                .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())
+                                .setAccess(runtime.accessPublic())
+                                .commitParameters();
+                        builder.addConstructor(constructor);
+                        initializerContext.resolver().add(constructor, constructor.builder(),
+                                initializerContext.emptyForwardType(), null, cb, initializerContext);
+                        countNormalConstructors++;
+                    } else throw new Summary.ParseException(newContext.info(), "Unknown initializer");
                 }
             }
         }
