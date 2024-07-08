@@ -17,11 +17,11 @@ public class ParseBlock extends CommonParse {
         super(runtime, parsers);
     }
 
-    public Block parse(Context context, String index, CodeBlock codeBlock) {
-        return parse(context, index, codeBlock, 0);
+    public Block parse(Context context, String index, String label, CodeBlock codeBlock) {
+        return parse(context, index, label, codeBlock, 0);
     }
 
-    public Block parse(Context context, String index, CodeBlock codeBlock, int startCount) {
+    public Block parse(Context context, String index, String label, CodeBlock codeBlock, int startCount) {
         Source source = source(context.info(), index, codeBlock);
         List<Comment> comments = comments(codeBlock);
         Block.Builder builder = runtime.newBlockBuilder();
@@ -36,6 +36,6 @@ public class ParseBlock extends CommonParse {
                 count++;
             }
         }
-        return builder.setSource(source).addComments(comments).build();
+        return builder.setSource(source).addComments(comments).setLabel(label).build();
     }
 }

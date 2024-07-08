@@ -180,7 +180,7 @@ public class ParseExpression extends CommonParse {
                 Node ncs1 = ncs.get(1);
                 if (ncs1 instanceof CodeBlock cb) {
                     String newIndex = index + "." + CommonParse.pad(count, n);
-                    entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, cb));
+                    entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
                 } else if (ncs1 instanceof Statement statement) {
                     // throw statement is allowed!
                     String newIndex = index + "." + CommonParse.pad(count, n) + "0";

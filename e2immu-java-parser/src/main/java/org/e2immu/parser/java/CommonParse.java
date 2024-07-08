@@ -126,7 +126,7 @@ public abstract class CommonParse {
                         break;
                     }
                 }
-                assert identifier != null && sub != null;
+                assert identifier != null;
                 String typeName = td.firstChildOfType(Identifier.class).getSource();
                 TypeInfo typeInfo;
                 if (parent.isLeft()) {
@@ -135,7 +135,9 @@ public abstract class CommonParse {
                     typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
                 }
                 map.put(typeInfo.fullyQualifiedName(), typeInfo);
-                map.putAll(recursivelyFindTypes(Either.right(typeInfo), sub));
+                if(sub != null) {
+                    map.putAll(recursivelyFindTypes(Either.right(typeInfo), sub));
+                }
             }
         }
         return Map.copyOf(map);

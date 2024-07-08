@@ -42,6 +42,8 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
         if (main.methodBody().statements().get(0) instanceof SwitchStatementNewStyle ssn) {
             assertEquals("""
+                            // noinspection ALL
+
                             switch(args.length){case 0->System.out.println("zero!");case 1,2->{System.out.println("less than 3");return;}default->// noinspection ALL
 
                             {System.out.println("all the rest");}}\

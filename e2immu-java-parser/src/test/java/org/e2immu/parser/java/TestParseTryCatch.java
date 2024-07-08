@@ -48,6 +48,10 @@ public class TestParseTryCatch extends CommonTestParse {
             assertEquals(1, tryStatement.catchClauses().size());
             assertEquals(1, tryStatement.catchClauses().get(0).block().statements().size());
             assertEquals(1, tryStatement.finallyBlock().statements().size());
+
+            assertEquals("""
+                    try{System.out.println(args[0]);}catch(Exception e){System.out.println("exception");}finally{System.out.println("bye");}\
+                    """, tryStatement.toString());
         } else fail();
     }
 }

@@ -78,11 +78,11 @@ public class TestParseSwitchOldStyle extends CommonTestParse {
     public void test2() {
         TypeInfo typeInfo = parse(INPUT2);
         MethodInfo main = typeInfo.findUniqueMethod("method", 1);
-        if (main.methodBody().statements().get(1) instanceof SwitchStatementNewStyle ssn) {
+        if (main.methodBody().statements().get(1) instanceof SwitchStatementOldStyle sso) {
             assertEquals("""
-                            switch(dataType){case 3->{s="x";}case 4->s="z";default->s="y";}\
+                            a: switch(dataType){case 3:{s="x";break;}case 4:s="z";b: break a;default:s="y";}\
                             """,
-                    ssn.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    sso.print(runtime.qualificationDoNotQualifyImplicit()).toString());
         } else fail();
     }
 }

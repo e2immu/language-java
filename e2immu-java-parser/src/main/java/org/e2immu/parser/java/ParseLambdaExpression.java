@@ -93,7 +93,7 @@ public class ParseLambdaExpression extends CommonParse {
             // new we have  "class $1 implements Function<Integer, String>"
             anonymousType.builder().addInterfaceImplemented(concreteFunctionalType);
         } else if (le1 instanceof CodeBlock codeBlock) {
-            methodBody = parsers.parseBlock().parse(newContext, "", codeBlock);
+            methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
         } else throw new Summary.ParseException(context.info(), "Expected either expression or code block");
 
