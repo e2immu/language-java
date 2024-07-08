@@ -2,21 +2,22 @@ package org.e2immu.parser.java;
 
 import org.e2immu.annotation.NotNull;
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class CommonParse {
     protected final Runtime runtime;
@@ -108,4 +109,36 @@ public abstract class CommonParse {
         }
         throw new UnsupportedOperationException(AWFULLY_LONG_METHOD);
     }
+
+
+    protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent, Node body) {
+        Map<String, TypeInfo> map = new HashMap<>();
+        for (Node node : body) {
+            if (node instanceof TypeDeclaration td) {
+                Identifier identifier = null;
+                Node sub = null;
+                for (Node child : td.children()) {
+                    if (child instanceof Identifier id) {
+                        identifier = id;
+                    }
+                    if (child instanceof ClassOrInterfaceBody || child instanceof RecordBody || child instanceof EnumBody) {
+                        sub = child;
+                        break;
+                    }
+                }
+                assert identifier != null && sub != null;
+                String typeName = td.firstChildOfType(Identifier.class).getSource();
+                TypeInfo typeInfo;
+                if (parent.isLeft()) {
+                    typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
+                } else {
+                    typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
+                }
+                map.put(typeInfo.fullyQualifiedName(), typeInfo);
+                map.putAll(recursivelyFindTypes(Either.right(typeInfo), sub));
+            }
+        }
+        return Map.copyOf(map);
+    }
+
 }

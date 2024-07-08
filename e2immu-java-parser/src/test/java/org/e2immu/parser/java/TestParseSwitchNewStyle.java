@@ -49,4 +49,42 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
                     ssn.print(runtime.qualificationDoNotQualifyImplicit()).toString());
         } else fail();
     }
+
+    @Language("java")
+    private static final String INPUT2 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class NewSwitchStatement_0 {
+
+                public static String method(int dataType) {
+                    String s;
+                    switch (dataType) {
+
+                        case 3 -> {
+                            s = "x";
+                        }
+
+                        case 4 ->
+                            s = "z";
+
+                        default ->
+                            s = "y";
+
+                    }
+                    return s;
+                }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+        MethodInfo main = typeInfo.findUniqueMethod("method", 1);
+        if (main.methodBody().statements().get(1) instanceof SwitchStatementNewStyle ssn) {
+            assertEquals("""
+                            switch(dataType){case 3->{s="x";}case 4->s="z";default->s="y";}\
+                            """,
+                    ssn.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+        } else fail();
+    }
 }

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
@@ -36,9 +37,10 @@ public class ParseTypeDeclaration extends CommonParse {
     public TypeInfo parse(Context context,
                           TypeInfo typeInfoOrNull,
                           Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                          Map<String, TypeInfo> typeInfoMap,
                           TypeDeclaration td) {
         try {
-            return internalParse(context, typeInfoOrNull, packageNameOrEnclosing, td);
+            return internalParse(context, typeInfoOrNull, packageNameOrEnclosing, typeInfoMap, td);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -59,6 +61,7 @@ public class ParseTypeDeclaration extends CommonParse {
     private TypeInfo internalParse(Context context,
                                    TypeInfo typeInfoOrNull,
                                    Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                                   Map<String, TypeInfo> typeInfoMap,
                                    TypeDeclaration td) {
         List<Comment> comments = comments(td);
 
@@ -101,15 +104,14 @@ public class ParseTypeDeclaration extends CommonParse {
         } else throw new UnsupportedOperationException();
         TypeInfo typeInfo;
 
-        if (packageNameOrEnclosing.isLeft()) {
-            if (typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
-                typeInfo = typeInfoOrNull; // we must re-use this object!!
-            } else {
-                typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getLeft(), simpleName);
-            }
+        if (packageNameOrEnclosing.isLeft() && typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
+            typeInfo = typeInfoOrNull; // we must re-use this object!!
         } else {
-            typeInfo = runtime.newTypeInfo(packageNameOrEnclosing.getRight(), simpleName);
+            String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
+            typeInfo = typeInfoMap.get(fqn);
         }
+
+        assert typeInfo != null;
         Source source = source(typeInfo, "", td);
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
@@ -124,7 +126,7 @@ public class ParseTypeDeclaration extends CommonParse {
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
 
-        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), td);
+        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfoMap, typeInfo);
 
         if (td.get(i) instanceof TypeParameters typeParameters) {
             int j = 1;
@@ -220,7 +222,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
                 new EnumSynthetics(runtime, typeInfo, builder).create(context, enumFields);
             }
-            constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
+            constructorCounts = parseBody(contextForBody, typeInfoMap, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
@@ -252,13 +254,31 @@ public class ParseTypeDeclaration extends CommonParse {
         return typeInfo;
     }
 
+    private String fullyQualifiedName(Either<CompilationUnit, TypeInfo> packageNameOrEnclosing, String simpleName) {
+        String prefix;
+        if (packageNameOrEnclosing.isLeft()) {
+            if (packageNameOrEnclosing.getLeft().packageName().isEmpty()) {
+                prefix = "";
+            } else {
+                prefix = packageNameOrEnclosing.getLeft().packageName() + ".";
+            }
+        } else {
+            prefix = packageNameOrEnclosing.getRight().fullyQualifiedName() + ".";
+        }
+        return prefix + simpleName;
+    }
+
     /*
      Important: we'll be creating TypeInfo objects, which we MUST re-use!
-     FIXME implement!
      */
-    private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext, TypeDeclaration td) {
-        td.descendantsOfType(TypeDeclaration.class).forEach(sub -> {
-            LOGGER.debug("Encountering {}", sub.getSource());
+    private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext,
+                                                       Map<String, TypeInfo> typeInfoMap,
+                                                       TypeInfo typeInfo) {
+        String fullyQualified = typeInfo.fullyQualifiedName();
+        typeInfoMap.forEach((fqn, ti) -> {
+            if (fqn.startsWith(fullyQualified)) {
+                typeContext.addToContext(ti);
+            }
         });
     }
 
@@ -304,6 +324,7 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     ConstructorCounts parseBody(Context newContext,
+                                Map<String, TypeInfo> typeInfoMap,
                                 Node body,
                                 TypeNature typeNature,
                                 TypeInfo typeInfo,
@@ -322,10 +343,10 @@ public class ParseTypeDeclaration extends CommonParse {
             }
         }
 
-        // FIRST, do subtypes
+        // FIRST, parse the subtypes
 
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
-            TypeInfo subTypeInfo = parse(newContext, null, Either.right(typeInfo), typeDeclaration);
+            TypeInfo subTypeInfo = parse(newContext, null, Either.right(typeInfo), typeInfoMap, typeDeclaration);
             builder.addSubType(subTypeInfo);
             newContext.typeContext().addToContext(subTypeInfo);
         }

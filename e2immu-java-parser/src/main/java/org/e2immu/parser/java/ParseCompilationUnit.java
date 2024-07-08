@@ -1,19 +1,19 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.annotation.Identity;
 import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
+import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ParseCompilationUnit extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseCompilationUnit.class);
@@ -75,10 +75,12 @@ public class ParseCompilationUnit extends CommonParse {
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
+        Map<String, TypeInfo> typesByFQN = recursivelyFindTypes(Either.left(compilationUnit), cu);
+
         List<TypeInfo> types = new ArrayList<>();
         while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {
             TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, typeInfoOrNull,
-                    Either.left(compilationUnit), cd);
+                    Either.left(compilationUnit), typesByFQN, cd);
             if (typeInfo != null) {
                 types.add(typeInfo);
             } // else: error...

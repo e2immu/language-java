@@ -3,6 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +75,17 @@ public class TestParseRecord extends CommonTestParse {
     @Test
     public void test2() {
         TypeInfo typeInfo = parse(INPUT2);
-        assertTrue(typeInfo.typeNature().isRecord());
+        test23(typeInfo);
+    }
+
+    private static void test23(TypeInfo typeInfo) {
+        TypeInfo qn = typeInfo.findSubType("QualifiedName");
+        assertTrue(qn.typeNature().isRecord());
+        TypeInfo req = qn.findSubType("Required");
+        assertTrue(req.typeNature().isEnum());
+        MethodInfo qnConstructor = qn.findConstructor(2);
+        ParameterizedType paramType = qnConstructor.parameters().get(1).parameterizedType();
+        assertSame(req, paramType.typeInfo());
     }
 
     // difference with INPUT2 is the absence of the qualifier QualifiedName.Required in the 2nd parameter/field declaration
@@ -98,6 +109,6 @@ public class TestParseRecord extends CommonTestParse {
     @Test
     public void test3() {
         TypeInfo typeInfo = parse(INPUT3);
-        assertTrue(typeInfo.typeNature().isRecord());
+        test23(typeInfo);
     }
 }

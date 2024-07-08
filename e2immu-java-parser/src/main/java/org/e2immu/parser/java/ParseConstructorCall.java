@@ -19,6 +19,7 @@ import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.parser.java.erasure.ConstructorCallErasure;
+import org.e2immu.support.Either;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -180,7 +181,8 @@ public class ParseConstructorCall extends CommonParse {
                && Token.TokenType.LPAREN.equals(ia.get(0).getType())
                && Token.TokenType.RPAREN.equals(ia.get(1).getType());
         Context newContext = context.newAnonymousClassBody();
-        parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType,
+        Map<String, TypeInfo> typeInfoMap = recursivelyFindTypes(Either.right(anonymousType), body);
+        parsers.parseTypeDeclaration().parseBody(newContext, typeInfoMap, body, typeNature, anonymousType,
                 builder);
         newContext.resolver().resolve();
         builder.commit();
