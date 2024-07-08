@@ -256,11 +256,7 @@ public class ParseExpression extends CommonParse {
 
     private Variable findField(Context context, Expression expression, String name, boolean complain) {
         TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
-        FieldInfo fieldInfo = typeInfo.getFieldByName(name, false);
-        while (fieldInfo == null && typeInfo.parentClass() != null && !typeInfo.parentClass().isJavaLangObject()) {
-            typeInfo = typeInfo.parentClass().typeInfo();
-            fieldInfo = typeInfo.getFieldByName(name, false);
-        }
+        FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
             if (complain) {
                 throw new Summary.ParseException(context.info(), "Cannot find field named '" + name
@@ -269,6 +265,23 @@ public class ParseExpression extends CommonParse {
             return null;
         }
         return runtime.newFieldReference(fieldInfo, expression, fieldInfo.type());
+    }
+
+    private FieldInfo findRecursively(TypeInfo typeInfo, String name) {
+        FieldInfo fieldInfo = typeInfo.getFieldByName(name, false);
+        if (fieldInfo != null) return fieldInfo;
+        if (typeInfo.parentClass() != null && !typeInfo.parentClass().isJavaLangObject()) {
+            FieldInfo fi = findRecursively(typeInfo.parentClass().typeInfo(), name);
+            if(fi != null) return fi;
+        }
+        if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
+            FieldInfo fi = findRecursively(typeInfo.compilationUnitOrEnclosingType().getRight(), name);
+            if (fi != null) return fi;
+        }
+        if (typeInfo.enclosingMethod() != null) {
+            return findRecursively(typeInfo.enclosingMethod().typeInfo(), name);
+        }
+        return null;
     }
 
     // result must be a variable
