@@ -640,6 +640,10 @@ public class ParseExpression extends CommonParse {
         if (child instanceof ThisLiteral) {
             return runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
         }
+        if (!le.children().isEmpty() && le.get(0) instanceof KeyWord kw && SUPER.equals(kw.getType())) {
+            return runtime.newVariableExpression(runtime.newThis(context.enclosingType().parentClass().typeInfo(),
+                    null, true));
+        }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
     }
 }

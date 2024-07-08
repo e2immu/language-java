@@ -1,7 +1,9 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.expression.MethodCall;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.intellij.lang.annotations.Language;
@@ -59,5 +61,72 @@ public class TestParseTypeParameter extends CommonTestParse {
 
         assertEquals(1, pt.typeParameter().annotations().size());
         assertEquals("@SuppressWarnings(\"?\")", pt.typeParameter().annotations().get(0).toString());
+    }
+
+    @Language("java")
+    private static final String INPUT3 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class TypeParameter_3 {
+                enum Visibility {
+                    NONE;
+                }
+
+                interface SerializationConfig {
+                    VisibilityChecker<?> getDefaultVisibilityChecker();
+                }
+
+                // from com.fasterxml.jackson.databind.introspect
+                interface VisibilityChecker<T extends VisibilityChecker<T>> {
+                    T withGetterVisibility(Visibility v);
+
+                    T withSetterVisibility(Visibility v);
+                }
+
+                static class ObjectMapper {
+                    public void setVisibilityChecker(VisibilityChecker<?> vc) {
+
+                    }
+
+                    public SerializationConfig getSerializationConfig() {
+                        return null;
+                    }
+
+                }
+
+                private final ObjectMapper mapper = new ObjectMapper();
+
+                // CRASH
+                public void method1() {
+                     mapper.setVisibilityChecker(mapper.getSerializationConfig().getDefaultVisibilityChecker().
+                             withGetterVisibility(Visibility.NONE).
+                             withSetterVisibility(Visibility.NONE));
+                 }
+
+                // NO METHOD FOUND
+                public void method2() {
+                    VisibilityChecker<?> o = mapper.getSerializationConfig().getDefaultVisibilityChecker().
+                            withGetterVisibility(Visibility.NONE);
+                    mapper.setVisibilityChecker(o.withSetterVisibility(Visibility.NONE));
+                }
+
+                public void method3() {
+                    VisibilityChecker<?> o = mapper.getSerializationConfig().getDefaultVisibilityChecker().
+                            withGetterVisibility(Visibility.NONE);
+                    VisibilityChecker<?> vc = o.withSetterVisibility(Visibility.NONE);
+                    mapper.setVisibilityChecker(vc);
+                }
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+        TypeInfo objectMapper = typeInfo.findSubType("ObjectMapper");
+        MethodInfo setVc = objectMapper.findUniqueMethod("setVisibilityChecker", 1);
+        MethodInfo u = typeInfo.findUniqueMethod("method1", 0);
+        if (u.methodBody().statements().get(0) instanceof ExpressionAsStatement eas && eas.expression() instanceof MethodCall mc) {
+            assertSame(setVc, mc.methodInfo());
+        } else fail();
     }
 }

@@ -182,7 +182,7 @@ public class ParseStatement extends CommonParse {
                     .setBlock(block)
                     .addComments(comments).setSource(source).setLabel(label);
             int blockCount = 1;
-            while (tryStatement.get(i) instanceof CatchBlock catchBlock) {
+            while (i < tryStatement.size() && tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
                 org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
                         = runtime.newCatchClauseBuilder();
@@ -206,7 +206,7 @@ public class ParseStatement extends CommonParse {
                 i++;
             }
             Block finallyBlock;
-            if (tryStatement.get(i) instanceof FinallyBlock fb) {
+            if (i < tryStatement.size() && tryStatement.get(i) instanceof FinallyBlock fb) {
                 Context finallyContext = context.newVariableContext("finallyBlock");
                 String newIndex = index + "." + CommonParse.pad(blockCount, n);
                 finallyBlock = parseBlockOrStatement(finallyContext, newIndex, fb.get(1));

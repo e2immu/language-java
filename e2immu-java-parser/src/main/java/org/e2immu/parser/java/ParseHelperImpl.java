@@ -153,7 +153,9 @@ public class ParseHelperImpl implements ParseHelper {
         assert node instanceof InvocationArguments;
         List<Expression> expressions = new ArrayList<>();
         for (int k = 1; k < node.size(); k += 2) {
-            Expression e = parsers.parseExpression().parse(context, "0", context.emptyForwardType(), node.get(k));
+            Node nodeK = node.get(k);
+            if(nodeK instanceof Delimiter) break;
+            Expression e = parsers.parseExpression().parse(context, "0", context.emptyForwardType(), nodeK);
             expressions.add(e);
         }
         return List.copyOf(expressions);
