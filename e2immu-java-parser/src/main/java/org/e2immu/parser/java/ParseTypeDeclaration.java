@@ -9,6 +9,7 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -365,6 +366,17 @@ public class ParseTypeDeclaration extends CommonParse {
                     if (constructor != null) {
                         builder.addConstructor(constructor);
                     } // else error
+                } else if (child instanceof Initializer i && i.get(0) instanceof CodeBlock cb) {
+                    Context initializerContext = newContext.newSubType(typeInfo);
+                    MethodInfo constructor = runtime.newConstructor(typeInfo);
+                    constructor.builder()
+                            .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())
+                            .setAccess(runtime.accessPublic())
+                            .commitParameters();
+                    builder.addConstructor(constructor);
+                    initializerContext.resolver().add(constructor, constructor.builder(),
+                            initializerContext.emptyForwardType(), null, cb, initializerContext);
+                    countNormalConstructors++;
                 }
             }
         }
