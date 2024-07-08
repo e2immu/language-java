@@ -49,6 +49,9 @@ public class ParseLambdaExpression extends CommonParse {
 
         int typeIndex = context.anonymousTypeCounters().newIndex(context.enclosingType());
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(), typeIndex);
+        anonymousType.builder()
+                .setTypeNature(runtime.typeNatureClass())
+                .setParentClass(runtime.objectParameterizedType());
 
         MethodInfo sam = singleAbstractMethod.methodInfo();
         MethodInfo methodInfo = runtime.newMethod(anonymousType, sam.name(), runtime.methodTypeMethod());
@@ -232,7 +235,11 @@ public class ParseLambdaExpression extends CommonParse {
 
     private int countParameters(LambdaLHS lhs) {
         if (lhs.get(0) instanceof Identifier) return 1;
-        return (int) lhs.stream().filter(n -> Token.TokenType.COMMA.equals(n.getType())).count() + 1;
+        if (lhs.get(0) instanceof LambdaParameters lp) {
+            if (Token.TokenType.RPAREN.equals(lp.get(1).getType())) return 0;
+            return (int) lp.stream().filter(n -> Token.TokenType.COMMA.equals(n.getType())).count() + 1;
+        }
+        throw new UnsupportedOperationException();
     }
 
     private IsVoid computeIsVoid(LambdaExpression le) {
@@ -248,29 +255,24 @@ public class ParseLambdaExpression extends CommonParse {
         throw new UnsupportedOperationException("? either block or expression");
     }
 
-    private static IsVoid recursiveComputeIsVoid(Node statement) {
-        int i = 0;
-        while (i < statement.size() && statement.get(i) instanceof Delimiter) ++i;
-        if (i == statement.size()) return null;
-        Node ni = statement.get(i);
-        if (ni instanceof ReturnStatement rs) {
-            return rs.get(1) instanceof Delimiter ? IsVoid.YES : IsVoid.NO;
+    private static IsVoid recursiveComputeIsVoid(Node cb) {
+        int i = cb.size() - 1;
+        while (i >= 0) {
+            Node ni = cb.get(i);
+            if (ni instanceof ReturnStatement rs) {
+                return rs.get(1) instanceof Delimiter ? IsVoid.YES : IsVoid.NO;
+            }
+            if (ni instanceof CodeBlock cb2) {
+                return recursiveComputeIsVoid(cb2);
+            }
+            if (!(ni instanceof ThrowStatement) && !(ni instanceof Delimiter)) {
+                if (ni instanceof StatementExpression || ni instanceof ExpressionStatement) {
+                    return IsVoid.YES;
+                }
+                throw new UnsupportedOperationException("IMPLEMENT! " + ni.getClass());
+            }
+            --i;
         }
-        if (ni instanceof CodeBlock cb) {
-            int numStatements = (cb.size() - 1) / 2;
-            if (numStatements == 0) return IsVoid.YES;
-            IsVoid resultOfBlock = recursiveComputeIsVoid(cb.get(cb.size() - 2));
-            if (resultOfBlock == IsVoid.NO_IDEA) return IsVoid.NO;
-            return resultOfBlock;
-        }
-        // FIXME to be tested later, when method call erasures work!
-        if (ni instanceof ThrowStatement) return IsVoid.ESCAPE;
-        if (ni instanceof IfStatement ifs) return recursiveComputeIsVoid(ifs.get(1));
-        if (ni instanceof TryStatement ts) return recursiveComputeIsVoid(ts.get(2));
-        if (ni instanceof SynchronizedStatement sys) return recursiveComputeIsVoid(sys.get(4));
-        // loop statements not allowed (compilation error)...
-        // expression as statement: null
-        // throws statement: null
         return null;
     }
 }

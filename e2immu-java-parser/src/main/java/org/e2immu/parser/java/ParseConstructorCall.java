@@ -184,6 +184,7 @@ public class ParseConstructorCall extends CommonParse {
         ParameterizedType concreteReturnType = diamond.isShowAll() ? type : forwardType;
         if (concreteReturnType.typeInfo().isInterface()) {
             builder.addInterfaceImplemented(concreteReturnType);
+            builder.setParentClass(runtime.objectParameterizedType());
         } else {
             builder.setParentClass(concreteReturnType);
         }

@@ -276,7 +276,7 @@ public class ParseExpression extends CommonParse {
         throw new Summary.ParseException(context.info(), "unknown name '" + name + "'");
     }
 
-    private Variable findField(Context context, Expression expression, String name, boolean complain) {
+    private FieldReference findField(Context context, Expression expression, String name, boolean complain) {
         TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
         FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
@@ -465,18 +465,17 @@ public class ParseExpression extends CommonParse {
     private VariableExpression parseDotName(Context context, String index, DotName dotName) {
         String name = dotName.get(2).getSource();
         Expression scope;
-        FieldInfo fieldInfo;
+        FieldReference fr;
         Node n0 = dotName.get(0);
         if (n0 instanceof LiteralExpression le) {
             if ("this".equals(le.getAsString())) {
                 scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
-                fieldInfo = context.enclosingType().getFieldByName(name, true);
+                fr = findField(context, scope, name, true);
             } else throw new UnsupportedOperationException("NYI");
         } else {
             scope = parse(context, index, context.emptyForwardType(), n0);
-            throw new UnsupportedOperationException();
+            fr = findField(context, scope, name, true);
         }
-        FieldReference fr = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type()); // FIXME generics
         return runtime.newVariableExpression(fr);
     }
 
