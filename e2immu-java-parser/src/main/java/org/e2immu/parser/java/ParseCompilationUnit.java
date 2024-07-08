@@ -75,7 +75,7 @@ public class ParseCompilationUnit extends CommonParse {
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
-        Map<String, TypeInfo> typesByFQN = recursivelyFindTypes(Either.left(compilationUnit), cu);
+        Map<String, TypeInfo> typesByFQN = recursivelyFindTypes(Either.left(compilationUnit), typeInfoOrNull, cu);
 
         List<TypeInfo> types = new ArrayList<>();
         while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {

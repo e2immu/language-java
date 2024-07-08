@@ -111,7 +111,8 @@ public abstract class CommonParse {
     }
 
 
-    protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent, Node body) {
+    protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent,
+                                                         TypeInfo typeInfoOrNull, Node body) {
         Map<String, TypeInfo> map = new HashMap<>();
         for (Node node : body) {
             if (node instanceof TypeDeclaration td) {
@@ -130,13 +131,18 @@ public abstract class CommonParse {
                 String typeName = td.firstChildOfType(Identifier.class).getSource();
                 TypeInfo typeInfo;
                 if (parent.isLeft()) {
-                    typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
+                    if(typeInfoOrNull != null) {
+                        typeInfo = typeInfoOrNull;
+                        assert typeInfo.simpleName().equals(typeName);
+                    } else {
+                        typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
+                    }
                 } else {
                     typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
                 }
                 map.put(typeInfo.fullyQualifiedName(), typeInfo);
                 if(sub != null) {
-                    map.putAll(recursivelyFindTypes(Either.right(typeInfo), sub));
+                    map.putAll(recursivelyFindTypes(Either.right(typeInfo),  typeInfoOrNull, sub));
                 }
             }
         }

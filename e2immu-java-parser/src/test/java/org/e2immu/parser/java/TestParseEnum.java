@@ -97,4 +97,25 @@ public class TestParseEnum extends CommonTestParse {
         assertEquals("new E(false)", b.initializer().toString());
     }
 
+    private static final String INPUT3 = """
+            package org.e2immu.language.inspection.integration.java.importhelper;
+            public class RMultiLevel {
+                public enum Effective {
+                    E1, E2;
+                    public static Effective of(int index) {
+                        return index == 1 ? E1: E2;
+                    }
+                }
+                public enum Level {
+                    ONE, TWO, THREE
+                }
+            }
+            """;
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+        TypeInfo effective = typeInfo.findSubType("Effective");
+        assertTrue(effective.typeNature().isEnum());
+    }
+
 }

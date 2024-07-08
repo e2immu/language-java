@@ -239,6 +239,11 @@ public class ParseExpression extends CommonParse {
         if (v != null) {
             return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
         }
+        Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
+        Variable v2 = findField(context, scope, name, false);
+        if (v2 != null) {
+            return runtime.newVariableExpressionBuilder().setVariable(v2).setSource(source).addComments(comments).build();
+        }
         NamedType namedType = context.typeContext().get(name, false);
         if (namedType instanceof TypeInfo typeInfo) {
             ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
@@ -249,6 +254,23 @@ public class ParseExpression extends CommonParse {
         throw new Summary.ParseException(context.info(), "unknown name '" + name + "'");
     }
 
+    private Variable findField(Context context, Expression expression, String name, boolean complain) {
+        TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
+        FieldInfo fieldInfo = typeInfo.getFieldByName(name, false);
+        while (fieldInfo == null && typeInfo.parentClass() != null && !typeInfo.parentClass().isJavaLangObject()) {
+            typeInfo = typeInfo.parentClass().typeInfo();
+            fieldInfo = typeInfo.getFieldByName(name, false);
+        }
+        if (fieldInfo == null) {
+            if (complain) {
+                throw new Summary.ParseException(context.info(), "Cannot find field named '" + name
+                                                                 + "' in hierarchy of " + expression.parameterizedType());
+            }
+            return null;
+        }
+        return runtime.newFieldReference(fieldInfo, expression, fieldInfo.type());
+    }
+
     // result must be a variable
     private Variable parseVariable(Context context, List<Comment> comments, Source source, String name) {
         int lastDot = name.lastIndexOf('.');
@@ -257,9 +279,7 @@ public class ParseExpression extends CommonParse {
         }
         String varName = name.substring(lastDot + 1);
         Expression expression = parseName(context, comments, source, name.substring(0, lastDot));
-        TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
-        FieldInfo fieldInfo = typeInfo.getFieldByName(varName, true);
-        return runtime.newFieldReference(fieldInfo, expression, fieldInfo.type());
+        return findField(context, expression, varName, true);
     }
 
     private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,

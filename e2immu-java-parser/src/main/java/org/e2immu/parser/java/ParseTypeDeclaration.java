@@ -35,7 +35,7 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     public TypeInfo parse(Context context,
-                          TypeInfo typeInfoOrNull,
+                          TypeInfo typeInfoOrNull, // FIXME remove, has been superseded by the typeInfoMap
                           Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                           Map<String, TypeInfo> typeInfoMap,
                           TypeDeclaration td) {

@@ -181,7 +181,7 @@ public class ParseConstructorCall extends CommonParse {
                && Token.TokenType.LPAREN.equals(ia.get(0).getType())
                && Token.TokenType.RPAREN.equals(ia.get(1).getType());
         Context newContext = context.newAnonymousClassBody();
-        Map<String, TypeInfo> typeInfoMap = recursivelyFindTypes(Either.right(anonymousType), body);
+        Map<String, TypeInfo> typeInfoMap = recursivelyFindTypes(Either.right(anonymousType), null, body);
         parsers.parseTypeDeclaration().parseBody(newContext, typeInfoMap, body, typeNature, anonymousType,
                 builder);
         newContext.resolver().resolve();
