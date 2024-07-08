@@ -149,8 +149,8 @@ public class ParseTypeDeclaration extends CommonParse {
                 Node rhj = rh.get(j);
                 if (rhj instanceof Delimiter) break; // empty parameter list
                 if (rhj instanceof RecordComponent rc) {
-                    recordFields.add(parseRecordField(context, typeInfo, rc));
-                } else throw new Summary.ParseException(context.info(), "Expected record component");
+                    recordFields.add(parseRecordField(newContext, typeInfo, rc));
+                } else throw new Summary.ParseException(newContext.info(), "Expected record component");
             }
             i++;
         } else {
@@ -213,14 +213,14 @@ public class ParseTypeDeclaration extends CommonParse {
                         enumFields.add(fieldInfo);
                         contextForBody.variableContext().add(runtime.newFieldReference(fieldInfo));
                         if (ec.size() >= 2 && ec.get(1) instanceof InvocationArguments ia) {
-                            context.resolver().add(fieldInfo, fieldInfo.builder(), context.newForwardType(typeInfo.asSimpleParameterizedType()),
+                            newContext.resolver().add(fieldInfo, fieldInfo.builder(), newContext.newForwardType(typeInfo.asSimpleParameterizedType()),
                                     null, ia, newContext);
                         }
                     }
                 }
                 TypeInfo enumTypeInfo = runtime.getFullyQualified("java.lang.Enum", true);
                 builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
-                new EnumSynthetics(runtime, typeInfo, builder).create(context, enumFields);
+                new EnumSynthetics(runtime, typeInfo, builder).create(newContext, enumFields);
             }
             constructorCounts = parseBody(contextForBody, typeInfoMap, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
@@ -233,7 +233,7 @@ public class ParseTypeDeclaration extends CommonParse {
             constructorCounts = new ConstructorCounts(0, 0);
         } else throw new UnsupportedOperationException("node " + td.get(i).getClass());
 
-        context.resolver().add(builder);
+        newContext.resolver().add(builder);
 
         /*
         Ensure a constructor when the type is a record and there are no compact constructors.
