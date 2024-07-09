@@ -608,7 +608,8 @@ public class TestParseMethods extends CommonTestParse {
         parse(INPUT15);
     }
 
-    String INPUT16 = """
+    @Language("java")
+    private static final String INPUT16 = """
             package org.e2immu.analyser.resolver.testexample;
 
             // String[][] --> Object[]
@@ -624,7 +625,13 @@ public class TestParseMethods extends CommonTestParse {
             }
             """;
 
-    String INPUT17 = """
+    @Test
+    public void test16() {
+        parse(INPUT16);
+    }
+
+    @Language("java")
+    private static final String INPUT17 = """
             package org.e2immu.analyser.resolver.testexample;
 
             public class MethodCall_23 {
@@ -647,7 +654,14 @@ public class TestParseMethods extends CommonTestParse {
                 }
             }
             """;
-    String INPUT18 = """
+
+    @Test
+    public void test17() {
+        parse(INPUT17);
+    }
+
+    @Language("java")
+    private static final String INPUT18 = """
             package org.e2immu.analyser.resolver.testexample;
 
             // identical to _21, but for the Analyser. qualifier
@@ -670,7 +684,13 @@ public class TestParseMethods extends CommonTestParse {
             }
             """;
 
-    String INPUT19 = """
+    @Test
+    public void test18() {
+        parse(INPUT18);
+    }
+
+    @Language("java")
+    private static final String INPUT19 = """
             package org.e2immu.analyser.resolver.testexample;
 
             public class MethodCall_21 {
@@ -691,6 +711,74 @@ public class TestParseMethods extends CommonTestParse {
                 }
             }
             """;
+
+    @Test
+    public void test19() {
+        parse(INPUT19);
+    }
+
+    @Language("java")
+    private static final String INPUT20 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+
+            public class MethodCall_10 {
+
+                interface I1 {
+
+                    boolean isDelayed();
+                }
+
+                interface I2 {
+
+                    boolean isDelayed();
+                }
+
+                interface Cause extends I1, I2 {
+
+                     class Simple implements Cause {
+                         @Override
+                         public boolean isDelayed() {
+                             return false;
+                         }
+                     }
+                }
+
+                public boolean test() {
+                    boolean b1 = new Cause.Simple().isDelayed(); // both candidates (I1, I2)
+                    Cause cause = new Cause.Simple();
+                    return cause.isDelayed(); // only candidate: I1
+                }
+            }""";
+
+    @Test
+    public void test20() {
+        parse(INPUT20);
+    }
+
+    @Language("java")
+    private static final String INPUT21 = """
+            package org.e2immu.analyser.resolver.testexample;
+
+            public class MethodCall_16 {
+
+                private int accept(int i) {
+                    return i+1;
+                }
+
+                public void method(int k) {
+                    if(accept(k & 4)>0) {
+                        System.out.println("ok!");
+                    }
+                }
+            }
+            """;
+
+    @Test
+    public void test21() {
+        parse(INPUT21);
+    }
+
 }
 
 
