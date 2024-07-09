@@ -613,7 +613,28 @@ public class ParseExpression extends CommonParse {
     private Expression parseLiteral(Context context, LiteralExpression le) {
         Node child = le.children().get(0);
         if (child instanceof IntegerLiteral il) {
-            return runtime.newInt(il.getValue());
+            String src = il.getSource().toLowerCase().replace("_", "")
+                    .replace("l", "");
+            long l = Long.parseLong(src);
+            if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
+                return runtime.newInt((int) l);
+            }
+            return runtime.newLong(l);
+        }
+        if (child instanceof LongLiteral ll) {
+            String src = ll.getSource().toLowerCase().replace("_", "")
+                    .replace("l", "");
+            return runtime.newLong(Long.parseLong(src));
+        }
+        if (child instanceof FloatingPointLiteral fp) {
+            String src = fp.getSource().toLowerCase().replace("_", "");
+            if (src.endsWith("f") || src.endsWith("F")) {
+                return runtime.newFloat(Float.parseFloat(src.substring(0, src.length() - 1)));
+            }
+            if (src.endsWith("d") || src.endsWith("D")) {
+                return runtime.newDouble(Double.parseDouble(src.substring(0, src.length() - 1)));
+            }
+            return runtime.newDouble(Double.parseDouble(src));
         }
         if (child instanceof BooleanLiteral bl) {
             return runtime.newBoolean("true".equals(bl.getSource()));
