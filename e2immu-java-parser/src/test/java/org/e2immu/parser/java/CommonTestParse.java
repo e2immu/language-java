@@ -165,6 +165,11 @@ public class CommonTestParse {
         valueOf.builder().commitParameters().commit();
         runtime.boxedLongTypeInfo().builder().addMethod(valueOf);
 
+        MethodInfo length = runtime.newMethod(runtime.stringTypeInfo(), "length", runtime.methodTypeMethod());
+        length.builder().setReturnType(runtime.intParameterizedType());
+        length.builder().commit();
+        runtime.stringTypeInfo().builder().addMethod(length);
+
     }
 
     private void defineFunction() {
