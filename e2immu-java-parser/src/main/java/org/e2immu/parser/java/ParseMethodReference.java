@@ -8,9 +8,13 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.MethodResolution;
+import org.e2immu.parser.java.erasure.LambdaErasure;
+import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.Identifier;
+import org.parsers.java.ast.ObjectType;
 import org.parsers.java.ast.Type;
 
 import java.util.*;
@@ -21,14 +25,20 @@ public class ParseMethodReference extends CommonParse {
         super(runtime, parsers);
     }
 
-    public MethodReference parse(Context context, List<Comment> comments, Source source, String index,
-                                 ForwardType forwardType,
-                                 org.parsers.java.ast.MethodReference mr) {
+    public Expression parse(Context context, List<Comment> comments, Source source, String index,
+                            ForwardType forwardType,
+                            org.parsers.java.ast.MethodReference mr) {
         Expression scope;
         Node n0 = mr.get(0);
         if (n0 instanceof Type) {
-            ParameterizedType pt = parsers.parseType().parse(context, n0);
-            scope = runtime.newTypeExpression(pt, runtime.diamondNo());
+            // BEWARE! even if n0 represents a variable, we may end up in this branch
+            ParameterizedType pt = parsers.parseType().parse(context, n0, false);
+            if (pt != null) {
+                scope = runtime.newTypeExpression(pt, runtime.diamondNo());
+            } else if (n0 instanceof ObjectType ot) {
+                // try again, cannot be a type
+                scope = parsers.parseExpression().parse(context, index, forwardType, ot.get(0));
+            } else throw new UnsupportedOperationException("NYI");
         } else {
             scope = parsers.parseExpression().parse(context, index, forwardType, n0);
         }
@@ -41,6 +51,13 @@ public class ParseMethodReference extends CommonParse {
         } else {
             throw new UnsupportedOperationException();
         }
+        if (forwardType.erasure()) {
+            Either<Set<MethodResolution.Count>, Expression> either = context.methodResolution()
+                    .computeMethodReferenceErasureCounts(context, comments, source, scope, methodName);
+            if (either.isRight()) return either.getRight();
+            return new LambdaErasure(runtime, either.getLeft(), source);
+        }
+
         return context.methodResolution().resolveMethodReference(context, comments, source, index, forwardType,
                 scope, methodName);
     }

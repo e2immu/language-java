@@ -6,17 +6,18 @@ import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.inspection.api.parser.MethodResolution;
 
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LambdaErasure extends ErasureExpressionImpl {
-    private final Set<Count> counts;
+    private final Set<MethodResolution.Count> counts;
     private final Runtime runtime;
     private final Source source;
 
-    public LambdaErasure(Runtime runtime, Set<Count> counts, Source source) {
+    public LambdaErasure(Runtime runtime, Set<MethodResolution.Count> counts, Source source) {
         Objects.requireNonNull(counts);
         Objects.requireNonNull(source);
         this.counts = counts;
@@ -36,13 +37,12 @@ public class LambdaErasure extends ErasureExpressionImpl {
         return Objects.hash(counts, source);
     }
 
-    public record Count(int parameters, boolean isVoid) {
-    }
+
 
     @Override
     public Set<ParameterizedType> erasureTypes() {
         return counts.stream()
-                .map(count -> runtime.syntheticFunctionalType(count.parameters, !count.isVoid))
+                .map(count -> runtime.syntheticFunctionalType(count.parameters(), !count.isVoid()))
                 .map(ti -> ti.asParameterizedType(runtime))
                 .collect(Collectors.toUnmodifiableSet());
     }
@@ -62,7 +62,7 @@ public class LambdaErasure extends ErasureExpressionImpl {
         return runtime.newOutputBuilder().add(runtime.newText("<Lambda Erasure at " + source + ": " + counts + ">"));
     }
 
-    public Set<Count> counts() {
+    public Set<MethodResolution.Count> counts() {
         return counts;
     }
 }

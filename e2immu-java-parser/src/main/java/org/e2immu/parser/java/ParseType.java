@@ -28,6 +28,10 @@ public class ParseType extends CommonParse {
 
      */
     public ParameterizedType parse(Context context, List<Node> nodes) {
+        return parse(context, nodes, true);
+    }
+
+    public ParameterizedType parse(Context context, List<Node> nodes, boolean complain) {
         Token.TokenType tt;
         ParameterizedType pt;
         Node n0 = nodes.get(0);
@@ -35,12 +39,12 @@ public class ParseType extends CommonParse {
             return parse(context, rt);
         }
         if (nodes instanceof ObjectType ot) {
-            pt = parseObjectType(context, ot);
+            pt = parseObjectType(context, ot, complain);
         } else if (n0 instanceof Identifier identifier) {
-            NamedType nt = context.typeContext().get(identifier.getSource(), true);
+            NamedType nt = context.typeContext().get(identifier.getSource(), complain);
             pt = nt.asSimpleParameterizedType();
         } else if (n0 instanceof ObjectType ot) {
-            pt = parseObjectType(context, ot);
+            pt = parseObjectType(context, ot, complain);
         } else if (n0 instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
             // ?, ? super T ==
             if (nodes.size() > 1 && nodes.get(1) instanceof WildcardBounds bounds) {
@@ -50,7 +54,8 @@ public class ParseType extends CommonParse {
                 pt = runtime.parameterizedTypeWildcard();
             }
         } else {
-            if (n0 instanceof PrimitiveArrayType pat && pat.get(0) instanceof PrimitiveType primitive && primitive.get(0) instanceof Primitive p) {
+            if (n0 instanceof PrimitiveArrayType pat && pat.get(0) instanceof PrimitiveType primitive
+                && primitive.get(0) instanceof Primitive p) {
                 tt = p.getType();
                 int arrays = countArrays(pat);
                 ParameterizedType parameterizedType = primitiveType(tt);
@@ -68,7 +73,10 @@ public class ParseType extends CommonParse {
                 pt = null;
             }
         }
-        assert pt != null;
+        if (pt == null) {
+            if (complain) throw new UnsupportedOperationException();
+            return null;
+        }
 
         int arrays = countArrays(nodes);
         if (arrays == 0) {
@@ -105,7 +113,7 @@ public class ParseType extends CommonParse {
         };
     }
 
-    private ParameterizedType parseObjectType(Context context, ObjectType ot) {
+    private ParameterizedType parseObjectType(Context context, ObjectType ot, boolean complain) {
         int i = 0;
         StringBuilder sb = new StringBuilder();
         while (i < ot.size()) {
@@ -120,7 +128,11 @@ public class ParseType extends CommonParse {
         }
         String qualifiedName = sb.toString();
         if (qualifiedName.isBlank()) throw new Summary.ParseException(context.info(), "Expected a qualified name");
-        NamedType nt = context.typeContext().get(qualifiedName, true);
+        NamedType nt = context.typeContext().get(qualifiedName, complain);
+        if (nt == null) {
+            if (complain) throw new Summary.ParseException(context.info(), "Expected non-null");
+            return null;
+        }
         ParameterizedType withoutTypeParameters = nt.asSimpleParameterizedType();
         if (ot.size() > i && ot.get(i) instanceof TypeArguments tas) {
             List<ParameterizedType> typeArguments = parseTypeArguments(context, tas);

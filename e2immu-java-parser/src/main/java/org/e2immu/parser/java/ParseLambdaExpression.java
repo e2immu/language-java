@@ -221,14 +221,14 @@ public class ParseLambdaExpression extends CommonParse {
         if (le.get(0) instanceof LambdaLHS lhs) {
             numParameters = countParameters(lhs);
         } else throw new Summary.ParseException(context.info(), "Expected LambdaLHS");
-        Set<LambdaErasure.Count> erasures;
+        Set<MethodResolution.Count> erasures;
         IsVoid isVoid = computeIsVoid(le);
         if (isVoid == IsVoid.NO_IDEA || isVoid == IsVoid.ESCAPE) {
             erasures = Set.of(
-                    new LambdaErasure.Count(numParameters, true),
-                    new LambdaErasure.Count(numParameters, false));
+                    new MethodResolution.Count(numParameters, true),
+                    new MethodResolution.Count(numParameters, false));
         } else {
-            erasures = Set.of(new LambdaErasure.Count(numParameters, isVoid == IsVoid.YES));
+            erasures = Set.of(new MethodResolution.Count(numParameters, isVoid == IsVoid.YES));
         }
         LOGGER.debug("Returning erasure {}", erasures);
         return new LambdaErasure(runtime, erasures, source);

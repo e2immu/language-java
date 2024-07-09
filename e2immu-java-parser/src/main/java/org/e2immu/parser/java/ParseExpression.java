@@ -138,6 +138,10 @@ public class ParseExpression extends CommonParse {
         if (node instanceof InstanceOfExpression ioe) {
             return parseInstanceOf(context, index, forwardType, comments, source, ioe);
         }
+        if (node instanceof Identifier i) {
+            // this is possible via ParseMethodReference
+            return parseName(context, comments, source, i.getSource());
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
     }
 
