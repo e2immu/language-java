@@ -1,12 +1,10 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.annotation.Identity;
 import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
-import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -15,6 +13,11 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.*;
 
+/*
+Second round! ScanCompilationUnit has already run.
+We parse the import statements, add them to the compilation unit object, and then continue with the
+actual parsing of types.
+ */
 public class ParseCompilationUnit extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseCompilationUnit.class);
 
@@ -25,62 +28,41 @@ public class ParseCompilationUnit extends CommonParse {
         this.rootContext = rootContext;
     }
 
-    public List<TypeInfo> parse(URI uri, CompilationUnit cu) {
+    public List<TypeInfo> parse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
+        assert compilationUnit.packageName() != null;
+        assert compilationUnit.uri() != null;
         try {
-            return internalParse(uri, null, cu);
+            return internalParse(compilationUnit, cu);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
             re.printStackTrace(System.err);
-            LOGGER.error("Caught exception parsing compilation unit {}", uri);
+            LOGGER.error("Caught exception parsing compilation unit {}", compilationUnit.uri());
             rootContext.summary().addParserError(re);
             return List.of();
         }
     }
 
-    // this version is for when the TypeInfo object has already been created, and must be reused
-    // Identity of the compilation unit is not that important, we'll overwrite the source in the TypeInfo builder.
-    public List<TypeInfo> parse(TypeInfo typeInfo, CompilationUnit cu) {
-        URI uri = typeInfo.compilationUnit().uri();
-        try {
-            return internalParse(uri, typeInfo, cu);
-        } catch (Summary.FailFastException ffe) {
-            throw ffe;
-        } catch (RuntimeException re) {
-            re.printStackTrace(System.err);
-            LOGGER.error("Caught exception parsing compilation unit {} from type {}", uri, typeInfo);
-            rootContext.summary().addParserError(re);
-            return List.of();
-        }
-    }
+    private List<TypeInfo> internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
+        assert compilationUnit.packageName() != null;
 
-    private List<TypeInfo> internalParse(URI uri, TypeInfo typeInfoOrNull, CompilationUnit cu) {
-        PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
-        String packageName = packageDeclaration == null ? ""
-                : Objects.requireNonNullElse(packageDeclaration.getName(), "");
-        org.e2immu.language.cst.api.element.CompilationUnit.Builder builder = runtime.newCompilationUnitBuilder()
-                .setPackageName(packageName);
         int i = 0;
+        List<ImportStatement> importStatements = new LinkedList<>();
         while (i < cu.size() && !(cu.get(i) instanceof TypeDeclaration)) {
             if (cu.get(i) instanceof ImportDeclaration id) {
                 ImportStatement importStatement = parseImportDeclaration(id);
-                builder.addImportStatement(importStatement);
-            } else if (!(cu.get(i) instanceof PackageDeclaration)) {
-                throw new Summary.ParseException(uri, "Expect PackageDeclaration, got " + cu.get(i).getClass() + " in {}");
+                importStatements.add(importStatement);
             }
             i++;
         }
-        org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = builder.build();
+        compilationUnit.setImportStatements(List.copyOf(importStatements));
 
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
-        Map<String, TypeInfo> typesByFQN = recursivelyFindTypes(Either.left(compilationUnit), typeInfoOrNull, cu);
-
         List<TypeInfo> types = new ArrayList<>();
         while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {
-            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, typeInfoOrNull,
-                    Either.left(compilationUnit), typesByFQN, cd);
+            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), cd);
             if (typeInfo != null) {
                 types.add(typeInfo);
             } // else: error...

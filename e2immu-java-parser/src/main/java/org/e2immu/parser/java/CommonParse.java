@@ -175,7 +175,9 @@ public abstract class CommonParse {
                 typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
             }
         } else {
-            typeInfo = runtime.newTypeInfo(parent.getRight(), typeName);
+            TypeInfo parentType = parent.getRight();
+            typeInfo = runtime.newTypeInfo(parentType, typeName);
+            parentType.builder().addSubType(typeInfo);
         }
         typeInfo.builder().setTypeNature(typeNature);
         typeModifiers.forEach(typeInfo.builder()::addTypeModifier);

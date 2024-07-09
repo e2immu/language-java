@@ -15,7 +15,10 @@ import org.parsers.java.JavaParser;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 
 public class CommonTestParse {
@@ -203,41 +206,46 @@ public class CommonTestParse {
                 .computeAccess();
     }
 
+
+    protected record ParseResult(Context context, List<TypeInfo> types) {
+    }
+
     protected Context parseReturnContext(String input) {
-        Summary failFastSummary = new SummaryImpl(false);
-        JavaParser parser = new JavaParser(input);
-        parser.setParserTolerant(false);
-        SourceTypesImpl sourceTypes = new SourceTypesImpl();
-        CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
-        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);
-        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
-        Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
-        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
-        try {
-            parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        rootContext.resolver().resolve();
-        return rootContext;
+        return parseReturnBoth(input).context;
     }
 
     protected TypeInfo parse(String input) {
-        Summary failFastSummary = new SummaryImpl(true);
-        JavaParser parser = new JavaParser(input);
-        parser.setParserTolerant(false);
-        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
+        return parseReturnBoth(input).types.get(0);
+    }
+
+    protected ParseResult parseReturnBoth(String input) {
+        Summary failFastSummary = new SummaryImpl(false);
+        Supplier<JavaParser> parser = ()-> {
+            JavaParser p = new JavaParser(input);
+            p.setParserTolerant(false);
+            return p;
+        };
         SourceTypesImpl sourceTypes = new SourceTypesImpl();
         CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
-        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes);
+        SourceTypeMapImpl stm = new SourceTypeMapImpl();
+        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes, stm);
+        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
-        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
+
+        ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(rootContext);
+        CompilationUnit cu;
         try {
-            List<TypeInfo> types = parseCompilationUnit.parse(new URI("input"), parser.CompilationUnit());
-            resolver.resolve();
-            return types.get(0);
+            ScanCompilationUnit.ScanResult sr = scanCompilationUnit.scan(new URI("input"), parser.get().CompilationUnit());
+            stm.putAll(sr.sourceTypes());
+            cu = sr.compilationUnit();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+        ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
+        List<TypeInfo> types = parseCompilationUnit.parse(cu, parser.get().CompilationUnit());
+        rootContext.resolver().resolve();
+        return new ParseResult(rootContext, types);
     }
+
+
 }

@@ -36,12 +36,10 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     public TypeInfo parse(Context context,
-                          TypeInfo typeInfoOrNull, // FIXME remove, has been superseded by the typeInfoMap
                           Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
-                          Map<String, TypeInfo> typeInfoMap,
                           TypeDeclaration td) {
         try {
-            return internalParse(context, typeInfoOrNull, packageNameOrEnclosing, typeInfoMap, td);
+            return internalParse(context, packageNameOrEnclosing, td);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -60,9 +58,7 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     private TypeInfo internalParse(Context context,
-                                   TypeInfo typeInfoOrNull,
                                    Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
-                                   Map<String, TypeInfo> typeInfoMap,
                                    TypeDeclaration td) {
         List<Comment> comments = comments(td);
 
@@ -92,14 +88,10 @@ public class ParseTypeDeclaration extends CommonParse {
             simpleName = identifier.getSource();
             i++;
         } else throw new UnsupportedOperationException();
-        TypeInfo typeInfo;
 
-        if (packageNameOrEnclosing.isLeft() && typeInfoOrNull != null && typeInfoOrNull.simpleName().equals(simpleName)) {
-            typeInfo = typeInfoOrNull; // we must re-use this object!!
-        } else {
-            String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
-            typeInfo = typeInfoMap.get(fqn);
-        }
+        // during the "scan" phase, we have already created all the TypeInfo objects
+        String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
+        TypeInfo typeInfo = (TypeInfo) context.typeContext().get(fqn, true);
 
         assert typeInfo != null;
         Source source = source(typeInfo, "", td);
@@ -114,7 +106,7 @@ public class ParseTypeDeclaration extends CommonParse {
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
 
-        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfoMap, typeInfo);
+        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo);
 
         if (td.get(i) instanceof TypeParameters typeParameters) {
             int j = 1;
@@ -211,7 +203,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
                 new EnumSynthetics(runtime, typeInfo, builder).create(newContext, enumFields);
             }
-            constructorCounts = parseBody(contextForBody, typeInfoMap, body, typeNature, typeInfo, builder);
+            constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
@@ -260,15 +252,19 @@ public class ParseTypeDeclaration extends CommonParse {
     /*
      Important: we'll be creating TypeInfo objects, which we MUST re-use!
      */
-    private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext,
-                                                       Map<String, TypeInfo> typeInfoMap,
-                                                       TypeInfo typeInfo) {
-        String fullyQualified = typeInfo.fullyQualifiedName();
-        typeInfoMap.forEach((fqn, ti) -> {
-            if (fqn.startsWith(fullyQualified)) {
-                typeContext.addToContext(ti);
+    private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext, TypeInfo typeInfo) {
+        // add direct children
+        for (TypeInfo subType : typeInfo.subTypes()) {
+            typeContext.addToContext(subType);
+        }
+        // add enclosing type and direct siblings
+        if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
+            TypeInfo enclosingType = typeInfo.compilationUnitOrEnclosingType().getRight();
+            typeContext.addToContext(enclosingType);
+            for (TypeInfo subType : enclosingType.subTypes()) {
+                typeContext.addToContext(subType);
             }
-        });
+        }
     }
 
     private RecordField parseRecordField(Context context, TypeInfo typeInfo, RecordComponent rc) {
@@ -313,7 +309,6 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     ConstructorCounts parseBody(Context newContext,
-                                Map<String, TypeInfo> typeInfoMap,
                                 Node body,
                                 TypeNature typeNature,
                                 TypeInfo typeInfo,
@@ -333,11 +328,11 @@ public class ParseTypeDeclaration extends CommonParse {
             }
         }
 
-        // FIRST, parse the subtypes
+        // FIRST, parse the subtypes (but do not add them as a subtype, that has already been done in the
+        // scan phase
 
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
-            TypeInfo subTypeInfo = parse(newContext, null, Either.right(typeInfo), typeInfoMap, typeDeclaration);
-            builder.addSubType(subTypeInfo);
+            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration);
             newContext.typeContext().addToContext(subTypeInfo);
         }
 
