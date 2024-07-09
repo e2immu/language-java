@@ -211,15 +211,15 @@ public class CommonTestParse {
     }
 
     protected Context parseReturnContext(String input) {
-        return parseReturnBoth(input).context;
+        return parseReturnBoth(input, false).context;
     }
 
     protected TypeInfo parse(String input) {
-        return parseReturnBoth(input).types.get(0);
+        return parseReturnBoth(input, true).types.get(0);
     }
 
-    protected ParseResult parseReturnBoth(String input) {
-        Summary failFastSummary = new SummaryImpl(false);
+    protected ParseResult parseReturnBoth(String input, boolean failFast) {
+        Summary failFastSummary = new SummaryImpl(failFast);
         Supplier<JavaParser> parser = ()-> {
             JavaParser p = new JavaParser(input);
             p.setParserTolerant(false);

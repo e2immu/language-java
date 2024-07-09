@@ -46,39 +46,17 @@ public class ParseCompilationUnit extends CommonParse {
     private List<TypeInfo> internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
         assert compilationUnit.packageName() != null;
 
-        int i = 0;
-        List<ImportStatement> importStatements = new LinkedList<>();
-        while (i < cu.size() && !(cu.get(i) instanceof TypeDeclaration)) {
-            if (cu.get(i) instanceof ImportDeclaration id) {
-                ImportStatement importStatement = parseImportDeclaration(id);
-                importStatements.add(importStatement);
-            }
-            i++;
-        }
-        compilationUnit.setImportStatements(List.copyOf(importStatements));
-
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
         List<TypeInfo> types = new ArrayList<>();
-        while (i < cu.size() && cu.get(i) instanceof TypeDeclaration cd) {
-            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), cd);
+        for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
+            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
             if (typeInfo != null) {
                 types.add(typeInfo);
             } // else: error...
-            i++;
         }
         return types;
     }
 
-    private ImportStatement parseImportDeclaration(ImportDeclaration id) {
-        boolean isStatic = id.get(1) instanceof KeyWord kw && Token.TokenType.STATIC.equals(kw.getType());
-        int i = isStatic ? 2 : 1;
-        String importString = id.get(i).getSource();
-        if (id.get(i + 1) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())
-            && id.get(i + 2) instanceof Operator o && Token.TokenType.STAR.equals(o.getType())) {
-            return runtime.newImportStatement(importString + ".*", isStatic);
-        }
-        return runtime.newImportStatement(importString, isStatic);
-    }
 }

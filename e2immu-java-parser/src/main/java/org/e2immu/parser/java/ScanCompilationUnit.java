@@ -5,16 +5,14 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
+import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /*
 First round, we only prepare a type map.
@@ -35,7 +33,7 @@ public class ScanCompilationUnit extends CommonParse {
 
     public ScanResult scan(URI uri, CompilationUnit cu) {
         try {
-            return internalScan(uri, null, cu);
+            return internalScan(uri, cu);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -46,33 +44,30 @@ public class ScanCompilationUnit extends CommonParse {
         }
     }
 
-    // this version is for when the TypeInfo object has already been created, and must be reused
-    // Identity of the compilation unit is not that important, we'll overwrite the source in the TypeInfo builder.
-    public ScanResult scan(TypeInfo typeInfo, CompilationUnit cu) {
-        URI uri = typeInfo.compilationUnit().uri();
-        try {
-            return internalScan(uri, typeInfo, cu);
-        } catch (Summary.FailFastException ffe) {
-            throw ffe;
-        } catch (RuntimeException re) {
-            re.printStackTrace(System.err);
-            LOGGER.error("Caught exception scanning compilation unit {} from type {}", uri, typeInfo);
-            rootContext.summary().addParserError(re);
-            return new ScanResult(Map.of(), null);
-        }
-    }
-
-    private ScanResult internalScan(URI uri, TypeInfo typeInfoOrNull, CompilationUnit cu) {
+    private ScanResult internalScan(URI uri, CompilationUnit cu) {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
         String packageName = packageDeclaration == null ? ""
                 : Objects.requireNonNullElse(packageDeclaration.getName(), "");
 
-        org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = runtime.newCompilationUnitBuilder()
-                .setURI(uri)
-                .setPackageName(packageName)
-                .build();
-
-        return new ScanResult(recursivelyFindTypes(Either.left(compilationUnit), typeInfoOrNull, cu), compilationUnit);
+        org.e2immu.language.cst.api.element.CompilationUnit.Builder compilationUnitBuilder
+                = runtime.newCompilationUnitBuilder().setURI(uri).setPackageName(packageName);
+        for (ImportDeclaration id : cu.childrenOfType(ImportDeclaration.class)) {
+            ImportStatement importStatement = parseImportDeclaration(id);
+            compilationUnitBuilder.addImportStatement(importStatement);
+        }
+        org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = compilationUnitBuilder.build();
+        return new ScanResult(recursivelyFindTypes(Either.left(compilationUnit), null, cu), compilationUnit);
     }
 
+
+    private ImportStatement parseImportDeclaration(ImportDeclaration id) {
+        boolean isStatic = id.get(1) instanceof KeyWord kw && Token.TokenType.STATIC.equals(kw.getType());
+        int i = isStatic ? 2 : 1;
+        String importString = id.get(i).getSource();
+        if (id.get(i + 1) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())
+            && id.get(i + 2) instanceof Operator o && Token.TokenType.STAR.equals(o.getType())) {
+            return runtime.newImportStatement(importString + ".*", isStatic);
+        }
+        return runtime.newImportStatement(importString, isStatic);
+    }
 }

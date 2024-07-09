@@ -106,7 +106,7 @@ public class ParseTypeDeclaration extends CommonParse {
         Context newContext = context.newSubType(typeInfo);
         newContext.typeContext().addToContext(typeInfo);
 
-        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo);
+        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo.primaryType());
 
         if (td.get(i) instanceof TypeParameters typeParameters) {
             int j = 1;
@@ -253,17 +253,10 @@ public class ParseTypeDeclaration extends CommonParse {
      Important: we'll be creating TypeInfo objects, which we MUST re-use!
      */
     private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext, TypeInfo typeInfo) {
+        typeContext.addToContext(typeInfo);
         // add direct children
         for (TypeInfo subType : typeInfo.subTypes()) {
-            typeContext.addToContext(subType);
-        }
-        // add enclosing type and direct siblings
-        if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
-            TypeInfo enclosingType = typeInfo.compilationUnitOrEnclosingType().getRight();
-            typeContext.addToContext(enclosingType);
-            for (TypeInfo subType : enclosingType.subTypes()) {
-                typeContext.addToContext(subType);
-            }
+            collectNamesOfSubTypesIntoTypeContext(typeContext, subType);
         }
     }
 
