@@ -8,6 +8,7 @@ import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.variable.FieldReference;
 
 import java.util.List;
 
@@ -46,6 +47,24 @@ class RecordSynthetics {
     }
 
     List<MethodInfo> createAccessors(List<ParseTypeDeclaration.RecordField> recordFields) {
-        return List.of();
+        return recordFields.stream().map(this::createAccessor).toList();
+    }
+
+    private MethodInfo createAccessor(ParseTypeDeclaration.RecordField recordField) {
+        FieldReference fr = runtime.newFieldReference(recordField.fieldInfo());
+        Block methodBody = runtime.newBlockBuilder()
+                .addStatement(runtime.newReturnStatement(runtime.newVariableExpression(fr)))
+                .build();
+        MethodInfo methodInfo = runtime.newMethod(recordField.fieldInfo().owner(), recordField.fieldInfo().name(),
+                runtime.methodTypeMethod());
+        MethodInfo.Builder builder = methodInfo.builder();
+        builder.setReturnType(recordField.fieldInfo().type())
+                .setAccess(runtime.accessPublic())
+                .addMethodModifier(runtime.methodModifierPublic())
+                .setSynthetic(true)
+                .commitParameters()
+                .setMethodBody(methodBody)
+                .commit();
+        return methodInfo;
     }
 }
