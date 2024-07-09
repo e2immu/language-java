@@ -115,7 +115,7 @@ public class ParseExpression extends CommonParse {
             return parsers.parseConstructorCall().parse(context, index, forwardType, ae);
         }
         if (node instanceof MethodReference mr) {
-            return parsers.parseMethodReference().parse(context, comments, source, index, mr);
+            return parsers.parseMethodReference().parse(context, comments, source, index, forwardType, mr);
         }
         if (node instanceof LambdaExpression le) {
             return parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
