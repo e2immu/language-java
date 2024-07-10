@@ -11,11 +11,10 @@ import java.util.Set;
 
 public class ConstructorCallErasure extends ErasureExpressionImpl {
     private final ParameterizedType formalType;
-    private final Runtime runtime;
 
     public ConstructorCallErasure(Runtime runtime, ParameterizedType formalType) {
+        super(runtime);
         this.formalType = formalType;
-        this.runtime = runtime;
     }
 
     @Override

@@ -42,6 +42,7 @@ public class ParseLambdaExpression extends CommonParse {
 
         MethodTypeParameterMap singleAbstractMethod = forwardType.computeSAM(runtime, context.genericsHelper(),
                 context.enclosingType());
+        assert singleAbstractMethod != null : "No singleAbstractMethod computed from forwardType";
 
         Lambda.Builder builder = runtime.newLambdaBuilder();
 
@@ -159,8 +160,13 @@ public class ParseLambdaExpression extends CommonParse {
         Node lhs0 = lhs.get(0);
         if (lhs0 instanceof Identifier identifier) {
             // single variable, no type given. we must extract it from the forward type, which must be a functional interface
-            ParameterizedType type = forwardType.type().parameters().get(0).ensureBoxed(runtime);
             String parameterName = identifier.getSource();
+            ParameterizedType formalType = forwardType.type().bestTypeInfo().singleAbstractMethod()
+                    .parameters().get(0).parameterizedType().ensureBoxed(runtime);
+            MethodTypeParameterMap methodTypeParameterMap = newContext.genericsHelper()
+                    .findSingleAbstractMethodOfInterface(forwardType.type());
+            ParameterizedType type = methodTypeParameterMap.getConcreteTypeOfParameter(runtime, 0);
+
             ParameterInfo pi = miBuilder.addParameter(parameterName, type);
             outputVariants.add(runtime.lambdaOutputVariantEmpty());
             pi.builder().commit();
@@ -283,7 +289,7 @@ public class ParseLambdaExpression extends CommonParse {
                         return recursiveComputeIsVoid(cb3);
                     }
                 }
-                if(ni instanceof TryStatement) {
+                if (ni instanceof TryStatement) {
                     CodeBlock cbt = ni.firstChildOfType(CodeBlock.class);
                     return recursiveComputeIsVoid(cbt);
                 }

@@ -25,7 +25,7 @@ public class CommonTestParse {
 
     private TypeInfo predefined(String fullyQualifiedName, boolean complain) {
         return switch (fullyQualifiedName) {
-            case "java.lang.Class" -> clazz;
+            case "java.lang.Class" -> runtime.classTypeInfo();
             case "java.lang.Object" -> runtime.objectTypeInfo();
             case "java.lang.Long" -> runtime.boxedLongTypeInfo();
             case "java.lang.String" -> runtime.stringTypeInfo();
@@ -61,7 +61,6 @@ public class CommonTestParse {
         }
     };
 
-    protected final TypeInfo clazz;
     protected final TypeInfo math;
     protected final TypeInfo system;
     protected final TypeInfo exception;
@@ -89,7 +88,6 @@ public class CommonTestParse {
         CompilationUnit javaUtilFunction = runtime.newCompilationUnitBuilder().setPackageName("java.util.function").build();
 
         suppressWarnings = runtime.newTypeInfo(javaLang, "SuppressWarnings");
-        clazz = runtime.newTypeInfo(javaLang, "Class");
         enumTypeInfo = runtime.newTypeInfo(javaLang, "Enum");
         math = runtime.newTypeInfo(javaLang, "Math");
         override = runtime.newTypeInfo(javaLang, "Override");
@@ -100,7 +98,22 @@ public class CommonTestParse {
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
 
-        clazz.builder().addTypeParameter(runtime.newTypeParameter(0, "C", clazz));
+        TypeParameter tpClass = runtime.newTypeParameter(0, "C",
+                runtime.classTypeInfo()).builder().commit();
+        runtime.classTypeInfo().builder().addTypeParameter(tpClass);
+        MethodInfo getClass = runtime.newMethod(runtime.objectTypeInfo(), "getClass", runtime.methodTypeMethod());
+        getClass.builder()
+                .setAccess(runtime.accessPublic())
+                .setReturnType(runtime.newParameterizedType(runtime.classTypeInfo(), List.of(runtime.parameterizedTypeWildcard())))
+                .commitParameters();
+        MethodInfo clone = runtime.newMethod(runtime.objectTypeInfo(), "clone", runtime.methodTypeAbstractMethod());
+        clone.builder()
+                .setAccess(runtime.accessProtected())
+                .setReturnType(runtime.newParameterizedType(runtime.objectTypeInfo(), 0))
+                .commitParameters();
+        MethodInfo toString = runtime.newMethod(runtime.objectTypeInfo(), "toString", runtime.methodTypeMethod());
+        toString.builder().setAccess(runtime.accessPublic()).setReturnType(runtime.stringParameterizedType()).commitParameters();
+        runtime.objectTypeInfo().builder().addMethod(getClass).addMethod(clone).addMethod(toString);
 
         defineFunction();
         defineBiConsumer();
@@ -151,7 +164,7 @@ public class CommonTestParse {
 
         enumTypeInfo.builder()
                 .setParentClass(runtime.objectParameterizedType())
-                .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo));
+                .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo).builder().commit());
         enumTypeInfo.builder().commit();
 
         MethodInfo rteConstructor = runtime.newConstructor(runtimeException);
@@ -176,8 +189,8 @@ public class CommonTestParse {
     }
 
     private void defineFunction() {
-        TypeParameter T = runtime.newTypeParameter(0, "T", function);
-        TypeParameter R = runtime.newTypeParameter(1, "R", function);
+        TypeParameter T = runtime.newTypeParameter(0, "T", function).builder().commit();
+        TypeParameter R = runtime.newTypeParameter(1, "R", function).builder().commit();
         function.builder().addTypeParameter(T).addTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
         MethodInfo apply = runtime.newMethod(function, "apply", runtime.methodTypeAbstractMethod());
         apply.builder().setReturnType(runtime.newParameterizedType(R, 0, null))
@@ -191,8 +204,8 @@ public class CommonTestParse {
     }
 
     private void defineBiConsumer() {
-        TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer);
-        TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer);
+        TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer).builder().commit();
+        TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer).builder().commit();
         biConsumer.builder().addTypeParameter(T).addTypeParameter(U).setTypeNature(runtime.typeNatureInterface());
         MethodInfo accept = runtime.newMethod(biConsumer, "accept", runtime.methodTypeAbstractMethod());
         accept.builder().setReturnType(runtime.voidParameterizedType())
@@ -220,7 +233,7 @@ public class CommonTestParse {
 
     protected ParseResult parseReturnBoth(String input, boolean failFast) {
         Summary failFastSummary = new SummaryImpl(failFast);
-        Supplier<JavaParser> parser = ()-> {
+        Supplier<JavaParser> parser = () -> {
             JavaParser p = new JavaParser(input);
             p.setParserTolerant(false);
             return p;

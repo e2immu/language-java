@@ -14,15 +14,14 @@ import java.util.stream.Collectors;
 
 public class LambdaErasure extends ErasureExpressionImpl {
     private final Set<MethodResolution.Count> counts;
-    private final Runtime runtime;
     private final Source source;
 
     public LambdaErasure(Runtime runtime, Set<MethodResolution.Count> counts, Source source) {
+        super(runtime);
         Objects.requireNonNull(counts);
         Objects.requireNonNull(source);
         this.counts = counts;
         this.source = source;
-        this.runtime = runtime;
     }
 
     @Override
@@ -38,18 +37,12 @@ public class LambdaErasure extends ErasureExpressionImpl {
     }
 
 
-
     @Override
     public Set<ParameterizedType> erasureTypes() {
         return counts.stream()
                 .map(count -> runtime.syntheticFunctionalType(count.parameters(), !count.isVoid()))
                 .map(ti -> ti.asParameterizedType(runtime))
                 .collect(Collectors.toUnmodifiableSet());
-    }
-
-    @Override
-    public ParameterizedType parameterizedType() {
-        return null;
     }
 
     @Override

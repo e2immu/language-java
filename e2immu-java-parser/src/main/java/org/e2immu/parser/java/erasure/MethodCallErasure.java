@@ -12,10 +12,9 @@ import java.util.Set;
 public class MethodCallErasure extends ErasureExpressionImpl {
     private final Set<ParameterizedType> returnTypes;
     private final String methodName;
-    private final Runtime runtime;
 
     public MethodCallErasure(Runtime runtime, Set<ParameterizedType> returnTypes, String methodName) {
-        this.runtime = runtime;
+        super(runtime);
         this.returnTypes = returnTypes;
         this.methodName = methodName;
     }
@@ -35,11 +34,6 @@ public class MethodCallErasure extends ErasureExpressionImpl {
     @Override
     public Set<ParameterizedType> erasureTypes() {
         return returnTypes;
-    }
-
-    @Override
-    public ParameterizedType parameterizedType() {
-        return null;
     }
 
     public String methodName() {

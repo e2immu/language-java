@@ -5,7 +5,9 @@ import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.element.Visitor;
 import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.translate.TranslationMap;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.DescendMode;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.ErasedExpression;
@@ -15,6 +17,17 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public abstract   class ErasureExpressionImpl implements ErasedExpression, Expression {
+    protected final Runtime runtime;
+
+    protected ErasureExpressionImpl(Runtime runtime) {
+        this.runtime = runtime;
+    }
+
+    @Override
+    public ParameterizedType parameterizedType() {
+        return runtime.objectParameterizedType();
+    }
+
     @Override
     public int compareTo(Expression o) {
         throw new UnsupportedOperationException();

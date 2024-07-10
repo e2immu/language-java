@@ -487,7 +487,7 @@ public class ParseExpression extends CommonParse {
         // 0 = '(', 2 = ')'
         ParameterizedType pt = parsers.parseType().parse(context, castExpression.get(1));
         // can technically be anything
-        ForwardType fwd = context.newForwardType(runtime.objectParameterizedType());
+        ForwardType fwd = context.newForwardType(pt);
         Expression expression = parse(context, index, fwd, castExpression.get(3));
         return runtime.newCast(expression, pt);
     }
