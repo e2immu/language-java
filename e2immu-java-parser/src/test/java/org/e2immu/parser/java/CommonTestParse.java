@@ -225,10 +225,9 @@ public class CommonTestParse {
             p.setParserTolerant(false);
             return p;
         };
-        SourceTypesImpl sourceTypes = new SourceTypesImpl();
         CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
         SourceTypeMapImpl stm = new SourceTypeMapImpl();
-        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, sourceTypes, stm);
+        TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, stm);
         Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
 

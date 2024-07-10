@@ -283,6 +283,10 @@ public class ParseLambdaExpression extends CommonParse {
                         return recursiveComputeIsVoid(cb3);
                     }
                 }
+                if(ni instanceof TryStatement) {
+                    CodeBlock cbt = ni.firstChildOfType(CodeBlock.class);
+                    return recursiveComputeIsVoid(cbt);
+                }
                 throw new UnsupportedOperationException("IMPLEMENT! " + ni.getClass());
             }
             --i;
