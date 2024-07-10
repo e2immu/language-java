@@ -68,7 +68,15 @@ public class ParseConstructorCall extends CommonParse {
         ParameterizedType formalType = typeInfo.asParameterizedType(runtime);
 
         if (forwardType.erasure()) {
-            return new ConstructorCallErasure(runtime, formalType);
+            i++;
+            ParameterizedType erasureType;
+            if (i < ae.size() && ae.get(i) instanceof ArrayDimsAndInits ada) {
+                int arrays = countArrays(ada);
+                erasureType = formalType.copyWithArrays(arrays);
+            } else {
+                erasureType = formalType;
+            }
+            return new ConstructorCallErasure(runtime, erasureType);
         }
 
         Diamond diamond;
@@ -113,6 +121,12 @@ public class ParseConstructorCall extends CommonParse {
         }
         throw new Summary.ParseException(context.info(), "Expected InvocationArguments or ArrayDimsAndInits, got "
                                                          + ae.get(i).getClass());
+    }
+
+    private int countArrays(ArrayDimsAndInits ada) {
+        return (int) ada.children().stream()
+                .filter(c -> Token.TokenType.LBRACKET.equals(c.getType()))
+                .count();
     }
 
     private ConstructorCall arrayCreation(Context context,
