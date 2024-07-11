@@ -118,7 +118,7 @@ public abstract class CommonParse {
                                                          TypeInfo typeInfoOrNull, Node body) {
         Map<String, TypeInfo> map = new HashMap<>();
         for (Node node : body) {
-            if (node instanceof TypeDeclaration td) {
+            if (node instanceof TypeDeclaration td && !(node instanceof EmptyDeclaration)) {
                 handleTypeDeclaration(parent, typeInfoOrNull, td, map);
             }
         }

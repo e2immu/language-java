@@ -37,7 +37,7 @@ public class ParseMethodReference extends CommonParse {
                 scope = runtime.newTypeExpression(pt, runtime.diamondNo());
             } else if (n0 instanceof ObjectType ot) {
                 // try again, cannot be a type
-                scope = parsers.parseExpression().parse(context, index, forwardType, ot.get(0));
+                scope = parsers.parseExpression().parse(context, index, forwardType, ot);
             } else throw new UnsupportedOperationException("NYI");
         } else {
             scope = parsers.parseExpression().parse(context, index, forwardType, n0);

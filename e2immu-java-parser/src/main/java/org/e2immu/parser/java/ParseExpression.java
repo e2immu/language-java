@@ -138,8 +138,17 @@ public class ParseExpression extends CommonParse {
         if (node instanceof InstanceOfExpression ioe) {
             return parseInstanceOf(context, index, forwardType, comments, source, ioe);
         }
+        if (node instanceof ObjectType ot) {
+            // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
+            if (ot.size() == 3 && Token.TokenType.DOT.equals(ot.get(1).getType())) {
+                return parseDotName(context, index, node);
+            }
+            // ditto, see TestParseMethodReference
+            if (ot.size() == 1 && ot.get(0) instanceof Identifier i) {
+                return parseName(context, comments, source, i.getSource());
+            }
+        }
         if (node instanceof Identifier i) {
-            // this is possible via ParseMethodReference
             return parseName(context, comments, source, i.getSource());
         }
         throw new UnsupportedOperationException("node " + node.getClass());
@@ -466,7 +475,7 @@ public class ParseExpression extends CommonParse {
         return runtime.newUnaryOperator(methodInfo, expression, runtime.precedenceUnary());
     }
 
-    private VariableExpression parseDotName(Context context, String index, DotName dotName) {
+    private VariableExpression parseDotName(Context context, String index, Node dotName) {
         String name = dotName.get(2).getSource();
         Expression scope;
         FieldReference fr;

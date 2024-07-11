@@ -49,6 +49,10 @@ public class ParseCompilationUnit extends CommonParse {
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
 
+        // then, with lower priority, add type names from the same package
+        rootContext.typeContext().typesInSamePackage(compilationUnit.packageName())
+                .forEach(ti -> newContext.typeContext().addToContext(ti));
+
         List<TypeInfo> types = new ArrayList<>();
         for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
             TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
