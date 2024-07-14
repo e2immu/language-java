@@ -37,6 +37,7 @@ public class CommonTestParse {
             case "java.lang.Exception" -> exception;
             case "java.lang.RuntimeException" -> runtimeException;
             case "java.lang.Enum" -> enumTypeInfo;
+            case "java.lang.AutoCloseable" -> autoCloseable;
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
             case "java.util.function.BiConsumer" -> biConsumer;
@@ -71,7 +72,7 @@ public class CommonTestParse {
     protected final TypeInfo suppressWarnings;
     protected final TypeInfo override;
     protected final TypeInfo enumTypeInfo;
-
+    protected final TypeInfo autoCloseable;
 
     class CompiledTypesManagerImpl implements CompiledTypesManager {
 
@@ -97,6 +98,7 @@ public class CommonTestParse {
         runtimeException = runtime.newTypeInfo(javaLang, "RuntimeException");
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
+        autoCloseable = runtime.newTypeInfo(javaLang, "AutoCloseable");
 
         TypeParameter tpClass = runtime.newTypeParameter(0, "C",
                 runtime.classTypeInfo()).builder().commit();
@@ -186,6 +188,9 @@ public class CommonTestParse {
         length.builder().commit();
         runtime.stringTypeInfo().builder().addMethod(length);
 
+        MethodInfo close = runtime.newMethod(autoCloseable, "close", runtime.methodTypeAbstractMethod());
+        close.builder().setReturnType(runtime.voidParameterizedType()).commit();
+        autoCloseable.builder().addMethod(close).setParentClass(runtime.objectParameterizedType());
     }
 
     private void defineFunction() {

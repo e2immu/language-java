@@ -168,20 +168,33 @@ public class ParseStatement extends CommonParse {
                     .build();
         }
         if (statement instanceof TryStatement tryStatement) {
+            org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder();
             int i = 1;
-            if (tryStatement.get(i) instanceof Delimiter) {
-                // resources
-                i += 2;
-            }
             Context newContext = context.newVariableContext("tryBlock");
-            int n = countCatchBlocks(tryStatement) + 2;
-            String firstIndex = index + "." + CommonParse.pad(0, n);
+            int mainBlockIndex;
+            if (tryStatement.get(i) instanceof ResourcesInTryBlock r) {
+                int j = 1;
+                int rCount = 0;
+                int n = (r.size() - 1) / 2;
+                while (j < r.size() && !(r.get(j) instanceof Delimiter)) {
+                    // resources
+                    String newIndex = index + ".0." + CommonParse.pad(rCount, n);
+                    LocalVariableCreation resource = (LocalVariableCreation) parse(newContext, newIndex, (Statement) r.get(j));
+                    builder.addResource(resource);
+                    j += 2;
+                    rCount++;
+                }
+                i++;
+                mainBlockIndex = 1;
+            } else {
+                mainBlockIndex = 0;
+            }
+            int n = countCatchBlocks(tryStatement) + mainBlockIndex + 2;
+            String firstIndex = index + "." + CommonParse.pad(mainBlockIndex, n);
             Block block = parseBlockOrStatement(newContext, firstIndex, tryStatement.get(i));
             i++;
-            org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder()
-                    .setBlock(block)
-                    .addComments(comments).setSource(source).setLabel(label);
-            int blockCount = 1;
+            builder.setBlock(block).addComments(comments).setSource(source).setLabel(label);
+            int blockCount = 1 + mainBlockIndex;
             while (i < tryStatement.size() && tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
                 org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
@@ -359,6 +372,10 @@ public class ParseStatement extends CommonParse {
             return builder.setSource(source).addComments(comments).setLabel(label).build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
+    }
+
+    private LocalVariableCreation parseResource(Node node) {
+        return null;
     }
 
     private static int countCatchBlocks(TryStatement tryStatement) {
