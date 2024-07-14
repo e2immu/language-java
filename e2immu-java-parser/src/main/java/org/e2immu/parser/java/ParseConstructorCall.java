@@ -218,6 +218,8 @@ public class ParseConstructorCall extends CommonParse {
                && Token.TokenType.LPAREN.equals(ia.get(0).getType())
                && Token.TokenType.RPAREN.equals(ia.get(1).getType());
         Context newContext = context.newAnonymousClassBody();
+        // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
+        // also those of the type we're extending:
         newContext.typeContext().addSubTypesOfHierarchy(concreteReturnType.typeInfo());
         parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType, builder);
         newContext.resolver().resolve();
