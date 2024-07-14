@@ -147,6 +147,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 } else {
                     builder.setParentClass(pt);
                 }
+                pt.typeInfo().subTypes().forEach(st -> newContext.typeContext().addToContext(st));
             }
             i++;
         }
@@ -155,6 +156,7 @@ public class ParseTypeDeclaration extends CommonParse {
             for (int j = 1; j < implementsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, implementsList.get(j));
                 builder.addInterfaceImplemented(pt);
+                pt.typeInfo().subTypes().forEach(st -> newContext.typeContext().addToContext(st));
             }
             i++;
         }

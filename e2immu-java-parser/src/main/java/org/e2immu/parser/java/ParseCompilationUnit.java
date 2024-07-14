@@ -1,16 +1,14 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.support.Either;
-import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.*;
 
 /*
@@ -47,11 +45,18 @@ public class ParseCompilationUnit extends CommonParse {
         assert compilationUnit.packageName() != null;
 
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
-        compilationUnit.importStatements().forEach(is -> newContext.typeContext().addToImportMap(is));
+        TypeContext typeContext = newContext.typeContext();
+        compilationUnit.importStatements().forEach(is -> {
+            if(is.isStatic()) {
+                typeContext.addToStaticImportMap(is);
+            } else {
+                typeContext.addNonStaticImportToContext(is);
+            }
+        });
 
         // then, with lower priority, add type names from the same package
         rootContext.typeContext().typesInSamePackage(compilationUnit.packageName())
-                .forEach(ti -> newContext.typeContext().addToContext(ti));
+                .forEach(ti -> typeContext.addToContext(ti, false));
 
         List<TypeInfo> types = new ArrayList<>();
         for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
