@@ -44,25 +44,36 @@ public class ParseConstructorCall extends CommonParse {
                             org.parsers.java.ast.AllocationExpression aeIn) {
         AllocationExpression ae;
         Node unparsedObject;
+        Context newContext;
         if (aeIn instanceof DotNew dn) {
             unparsedObject = dn.get(0);
             assert Token.TokenType.DOT.equals(dn.get(1).getType());
             ae = (AllocationExpression) dn.get(2);
+            Expression object = parsers.parseExpression().parse(context, index, context.emptyForwardType(), unparsedObject);
+            TypeInfo typeInfo = object.parameterizedType().bestTypeInfo();
+            if (typeInfo != null) {
+                // see TestConstructor,15 for an example
+                newContext = context.newTypeContext();
+                newContext.typeContext().addSubTypesOfHierarchy(typeInfo);
+            } else {
+                newContext = context; // type is Object... nothing to add
+            }
         } else {
             ae = aeIn;
             unparsedObject = null;
+            newContext = context;
         }
         assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
         int i = 1;
         List<ParameterizedType> methodTypeArguments;
         // new <String>Parameterized(...) == generics on the constructor, see TestConstructor,2
         if (ae.get(1) instanceof TypeArguments tas) {
-            methodTypeArguments = parsers.parseType().parseTypeArguments(context, tas);
+            methodTypeArguments = parsers.parseType().parseTypeArguments(newContext, tas);
             ++i;
         } else {
             methodTypeArguments = List.of();
         }
-        ParameterizedType typeAsIs = parsers.parseType().parse(context, ae.get(i));
+        ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(i));
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
         ParameterizedType formalType = typeInfo.asParameterizedType(runtime);
@@ -87,7 +98,7 @@ public class ParseConstructorCall extends CommonParse {
             if (forwardType.type() == null || forwardType.type().isVoid()) {
                 expectedConcreteType = null;
             } else {
-                expectedConcreteType = inferDiamond(context, typeAsIs.typeInfo(), forwardType.type());
+                expectedConcreteType = inferDiamond(newContext, typeAsIs.typeInfo(), forwardType.type());
             }
             i++;
         } else {
@@ -96,11 +107,11 @@ public class ParseConstructorCall extends CommonParse {
         }
 
         List<Comment> comments = comments(ae);
-        Source source = source(context.info(), index, ae);
+        Source source = source(newContext.info(), index, ae);
 
         if (ae.get(i) instanceof InvocationArguments ia) {
             if (i + 1 < ae.size() && ae.get(i + 1) instanceof ClassOrInterfaceBody body) {
-                return anonymousType(context, comments, source, expectedConcreteType, typeAsIs, ia, body, diamond);
+                return anonymousType(newContext, comments, source, expectedConcreteType, typeAsIs, ia, body, diamond);
             }
             List<Object> unparsedArguments = new ArrayList<>();
             int j = 1;
@@ -108,7 +119,7 @@ public class ParseConstructorCall extends CommonParse {
                 unparsedArguments.add(ia.get(j));
                 j += 2;
             }
-            Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
+            Expression constructorCall = newContext.methodResolution().resolveConstructor(newContext, comments, source,
                     index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedArguments,
                     methodTypeArguments);
             if (constructorCall == null) {
@@ -117,10 +128,10 @@ public class ParseConstructorCall extends CommonParse {
             return constructorCall;
         }
         if (ae.get(i) instanceof ArrayDimsAndInits ada) {
-            return arrayCreation(context, index, ada, typeInfo, diamond, source, comments);
+            return arrayCreation(newContext, index, ada, typeInfo, diamond, source, comments);
         }
-        throw new Summary.ParseException(context.info(), "Expected InvocationArguments or ArrayDimsAndInits, got "
-                                                         + ae.get(i).getClass());
+        throw new Summary.ParseException(newContext.info(), "Expected InvocationArguments or ArrayDimsAndInits, got "
+                                                            + ae.get(i).getClass());
     }
 
     private int countArrays(ArrayDimsAndInits ada) {

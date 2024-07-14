@@ -51,6 +51,7 @@ public class ParseLambdaExpression extends CommonParse {
         int typeIndex = context.anonymousTypeCounters().newIndex(context.enclosingType());
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(), typeIndex);
         anonymousType.builder()
+                .setAccess(runtime.accessPrivate())
                 .setTypeNature(runtime.typeNatureClass())
                 .setParentClass(runtime.objectParameterizedType());
 
@@ -214,6 +215,7 @@ public class ParseLambdaExpression extends CommonParse {
             }
         }
         miBuilder.commitParameters();
+        miBuilder.computeAccess();
     }
 
     private enum IsVoid {NO_IDEA, YES, NO, ESCAPE}
