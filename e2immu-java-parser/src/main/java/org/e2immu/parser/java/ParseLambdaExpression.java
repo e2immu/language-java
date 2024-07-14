@@ -58,7 +58,7 @@ public class ParseLambdaExpression extends CommonParse {
         MethodInfo methodInfo = runtime.newMethod(anonymousType, sam.name(), runtime.methodTypeMethod());
         MethodInfo.Builder miBuilder = methodInfo.builder();
 
-        parseParameters(context, forwardType, le, miBuilder, outputVariants, context);
+        parseParameters(context, forwardType, le, miBuilder, outputVariants, context, singleAbstractMethod);
         Context newContext = context.newLambdaContext(methodInfo);
         methodInfo.parameters().forEach(newContext.variableContext()::add);
         ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
@@ -153,7 +153,8 @@ public class ParseLambdaExpression extends CommonParse {
                                  LambdaExpression le,
                                  MethodInfo.Builder miBuilder,
                                  List<Lambda.OutputVariant> outputVariants,
-                                 Context newContext) {
+                                 Context newContext,
+                                 MethodTypeParameterMap sam) {
         if (!(le.get(0) instanceof LambdaLHS lhs)) {
             throw new Summary.ParseException(context.info(), "Expected lambda lhs");
         }
@@ -161,11 +162,7 @@ public class ParseLambdaExpression extends CommonParse {
         if (lhs0 instanceof Identifier identifier) {
             // single variable, no type given. we must extract it from the forward type, which must be a functional interface
             String parameterName = identifier.getSource();
-            ParameterizedType formalType = forwardType.type().bestTypeInfo().singleAbstractMethod()
-                    .parameters().get(0).parameterizedType().ensureBoxed(runtime);
-            MethodTypeParameterMap methodTypeParameterMap = newContext.genericsHelper()
-                    .findSingleAbstractMethodOfInterface(forwardType.type());
-            ParameterizedType type = methodTypeParameterMap.getConcreteTypeOfParameter(runtime, 0);
+            ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, 0);
 
             ParameterInfo pi = miBuilder.addParameter(parameterName, type);
             outputVariants.add(runtime.lambdaOutputVariantEmpty());
@@ -204,8 +201,7 @@ public class ParseLambdaExpression extends CommonParse {
             int paramIndex = 0;
             while (i < lhs.size()) {
                 if (lhs.get(i) instanceof Identifier identifier) {
-                    // FIXME we should take the types of the parameters of the sam, not of the forward type!!!
-                    ParameterizedType type = forwardType.type().parameters().get(paramIndex).ensureBoxed(runtime);
+                    ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, paramIndex);
                     String parameterName = identifier.getSource();
                     ParameterInfo pi = miBuilder.addParameter(parameterName, type);
                     outputVariants.add(runtime.lambdaOutputVariantEmpty());

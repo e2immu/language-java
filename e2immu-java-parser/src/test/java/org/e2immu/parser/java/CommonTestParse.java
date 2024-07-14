@@ -216,7 +216,7 @@ public class CommonTestParse {
         accept.builder().setReturnType(runtime.voidParameterizedType())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .addParameter("t", runtime.newParameterizedType(T, 0, null));
-        accept.builder().addParameter("u", runtime.newParameterizedType(U, 1, null));
+        accept.builder().addParameter("u", runtime.newParameterizedType(U, 0, null));
         accept.builder().computeAccess();
         accept.builder().commit();
         biConsumer.builder().addMethod(accept).addTypeModifier(runtime.typeModifierPublic())
