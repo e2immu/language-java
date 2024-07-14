@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.parsers.java.Token.TokenType.*;
 
@@ -290,16 +291,20 @@ public class ParseExpression extends CommonParse {
     }
 
     private FieldReference findField(Context context, Expression expression, String name, boolean complain) {
-        TypeInfo typeInfo = expression.parameterizedType().bestTypeInfo();
+        ParameterizedType pt = expression.parameterizedType();
+        TypeInfo typeInfo = pt.bestTypeInfo();
         FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
             if (complain) {
-                throw new Summary.ParseException(context.info(), "Cannot find field named '" + name
-                                                                 + "' in hierarchy of " + expression.parameterizedType());
+                throw new Summary.ParseException(context.info(),
+                        "Cannot find field named '" + name + "' in hierarchy of " + pt);
             }
             return null;
         }
-        return runtime.newFieldReference(fieldInfo, expression, fieldInfo.type());
+        // fieldInfo.type() is the formal type; we need the concrete type here
+        Map<NamedType, ParameterizedType> map = pt.initialTypeParameterMap(runtime);
+        ParameterizedType concreteType = fieldInfo.type().applyTranslation(runtime, map);
+        return runtime.newFieldReference(fieldInfo, expression, concreteType);
     }
 
     private FieldInfo findRecursively(TypeInfo typeInfo, String name) {
