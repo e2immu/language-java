@@ -6,6 +6,8 @@ import org.e2immu.language.cst.api.statement.Block;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseSubType extends CommonTestParse {
@@ -61,6 +63,11 @@ public class TestParseSubType extends CommonTestParse {
         assertEquals("i", i.name());
         Block block = i2.methodBody();
         assertEquals(1, block.statements().size());
+
+        TypeInfo jj= typeInfo.findSubType("JJ");
+        assertEquals("I,II,J",
+                jj.superTypesExcludingJavaLangObject().stream().map(TypeInfo::simpleName).sorted()
+                        .collect(Collectors.joining(",")));
     }
 
     @Language("java")
