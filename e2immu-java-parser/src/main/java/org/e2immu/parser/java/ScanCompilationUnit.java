@@ -2,10 +2,9 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
-import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
@@ -20,11 +19,11 @@ First round, we only prepare a type map.
 public class ScanCompilationUnit extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScanCompilationUnit.class);
 
-    private final Context rootContext;
+    private final Summary summary;
 
-    public ScanCompilationUnit(Context rootContext) {
-        super(rootContext.runtime(), new Parsers(rootContext.runtime()));
-        this.rootContext = rootContext;
+    public ScanCompilationUnit(Summary summary, Runtime runtime) {
+        super(runtime, new Parsers(runtime));
+        this.summary = summary;
     }
 
     public record ScanResult(Map<String, TypeInfo> sourceTypes,
@@ -39,7 +38,7 @@ public class ScanCompilationUnit extends CommonParse {
         } catch (RuntimeException re) {
             re.printStackTrace(System.err);
             LOGGER.error("Caught exception scanning compilation unit {}", uri);
-            rootContext.summary().addParserError(re);
+            summary.addParserError(re);
             return new ScanResult(Map.of(), null);
         }
     }

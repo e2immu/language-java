@@ -244,7 +244,7 @@ public class CommonTestParse {
         Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
 
-        ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(rootContext);
+        ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(failFastSummary, runtime);
         CompilationUnit cu;
         try {
             ScanCompilationUnit.ScanResult sr = scanCompilationUnit.scan(new URI("input"), parser.get().CompilationUnit());
