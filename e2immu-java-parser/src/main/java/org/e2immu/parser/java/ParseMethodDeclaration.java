@@ -178,11 +178,16 @@ public class ParseMethodDeclaration extends CommonParse {
         ParameterizedType typeOfParameter;
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
+        boolean isFinal = false;
         Node node0 = fp.get(i);
         if (node0 instanceof Modifiers) {
             for (Node modifier : node0) {
                 if (modifier instanceof Annotation a) {
                     annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                } else if (modifier instanceof KeyWord kw) {
+                    if (Token.TokenType.FINAL.equals(kw.getType())) {
+                        isFinal = true;
+                    } else throw new Summary.ParseException(context.info(), "Expect 'final' as only keyword");
                 } else {
                     throw new Summary.ParseException(context.info(), "Expect formal parameter's modifier to be an annotation");
                 }
@@ -190,6 +195,11 @@ public class ParseMethodDeclaration extends CommonParse {
             ++i;
         } else if (node0 instanceof Annotation a) {
             annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+            ++i;
+        } else if (node0 instanceof KeyWord kw) {
+            if (Token.TokenType.FINAL.equals(kw.getType())) {
+                isFinal = true;
+            } else throw new Summary.ParseException(context.info(), "Expect 'final' as only keyword");
             ++i;
         }
         Node node1 = fp.get(i);
@@ -212,6 +222,13 @@ public class ParseMethodDeclaration extends CommonParse {
         Node node2 = fp.get(i);
         if (node2 instanceof Identifier identifier) {
             parameterName = identifier.getSource();
+        } else if(node2 instanceof VariableDeclaratorId vdi) {
+            // old C-style array type 'I data[]'
+            if(vdi.get(0) instanceof Identifier identifier) {
+                parameterName = identifier.getSource();
+            } else throw new Summary.ParseException(context.info(), "Expect first part to be Identifier");
+            int arrayCount = (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();
+            typeOfParameter = typeOfParameter.copyWithArrays(arrayCount);
         } else {
             throw new UnsupportedOperationException();
         }
@@ -219,8 +236,7 @@ public class ParseMethodDeclaration extends CommonParse {
         ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter, comments(fp),
                 source(context.info(), "", fp), annotations);
         ParameterInfo.Builder piBuilder = pi.builder();
-        piBuilder.addAnnotations(annotations);
-        piBuilder.setVarArgs(varargs);
+        piBuilder.addAnnotations(annotations).setVarArgs(varargs).setIsFinal(isFinal);
         // do not commit yet!
         context.variableContext().add(pi);
     }

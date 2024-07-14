@@ -26,10 +26,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ASM9;
 
 public class MyMethodVisitor extends MethodVisitor {
@@ -41,6 +40,7 @@ public class MyMethodVisitor extends MethodVisitor {
         private final int index;
         private String name;
         private boolean isVarArgs;
+        private boolean isFinal;
         private final List<AnnotationExpression> annotations = new ArrayList<>();
 
         ParamBuilder(int i) {
@@ -104,6 +104,12 @@ public class MyMethodVisitor extends MethodVisitor {
             this.isVarArgs = varArgs;
             return this;
         }
+
+        @Override
+        public ParameterInfo.Builder setIsFinal(boolean isFinal) {
+            this.isFinal = isFinal;
+            return this;
+        }
     }
 
     private final Runtime runtime;
@@ -116,6 +122,7 @@ public class MyMethodVisitor extends MethodVisitor {
     private final int numberOfParameters;
     private final boolean lastParameterIsVarargs;
     private final ComputeMethodOverrides computeMethodOverrides;
+    private final Set<String> isFinalSet = new HashSet<>();
 
     public MyMethodVisitor(Runtime runtime,
                            TypeParameterContext typeContext,
@@ -153,9 +160,16 @@ public class MyMethodVisitor extends MethodVisitor {
                 parameterInspectionBuilders[parameter]);
     }
 
+    @Override
+    public void visitParameter(String name, int access) {
+        if((access & ACC_FINAL) != 0) {
+            isFinalSet.add(name);
+        }
+    }
+
     /*
-    index order seems to be: this params localVars
-     */
+        index order seems to be: this params localVars
+         */
     @Override
     public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
         int base = methodInfo.isStatic() ? 0 : 1; // get rid of "this" if non-static
@@ -183,6 +197,8 @@ public class MyMethodVisitor extends MethodVisitor {
             }
             pi.builder().addAnnotations(pib.annotations);
             pi.builder().setVarArgs(pib.isVarArgs);
+            boolean isFinal = isFinalSet.contains(name);
+            pi.builder().setIsFinal(isFinal);
             LOGGER.debug("Commit parameterInspection {}", i);
             pi.builder().commit();
         }
