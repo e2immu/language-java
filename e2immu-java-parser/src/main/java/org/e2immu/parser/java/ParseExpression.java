@@ -18,6 +18,7 @@ import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -301,9 +302,25 @@ public class ParseExpression extends CommonParse {
             }
             return null;
         }
-        // fieldInfo.type() is the formal type; we need the concrete type here
-        Map<NamedType, ParameterizedType> map = pt.initialTypeParameterMap(runtime);
-        ParameterizedType concreteType = fieldInfo.type().applyTranslation(runtime, map);
+        // fieldInfo.type() is the formal type; we need the concrete type here (e.g. TestMethodCall1,2)
+        // but the field can belong to a supertype of pt.typeInfo(), in which case .initialTypeParameterMap() is not
+        // sufficient (e.g. TestMethodCall4,3)
+        Map<NamedType, ParameterizedType> map;
+        if (typeInfo == fieldInfo.owner()) {
+            map = pt.initialTypeParameterMap(runtime);
+        } else {
+            // either fieldInfo.owner() is a super type of typeInfo,
+            boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
+            // or, fieldInfo.owner() is an enclosing type, typeInfo an inner type
+            boolean ownerIsEnclosingType = typeInfo.primaryType().equals(fieldInfo.owner().primaryType());
+            assert ownerIsSuperType || ownerIsEnclosingType;
+
+            ParameterizedType superType = fieldInfo.owner().asParameterizedType(runtime);
+            // we need to obtain a translation map to get the concrete types or type bounds
+            map = context.genericsHelper().mapInTermsOfParametersOfSuperType(context.enclosingType(), superType);
+        }
+        ParameterizedType concreteType = map == null || map.isEmpty() ? fieldInfo.type()
+                : fieldInfo.type().applyTranslation(runtime, map);
         return runtime.newFieldReference(fieldInfo, expression, concreteType);
     }
 
