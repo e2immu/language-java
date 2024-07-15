@@ -625,7 +625,7 @@ public class ParseExpression extends CommonParse {
         Expression rhs = parse(context, index, forwardType, eq.get(2));
         Node.NodeType token = eq.get(1).getType();
         MethodInfo operator;
-        boolean isNumeric = lhs.isNumeric();
+        boolean isNumeric = lhs.isNumeric() && rhs.isNumeric();
         if (token.equals(EQ)) {
             operator = isNumeric ? runtime.equalsOperatorInt() : runtime.equalsOperatorObject();
         } else if (token.equals(NE)) {
