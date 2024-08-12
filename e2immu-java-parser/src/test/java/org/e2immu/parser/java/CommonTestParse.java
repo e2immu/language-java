@@ -169,6 +169,8 @@ public class CommonTestParse {
                 .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo).builder().commit());
         enumTypeInfo.builder().commit();
 
+        exception.builder().setTypeNature(runtime.typeNatureClass());
+
         MethodInfo rteConstructor = runtime.newConstructor(runtimeException);
         rteConstructor.builder()
                 .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())

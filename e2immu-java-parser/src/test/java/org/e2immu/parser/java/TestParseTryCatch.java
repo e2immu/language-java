@@ -22,7 +22,7 @@ public class TestParseTryCatch extends CommonTestParse {
                 try {
                    System.out.println(args[0]);
                 } catch(Exception e) {
-                   System.out.println("exception");
+                   System.out.println("exception "+e);
                 } finally {
                    System.out.println("bye");
                 }
@@ -50,7 +50,7 @@ public class TestParseTryCatch extends CommonTestParse {
             assertEquals(1, tryStatement.finallyBlock().statements().size());
 
             assertEquals("""
-                    try{System.out.println(args[0]);}catch(Exception e){System.out.println("exception");}finally{System.out.println("bye");}\
+                    try{System.out.println(args[0]);}catch(Exception e){System.out.println("exception "+e);}finally{System.out.println("bye");}\
                     """, tryStatement.toString());
         } else fail();
     }
