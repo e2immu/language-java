@@ -83,20 +83,6 @@ public class ParseLambdaExpression extends CommonParse {
             concreteReturnType = expression.parameterizedType();
             Statement returnStatement = runtime.newReturnStatement(expression);
             methodBody = runtime.newBlockBuilder().addStatement(returnStatement).build();
-            // returns either java.util.function.Function<T,R> or java.util.function.Supplier<R>
-            boolean hasReturnValue = !concreteReturnType.isVoid();
-            TypeInfo abstractFunctionalType = runtime.syntheticFunctionalType(methodInfo.parameters().size(),
-                    hasReturnValue);
-            List<ParameterizedType> concreteFtParams = new ArrayList<>();
-            for (ParameterInfo pi : methodInfo.parameters()) {
-                concreteFtParams.add(pi.parameterizedType());
-            }
-            if (hasReturnValue) {
-                concreteFtParams.add(concreteReturnType);
-            }
-            ParameterizedType concreteFunctionalType = runtime.newParameterizedType(abstractFunctionalType, concreteFtParams);
-            // new we have  "class $1 implements Function<Integer, String>"
-            anonymousType.builder().addInterfaceImplemented(concreteFunctionalType);
         } else if (le1 instanceof CodeBlock codeBlock) {
             methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
