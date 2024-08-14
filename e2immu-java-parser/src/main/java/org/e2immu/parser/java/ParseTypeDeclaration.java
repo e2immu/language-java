@@ -264,6 +264,22 @@ public class ParseTypeDeclaration extends CommonParse {
 
     private RecordField parseRecordField(Context context, TypeInfo typeInfo, RecordComponent rc) {
         int i = 0;
+
+        List<AnnotationExpression> annotations = new ArrayList<>();
+        while (true) {
+            Node tdi = rc.get(i);
+            if (tdi instanceof Annotation a) {
+                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+            } else if (tdi instanceof Modifiers modifiers) {
+                for (Node node : modifiers.children()) {
+                    if (node instanceof Annotation a) {
+                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                    }
+                }
+            } else break;
+            i++;
+        }
+
         ParameterizedType pt;
         if (rc.get(i) instanceof Type type) {
             pt = parsers.parseType().parse(context, type);
@@ -286,6 +302,7 @@ public class ParseTypeDeclaration extends CommonParse {
             throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
+        fieldInfo.builder().addAnnotations(annotations);
         Source source = source(fieldInfo, "", rc);
         List<Comment> comments = comments(rc);
         return new RecordField(comments, source, fieldInfo, varargs);

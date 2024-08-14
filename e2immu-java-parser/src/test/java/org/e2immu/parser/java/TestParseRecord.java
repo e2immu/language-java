@@ -56,6 +56,7 @@ public class TestParseRecord extends CommonTestParse {
         assertEquals(2, ccR.methodBody().statements().size());
     }
 
+    @Language("java")
     private static final String INPUT2 = """
             package a.b;
             public class Record_0 {
@@ -89,6 +90,7 @@ public class TestParseRecord extends CommonTestParse {
     }
 
     // difference with INPUT2 is the absence of the qualifier QualifiedName.Required in the 2nd parameter/field declaration
+    @Language("java")
     private static final String INPUT3 = """
             package a.b;
             public class Record_1 {
@@ -111,4 +113,19 @@ public class TestParseRecord extends CommonTestParse {
         TypeInfo typeInfo = parse(INPUT3);
         test23(typeInfo);
     }
+
+    @Language("java")
+    private static final String INPUT4 = """
+            package a.b;
+            public record C(@SuppressWarnings("?") String name) {}
+            """;
+
+    @Test
+    public void test4() {
+        TypeInfo typeInfo = parse(INPUT4);
+        assertEquals(1, typeInfo.fields().size());
+        FieldInfo fieldInfo = typeInfo.getFieldByName("name", true);
+        assertEquals(1, fieldInfo.annotations().size());
+    }
+
 }
