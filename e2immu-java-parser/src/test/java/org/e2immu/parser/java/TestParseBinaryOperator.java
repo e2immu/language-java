@@ -25,6 +25,9 @@ public class TestParseBinaryOperator extends CommonTestParse {
                    the product of i and j */
                 return i*j;
               }
+              int div(int i, int j) {
+                return i/j;
+              }
               boolean c;
               boolean and(boolean a, boolean b) {
                 return a && b && c;
@@ -62,13 +65,52 @@ public class TestParseBinaryOperator extends CommonTestParse {
             assertEquals("return i-j;", rs.toString());
             assertInstanceOf(BinaryOperator.class, rs.expression());
             Expression ss = runtime.sortAndSimplify(rs.expression());
-            if(ss instanceof Sum s) {
+            if (ss instanceof Sum s) {
                 assertEquals("i", s.lhs().toString());
-                if(s.rhs() instanceof Negation n) {
+                if (s.rhs() instanceof Negation n) {
                     assertEquals("j", n.expression().toString());
                 } else fail();
             } else fail();
             assertEquals("i-j", ss.toString());
+        } else fail();
+
+        MethodInfo div = typeInfo.findUniqueMethod("div", 2);
+        if (div.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+            assertEquals("return i/j;", rs.toString());
+        } else fail();
+    }
+
+    @Language("java")
+    private static final String INPUT2 = """
+            package a.b;
+            // left-to-right associative!
+            class C {
+              int multDiv(int i, int j) {
+                return 2 * i / (j + 5);
+              }
+              int multDiv2(int i, int j) {
+                return 2 * i / j * 5;
+              }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        TypeInfo typeInfo = parse(INPUT2);
+        MethodInfo multDiv = typeInfo.findUniqueMethod("multDiv", 2);
+        if (multDiv.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+            assertEquals("return 2*i/(j+5);", rs.toString());
+            if (rs.expression() instanceof BinaryOperator bo) {
+                assertEquals("2*i", bo.lhs().toString());
+            } else fail();
+        } else fail();
+
+        MethodInfo multDiv2 = typeInfo.findUniqueMethod("multDiv2", 2);
+        if (multDiv2.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+            assertEquals("return 2*i/j*5;", rs.toString());
+            if (rs.expression() instanceof BinaryOperator bo) {
+                assertEquals("2*i/j", bo.lhs().toString());
+            } else fail();
         } else fail();
     }
 }

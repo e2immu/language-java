@@ -565,7 +565,7 @@ public class ParseExpression extends CommonParse {
         int i = 2;
         while (i < me.size()) {
             Expression rhs = parse(context, index, fwd, me.get(i));
-            Node.NodeType token = me.get(1).getType();
+            Node.NodeType token = me.get(i-1).getType();
             MethodInfo operator;
             if (token.equals(STAR)) {
                 operator = runtime.multiplyOperatorInt();
