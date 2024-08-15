@@ -479,7 +479,7 @@ public class ParseExpression extends CommonParse {
         if (ue.get(0) instanceof Operator operator) {
             methodInfo = switch (operator.getType()) {
                 case PLUS -> null; // ignore!
-                case MINUS -> runtime.minusOperatorInt();
+                case MINUS -> runtime.unaryMinusOperatorInt();
                 case BANG -> runtime.logicalNotOperatorBool();
                 case TILDE -> runtime.bitWiseNotOperatorInt();
                 default -> throw new UnsupportedOperationException();
