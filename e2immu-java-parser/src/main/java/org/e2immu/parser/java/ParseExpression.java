@@ -539,7 +539,11 @@ public class ParseExpression extends CommonParse {
             Expression rhs = parse(context, index, forwardType, ae.get(i));
             MethodInfo operator;
             if (token.equals(PLUS)) {
-                operator = runtime.plusOperatorInt();
+                if (accumulated.parameterizedType().isJavaLangString() || rhs.parameterizedType().isJavaLangString()) {
+                    operator = runtime.plusOperatorString();
+                } else {
+                    operator = runtime.plusOperatorInt();
+                }
             } else if (token.equals(MINUS)) {
                 operator = runtime.minusOperatorInt();
             } else {
@@ -565,7 +569,7 @@ public class ParseExpression extends CommonParse {
         int i = 2;
         while (i < me.size()) {
             Expression rhs = parse(context, index, fwd, me.get(i));
-            Node.NodeType token = me.get(i-1).getType();
+            Node.NodeType token = me.get(i - 1).getType();
             MethodInfo operator;
             if (token.equals(STAR)) {
                 operator = runtime.multiplyOperatorInt();

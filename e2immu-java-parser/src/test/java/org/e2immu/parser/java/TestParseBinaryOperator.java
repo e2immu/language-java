@@ -113,4 +113,43 @@ public class TestParseBinaryOperator extends CommonTestParse {
             } else fail();
         } else fail();
     }
+
+
+    @Language("java")
+    private static final String INPUT3 = """
+            package a.b;
+            // string concat
+            class C {
+              String concat1(int i) {
+                return i + "a";
+              }
+              String concat2(int i, int j) {
+                return i + "a" + j;
+              }
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+
+        MethodInfo concat1 = typeInfo.findUniqueMethod("concat1", 1);
+        if (concat1.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+            assertEquals("return i+\"a\";", rs.toString());
+            if (rs.expression() instanceof BinaryOperator bo) {
+               assertSame(runtime.plusOperatorString(), bo.operator());
+            } else fail();
+            assertTrue(rs.expression().parameterizedType().isJavaLangString());
+        } else fail();
+
+        MethodInfo concat2 = typeInfo.findUniqueMethod("concat2", 2);
+        if (concat2.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+            assertEquals("return i+\"a\"+j;", rs.toString());
+            if (rs.expression() instanceof BinaryOperator bo) {
+                assertSame(runtime.plusOperatorString(), bo.operator());
+            } else fail();
+            assertTrue(rs.expression().parameterizedType().isJavaLangString());
+        } else fail();
+
+    }
 }
