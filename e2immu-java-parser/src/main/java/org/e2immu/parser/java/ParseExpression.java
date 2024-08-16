@@ -545,7 +545,7 @@ public class ParseExpression extends CommonParse {
             } else {
                 throw new UnsupportedOperationException();
             }
-            ParameterizedType pt = runtime.widestType(accumulated.parameterizedType(), rhs.parameterizedType());
+            ParameterizedType pt = runtime.widestTypeUnbox(accumulated.parameterizedType(), rhs.parameterizedType());
             accumulated = runtime.newBinaryOperatorBuilder()
                     .setOperator(operator)
                     .setLhs(accumulated).setRhs(rhs)
@@ -578,7 +578,7 @@ public class ParseExpression extends CommonParse {
             } else {
                 throw new UnsupportedOperationException();
             }
-            ParameterizedType pt = runtime.widestType(accumulated.parameterizedType(), rhs.parameterizedType());
+            ParameterizedType pt = runtime.widestTypeUnbox(accumulated.parameterizedType(), rhs.parameterizedType());
             accumulated = runtime.newBinaryOperatorBuilder()
                     .setOperator(operator)
                     .setLhs(accumulated).setRhs(rhs)
