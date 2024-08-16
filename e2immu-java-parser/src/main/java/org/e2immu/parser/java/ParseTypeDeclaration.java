@@ -302,7 +302,9 @@ public class ParseTypeDeclaration extends CommonParse {
             throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
-        fieldInfo.builder().addAnnotations(annotations);
+        fieldInfo.builder()
+                .addFieldModifier(runtime.fieldModifierFinal())
+                .addAnnotations(annotations);
         Source source = source(fieldInfo, "", rc);
         List<Comment> comments = comments(rc);
         return new RecordField(comments, source, fieldInfo, varargs);
