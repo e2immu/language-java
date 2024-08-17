@@ -171,7 +171,10 @@ public class ParseExpression extends CommonParse {
             testType = parsers.parseType().parse(context, ioe.get(2));
             patternVariable = null;
         }
-        return runtime.newInstanceOf(expression, testType, patternVariable);
+        return runtime.newInstanceOfBuilder()
+                .setSource(source).addComments(comments)
+                .setExpression(expression).setTestType(testType).setPatternVariable(patternVariable)
+                .build();
     }
 
     private Expression parseSwitchExpression(Context context,
