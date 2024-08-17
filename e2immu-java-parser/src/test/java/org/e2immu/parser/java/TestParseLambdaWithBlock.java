@@ -45,7 +45,7 @@ public class TestParseLambdaWithBlock extends CommonTestParse {
             assertEquals("Type java.util.function.BiConsumer<Integer,Integer>",
                     lambda.concreteFunctionalType().toString());
             assertSame(runtime.voidParameterizedType(), lambda.concreteReturnType());
-            if (lambda.methodInfo().methodBody().statements().get(0) instanceof ExpressionAsStatement eas) {
+            if (lambda.methodBody().statements().get(0) instanceof ExpressionAsStatement eas) {
                 assertEquals("System.out.println(\"lv+t\"+i+j+lv);", eas.toString());
             } else fail();
         } else fail();
