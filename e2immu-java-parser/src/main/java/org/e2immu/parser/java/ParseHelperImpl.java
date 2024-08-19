@@ -88,7 +88,6 @@ public class ParseHelperImpl implements ParseHelper {
             // in Java, we must have a block
             throw new UnsupportedOperationException();
         }
-        builder.commit();
     }
 
     /*
