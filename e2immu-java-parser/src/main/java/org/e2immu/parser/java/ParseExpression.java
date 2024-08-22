@@ -651,25 +651,15 @@ public class ParseExpression extends CommonParse {
     private Expression parseLiteral(Context context, LiteralExpression le) {
         Node child = le.children().get(0);
         if (child instanceof IntegerLiteral il) {
-            String src = il.getSource().toLowerCase().replace("_", "")
-                    .replace("l", "");
-            long l;
-            if (src.startsWith("0x")) {
-                l = Long.parseLong(src.substring(2), 16);
-            } else if (src.startsWith("0") && src.length() > 1 && Character.isDigit(src.charAt(1))) {
-                l = Long.parseLong(src.substring(1), 8);
-            } else {
-                l = Long.parseLong(src);
-            }
+            long l = parseLong(il.getSource());
             if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
                 return runtime.newInt((int) l);
             }
             return runtime.newLong(l);
         }
         if (child instanceof LongLiteral ll) {
-            String src = ll.getSource().toLowerCase().replace("_", "")
-                    .replace("l", "");
-            return runtime.newLong(Long.parseLong(src));
+            long l = parseLong(ll.getSource());
+            return runtime.newLong(l);
         }
         if (child instanceof FloatingPointLiteral fp) {
             String src = fp.getSource().toLowerCase().replace("_", "");
@@ -715,5 +705,16 @@ public class ParseExpression extends CommonParse {
                     null, true));
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
+    }
+
+    private static long parseLong(String s) {
+        String src = s.toLowerCase().replace("_", "").replace("l", "");
+        if (src.startsWith("0x")) {
+            return Long.parseLong(src.substring(2), 16);
+        }
+        if (src.startsWith("0") && src.length() > 1 && Character.isDigit(src.charAt(1))) {
+            return Long.parseLong(src.substring(1), 8);
+        }
+        return Long.parseLong(src);
     }
 }
