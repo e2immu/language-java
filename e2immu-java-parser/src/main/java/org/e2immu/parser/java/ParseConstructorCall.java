@@ -217,6 +217,7 @@ public class ParseConstructorCall extends CommonParse {
         TypeNature typeNature = runtime.typeNatureClass();
         TypeInfo.Builder builder = anonymousType.builder();
         builder.setTypeNature(typeNature)
+                .setAccess(runtime.accessPrivate())
                 .setEnclosingMethod(context.enclosingMethod());
         ParameterizedType concreteReturnType = diamond.isShowAll() ? type : forwardType;
         if (concreteReturnType.typeInfo().isInterface()) {

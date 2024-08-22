@@ -129,4 +129,25 @@ public class TestParseTypeParameter extends CommonTestParse {
             assertSame(setVc, mc.methodInfo());
         } else fail();
     }
+
+    @Language("java")
+    public static final String INPUT4 = """
+            package a.b;
+            import java.util.Hashtable;
+            class X {
+            public static <K, V> Hashtable<K, V> copy(Hashtable<K, V> map) {
+              Hashtable<K, V> copy = new Hashtable<K, V>();
+              return copy;
+            }
+            }
+            """;
+
+    @Test
+    public void test4() {
+        TypeInfo typeInfo = parse(INPUT4);
+        MethodInfo copy = typeInfo.findUniqueMethod("copy", 1);
+        assertEquals(2, copy.typeParameters().size());
+        assertEquals("a.b.X.copy(java.util.Hashtable<K,V>)", copy.fullyQualifiedName());
+    }
+
 }

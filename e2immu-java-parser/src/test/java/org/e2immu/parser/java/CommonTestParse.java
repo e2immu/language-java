@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.parser.*;
@@ -41,6 +42,7 @@ public class CommonTestParse {
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
             case "java.util.function.BiConsumer" -> biConsumer;
+            case "java.util.Hashtable" -> hashtable;
             default -> {
                 if (complain) throw new UnsupportedOperationException("Type " + fullyQualifiedName);
                 yield null;
@@ -73,6 +75,7 @@ public class CommonTestParse {
     protected final TypeInfo override;
     protected final TypeInfo enumTypeInfo;
     protected final TypeInfo autoCloseable;
+    protected final TypeInfo hashtable;
 
     class CompiledTypesManagerImpl implements CompiledTypesManager {
 
@@ -86,6 +89,7 @@ public class CommonTestParse {
     protected CommonTestParse() {
         CompilationUnit javaLang = runtime.newCompilationUnitBuilder().setPackageName("java.lang").build();
         CompilationUnit javaIo = runtime.newCompilationUnitBuilder().setPackageName("java.io").build();
+        CompilationUnit javaUtil = runtime.newCompilationUnitBuilder().setPackageName("java.util").build();
         CompilationUnit javaUtilFunction = runtime.newCompilationUnitBuilder().setPackageName("java.util.function").build();
 
         suppressWarnings = runtime.newTypeInfo(javaLang, "SuppressWarnings");
@@ -99,6 +103,7 @@ public class CommonTestParse {
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
         autoCloseable = runtime.newTypeInfo(javaLang, "AutoCloseable");
+        hashtable = runtime.newTypeInfo(javaUtil, "Hashtable");
 
         TypeParameter tpClass = runtime.newTypeParameter(0, "C",
                 runtime.classTypeInfo()).builder().commit();
@@ -193,6 +198,32 @@ public class CommonTestParse {
         MethodInfo close = runtime.newMethod(autoCloseable, "close", runtime.methodTypeAbstractMethod());
         close.builder().setReturnType(runtime.voidParameterizedType()).commit();
         autoCloseable.builder().addMethod(close).setParentClass(runtime.objectParameterizedType());
+
+        TypeParameter htTpK = runtime.newTypeParameter(0, "K", hashtable);
+        TypeParameter htTpV = runtime.newTypeParameter(1, "V", hashtable);
+        ParameterizedType htTpKPt = runtime.newParameterizedType(htTpK, 0, null);
+        ParameterizedType htTpVPt = runtime.newParameterizedType(htTpV, 0, null);
+        hashtable.builder()
+                .setParentClass(runtime.objectParameterizedType())
+                .addTypeParameter(htTpK)
+                .addTypeParameter(htTpV);
+        MethodInfo htConstructor = runtime.newConstructor(hashtable);
+        htConstructor.builder()
+                .setReturnType(hashtable.asParameterizedType(runtime))
+                .setAccess(runtime.accessPublic()).commit();
+        hashtable.builder().addConstructor(htConstructor);
+        MethodInfo htPut = runtime.newMethod(hashtable, "put", runtime.methodTypeAbstractMethod());
+        htPut.builder().setReturnType(htTpVPt)
+                .addParameter("k", htTpKPt);
+        htPut.builder().setAccess(runtime.accessPublic()).commitParameters().commit();
+        hashtable.builder().addMethod(htPut);
+        MethodInfo htGet = runtime.newMethod(hashtable, "get", runtime.methodTypeAbstractMethod());
+        htGet.builder()
+                .setReturnType(htTpVPt)
+                .addParameter("k", htTpKPt);
+        htGet.builder().setAccess(runtime.accessPublic()).commitParameters().commit();
+        hashtable.builder().addMethod(htGet);
+        hashtable.builder().commit();
     }
 
     private void defineFunction() {

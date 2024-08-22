@@ -277,7 +277,14 @@ public class MyClassVisitor extends ClassVisitor {
             return null; // jdk
         }
         methodInspectionBuilder.setReturnType(types.get(types.size() - 1));
-
+        if(exceptions != null) {
+            for (String exception : exceptions) {
+                // java/io/IOException
+                String fqnName = localTypeMap.pathToFqn(exception);
+                TypeInfo typeInfo = mustFindTypeInfo(fqnName, exception);
+                methodInspectionBuilder.addExceptionType(typeInfo.asSimpleParameterizedType());
+            }
+        }
         return new MyMethodVisitor(runtime, typeParameterContext, localTypeMap, currentType, methodInfo,
                 types, lastParameterIsVarargs);
     }

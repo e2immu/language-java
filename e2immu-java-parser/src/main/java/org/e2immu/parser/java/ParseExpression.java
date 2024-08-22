@@ -500,7 +500,7 @@ public class ParseExpression extends CommonParse {
         return runtime.newUnaryOperator(methodInfo, expression, runtime.precedenceUnary());
     }
 
-    private VariableExpression parseDotName(Context context, String index, Node dotName) {
+    private Expression parseDotName(Context context, String index, Node dotName) {
         String name = dotName.get(2).getSource();
         Expression scope;
         FieldReference fr;
@@ -512,6 +512,10 @@ public class ParseExpression extends CommonParse {
             } else throw new UnsupportedOperationException("NYI");
         } else {
             scope = parse(context, index, context.emptyForwardType(), n0);
+            if ("length".equals(name)) {
+                if (scope.parameterizedType().arrays() == 0) throw new UnsupportedOperationException();
+                return runtime.newArrayLength(scope);
+            }
             fr = findField(context, scope, name, true);
         }
         return runtime.newVariableExpression(fr);
@@ -574,14 +578,34 @@ public class ParseExpression extends CommonParse {
             Expression rhs = parse(context, index, fwd, me.get(i));
             Node.NodeType token = me.get(i - 1).getType();
             MethodInfo operator;
+            Precedence precedence;
             if (token.equals(STAR)) {
                 operator = runtime.multiplyOperatorInt();
+                precedence = runtime.precedenceMultiplicative();
             } else if (token.equals(SLASH)) {
                 operator = runtime.divideOperatorInt();
+                precedence = runtime.precedenceMultiplicative();
             } else if (token.equals(REM)) {
+                precedence = runtime.precedenceMultiplicative();
                 operator = runtime.remainderOperatorInt();
             } else if (token.equals(BIT_AND)) {
+                precedence = runtime.precedenceBitwiseAnd();
                 operator = runtime.andOperatorInt();
+            } else if (token.equals(BIT_OR)) {
+                precedence = runtime.precedenceBitwiseOr();
+                operator = runtime.orOperatorInt();
+            } else if (token.equals(XOR)) {
+                precedence = runtime.precedenceBitwiseXor();
+                operator = runtime.xorOperatorInt();
+            } else if (token.equals(LSHIFT)) {
+                precedence = runtime.precedenceShift();
+                operator = runtime.leftShiftOperatorInt();
+            } else if (token.equals(RSIGNEDSHIFT)) {
+                precedence = runtime.precedenceShift();
+                operator = runtime.signedRightShiftOperatorInt();
+            } else if (token.equals(RUNSIGNEDSHIFT)) {
+                precedence = runtime.precedenceShift();
+                operator = runtime.unsignedRightShiftOperatorInt();
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -590,7 +614,7 @@ public class ParseExpression extends CommonParse {
                     .setOperator(operator)
                     .setLhs(accumulated).setRhs(rhs)
                     .setParameterizedType(pt)
-                    .setPrecedence(runtime.precedenceMultiplicative())
+                    .setPrecedence(precedence)
                     .setSource(source(context.info(), index, me))
                     .addComments(comments(me))
                     .build();
@@ -620,7 +644,7 @@ public class ParseExpression extends CommonParse {
                 .setOperator(operator)
                 .setLhs(lhs).setRhs(rhs)
                 .setParameterizedType(runtime.booleanParameterizedType())
-                .setPrecedence(runtime.precedenceMultiplicative())
+                .setPrecedence(runtime.precedenceRelational())
                 .setSource(source(context.info(), index, re))
                 .addComments(comments(re))
                 .build();
