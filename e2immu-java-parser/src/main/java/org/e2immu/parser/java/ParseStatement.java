@@ -200,12 +200,22 @@ public class ParseStatement extends CommonParse {
                 org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
                         = runtime.newCatchClauseBuilder();
                 int j = 2;
+                if (catchBlock.get(j) instanceof KeyWord kw) {
+                    if (Token.TokenType.FINAL.equals(kw.getType())) {
+                        ccBuilder.setFinal(true);
+                    } else throw new UnsupportedOperationException();
+                    j++;
+                } else {
+                    ccBuilder.setFinal(false);
+                }
                 ParameterizedType pt;
                 if (catchBlock.get(j) instanceof Type type) {
                     pt = parsers.parseType().parse(context, type);
                     ccBuilder.addType(pt);
                     j++;
-                } else throw new UnsupportedOperationException();
+                } else {
+                    throw new UnsupportedOperationException();
+                }
                 if (catchBlock.get(j) instanceof Identifier identifier) {
                     String variableName = identifier.getSource();
                     ccBuilder.setVariableName(variableName);
