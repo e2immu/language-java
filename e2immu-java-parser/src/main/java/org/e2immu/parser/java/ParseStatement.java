@@ -18,6 +18,7 @@ import org.parsers.java.ast.*;
 import org.parsers.java.ast.AssertStatement;
 import org.parsers.java.ast.BreakStatement;
 import org.parsers.java.ast.ContinueStatement;
+import org.parsers.java.ast.DoStatement;
 import org.parsers.java.ast.ReturnStatement;
 import org.parsers.java.ast.Statement;
 import org.parsers.java.ast.SynchronizedStatement;
@@ -137,15 +138,6 @@ public class ParseStatement extends CommonParse {
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, n6);
             return runtime.newForEachBuilder().addComments(comments).setSource(source).setLabel(label)
                     .setInitializer(loopVariableCreation).setBlock(block).setExpression(expression).build();
-        }
-        if (statement instanceof WhileStatement whileStatement) {
-            Context newContext = context.newVariableContext("while");
-            ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, whileStatement.get(2));
-            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, whileStatement.get(4));
-            return runtime.newWhileBuilder()
-                    .addComments(comments).setSource(source).setLabel(label)
-                    .setExpression(expression).setBlock(block).build();
         }
         if (statement instanceof IfStatement ifStatement) {
             ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
@@ -384,6 +376,24 @@ public class ParseStatement extends CommonParse {
             context.variableContext().add(lv);
             builder.setLocalVariable(lv);
             return builder.setSource(source).addComments(comments).setLabel(label).build();
+        }
+        if (statement instanceof WhileStatement whileStatement) {
+            Context newContext = context.newVariableContext("while");
+            ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, whileStatement.get(2));
+            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, whileStatement.get(4));
+            return runtime.newWhileBuilder()
+                    .addComments(comments).setSource(source).setLabel(label)
+                    .setExpression(expression).setBlock(block).build();
+        }
+        if (statement instanceof DoStatement doStatement) {
+            Context newContext = context.newVariableContext("do-while");
+            ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
+            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, doStatement.get(1));
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, doStatement.get(4));
+            return runtime.newDoBuilder()
+                    .addComments(comments).setSource(source).setLabel(label)
+                    .setExpression(expression).setBlock(block).build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }

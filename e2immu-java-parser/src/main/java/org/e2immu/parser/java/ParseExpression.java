@@ -112,7 +112,7 @@ public class ParseExpression extends CommonParse {
             return parseClassLiteral(context, cl);
         }
         if (node instanceof Parentheses p) {
-            return parseParentheses(context, index, forwardType, p);
+            return parseParentheses(context, index, comments, source, forwardType, p);
         }
         if (node instanceof AllocationExpression ae) {
             return parsers.parseConstructorCall().parse(context, index, forwardType, ae);
@@ -417,7 +417,18 @@ public class ParseExpression extends CommonParse {
         } else if (SLASHASSIGN.equals(tt)) {
             binaryOperator = runtime.divideOperatorInt();
             assignmentOperator = runtime.assignDivideOperatorInt();
-        } else throw new UnsupportedOperationException("NYI");
+        } else if (XORASSIGN.equals(tt)) {
+            binaryOperator = runtime.xorOperatorInt();
+            assignmentOperator = runtime.assignXorOperatorInt();
+        } else if(ANDASSIGN.equals(tt)) {
+            binaryOperator = runtime.andOperatorInt();
+            assignmentOperator = runtime.assignAndOperatorInt();
+        } else if(ORASSIGN.equals(tt)) {
+            binaryOperator = runtime.orOperatorInt();
+            assignmentOperator = runtime.assignOrOperatorInt();
+        } else {
+            throw new UnsupportedOperationException("NYI");
+        }
         return runtime.newAssignmentBuilder().setValue(value).setTarget(targetVE)
                 .setBinaryOperator(binaryOperator)
                 .setAssignmentOperator(assignmentOperator)
@@ -472,9 +483,13 @@ public class ParseExpression extends CommonParse {
         throw new UnsupportedOperationException();
     }
 
-    private Expression parseParentheses(Context context, String index, ForwardType forwardType, Parentheses p) {
+    private Expression parseParentheses(Context context, String index,
+                                        List<Comment> comments, Source source,
+                                        ForwardType forwardType, Parentheses p) {
         Expression e = parse(context, index, forwardType, p.getNestedExpression());
-        return runtime.newEnclosedExpression(e);
+        return runtime.newEnclosedExpressionBuilder()
+                .addComments(comments).setSource(source).setExpression(e)
+                .build();
     }
 
     private Expression parseUnaryExpression(Context context, String index, org.parsers.java.ast.Expression ue) {
@@ -711,7 +726,10 @@ public class ParseExpression extends CommonParse {
                     case 'f' -> '\f';
                     case '\'' -> '\'';
                     case '\\' -> '\\';
-                    default -> throw new UnsupportedOperationException();
+                    case '"' -> '"';
+                    default -> {
+                        throw new UnsupportedOperationException();
+                    }
                 };
             }
             return runtime.newChar(c);
