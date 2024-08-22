@@ -76,12 +76,19 @@ public class ParseFieldDeclaration extends CommonParse {
         builder.addAnnotations(annotations);
 
         fieldModifiers.forEach(builder::addFieldModifier);
-        VariableExpression scope = runtime.newVariableExpression(runtime.newThis(fieldInfo.owner()));
+        org.e2immu.language.cst.api.expression.Expression scope;
+        if(isStatic) {
+            scope = runtime.newTypeExpression(fieldInfo.owner().asSimpleParameterizedType(), runtime.diamondNo());
+        } else {
+            scope = runtime.newVariableExpression(runtime.newThis(fieldInfo.owner()));
+        }
         FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type()); // FIXME generics
         context.variableContext().add(fieldReference);
         if (expression != null) {
             ForwardType fwd = context.newForwardType(fieldInfo.type());
             context.resolver().add(fieldInfo, fieldInfo.builder(), fwd, null, expression, context);
+        } else {
+            fieldInfo.builder().commit();
         }
         return fieldInfo;
     }

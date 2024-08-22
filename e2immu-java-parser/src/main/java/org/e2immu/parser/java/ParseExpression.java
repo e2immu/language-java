@@ -74,7 +74,8 @@ public class ParseExpression extends CommonParse {
         if (node instanceof MultiplicativeExpression
             || node instanceof AndExpression
             || node instanceof InclusiveOrExpression
-            || node instanceof ExclusiveOrExpression) {
+            || node instanceof ExclusiveOrExpression
+            || node instanceof ShiftExpression) {
             return parseMultiplicative(context, index, node);
         }
         if (node instanceof RelationalExpression re) {

@@ -3,6 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.expression.MethodCall;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -148,6 +149,14 @@ public class TestParseTypeParameter extends CommonTestParse {
         MethodInfo copy = typeInfo.findUniqueMethod("copy", 1);
         assertEquals(2, copy.typeParameters().size());
         assertEquals("a.b.X.copy(java.util.Hashtable<K,V>)", copy.fullyQualifiedName());
+        assertEquals("""
+                static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){Hashtable<K,V> copy=new Hashtable<K,V>();return copy;}\
+                """, copy.print(runtime.qualificationQualifyFromPrimaryType()).toString());
+        Block newBody = runtime.emptyBlock();
+        MethodInfo copyNewBody = copy.withMethodBody(newBody);
+        assertEquals("""
+                static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){}\
+                """, copyNewBody.print(runtime.qualificationQualifyFromPrimaryType()).toString());
     }
 
 }

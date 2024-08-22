@@ -190,7 +190,8 @@ public class ParseTypeDeclaration extends CommonParse {
                                 .setSynthetic(true) // to distinguish them from normal, non-enum fields
                                 .addFieldModifier(runtime.fieldModifierFinal())
                                 .addFieldModifier(runtime.fieldModifierPublic())
-                                .addFieldModifier(runtime.fieldModifierStatic());
+                                .addFieldModifier(runtime.fieldModifierStatic())
+                                .computeAccess();
                         // register evaluation of parameters as an object creation for the field
                         builder.addField(fieldInfo);
                         enumFields.add(fieldInfo);
@@ -198,6 +199,8 @@ public class ParseTypeDeclaration extends CommonParse {
                         if (ec.size() >= 2 && ec.get(1) instanceof InvocationArguments ia) {
                             newContext.resolver().add(fieldInfo, fieldInfo.builder(), newContext.newForwardType(typeInfo.asSimpleParameterizedType()),
                                     null, ia, newContext);
+                        } else {
+                            fieldInfo.builder().commit();
                         }
                     }
                 }
@@ -303,8 +306,11 @@ public class ParseTypeDeclaration extends CommonParse {
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
         fieldInfo.builder()
+                .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())
-                .addAnnotations(annotations);
+                .addAnnotations(annotations)
+                .computeAccess()
+                .commit();
         Source source = source(fieldInfo, "", rc);
         List<Comment> comments = comments(rc);
         return new RecordField(comments, source, fieldInfo, varargs);
