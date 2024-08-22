@@ -193,16 +193,33 @@ public class TestParse101 extends CommonTestParse {
         parse(INPUT6);
     }
 
-   String INPUT7 = """
-           package org.e2immu.analyser.resolver.testexample;
-           public class Basics_4 {
-               public boolean test(boolean b1, boolean b2) {
-                   return b1 & b2 & true;
-               }
-           }
-           """;
+    @Language("java")
+    String INPUT7 = """
+            package org.e2immu.analyser.resolver.testexample;
+            public class Basics_4 {
+                public boolean test(boolean b1, boolean b2) {
+                    return b1 & b2 & true;
+                }
+            }
+            """;
+
     @Test
     public void test7() {
         parse(INPUT7);
+    }
+
+    @Language("java")
+    String INPUT8 = """
+            package a.b;
+            public class X {
+                public double parse() {
+                    return 0xF + 001 + 0.01e-1f + 2L + 1.0e2d;
+                }
+            }
+            """;
+
+    @Test
+    public void test8() {
+        parse(INPUT8);
     }
 }

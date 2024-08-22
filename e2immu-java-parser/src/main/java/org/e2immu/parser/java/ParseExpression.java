@@ -653,7 +653,14 @@ public class ParseExpression extends CommonParse {
         if (child instanceof IntegerLiteral il) {
             String src = il.getSource().toLowerCase().replace("_", "")
                     .replace("l", "");
-            long l = Long.parseLong(src);
+            long l;
+            if (src.startsWith("0x")) {
+                l = Long.parseLong(src.substring(2), 16);
+            } else if (src.startsWith("0") && src.length() > 1 && Character.isDigit(src.charAt(1))) {
+                l = Long.parseLong(src.substring(1), 8);
+            } else {
+                l = Long.parseLong(src);
+            }
             if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
                 return runtime.newInt((int) l);
             }
