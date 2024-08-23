@@ -12,6 +12,7 @@ import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -170,7 +171,7 @@ public class ParseStatement extends CommonParse {
                 int n = (r.size() - 1) / 2;
                 while (j < r.size() && !(r.get(j) instanceof Delimiter)) {
                     // resources
-                    String newIndex = index + ".0." + CommonParse.pad(rCount, n);
+                    String newIndex = index + ".0." + StringUtil.pad(rCount, n);
                     LocalVariableCreation resource = (LocalVariableCreation) parse(newContext, newIndex, (Statement) r.get(j));
                     builder.addResource(resource);
                     j += 2;
@@ -182,7 +183,7 @@ public class ParseStatement extends CommonParse {
                 mainBlockIndex = 0;
             }
             int n = countCatchBlocks(tryStatement) + mainBlockIndex + 2;
-            String firstIndex = index + "." + CommonParse.pad(mainBlockIndex, n);
+            String firstIndex = index + "." + StringUtil.pad(mainBlockIndex, n);
             Block block = parseBlockOrStatement(newContext, firstIndex, tryStatement.get(i));
             i++;
             builder.setBlock(block).addComments(comments).setSource(source).setLabel(label);
@@ -217,7 +218,7 @@ public class ParseStatement extends CommonParse {
                 } else throw new UnsupportedOperationException();
                 j++; // ) delimiter
                 if (catchBlock.get(j) instanceof CodeBlock cb) {
-                    String newIndex = index + "." + CommonParse.pad(blockCount, n);
+                    String newIndex = index + "." + StringUtil.pad(blockCount, n);
                     Block cbb = parsers.parseBlock().parse(catchContext, newIndex, null, cb);
                     blockCount++;
                     builder.addCatchClause(ccBuilder.setBlock(cbb).build());
@@ -227,7 +228,7 @@ public class ParseStatement extends CommonParse {
             Block finallyBlock;
             if (i < tryStatement.size() && tryStatement.get(i) instanceof FinallyBlock fb) {
                 Context finallyContext = context.newVariableContext("finallyBlock");
-                String newIndex = index + "." + CommonParse.pad(blockCount, n);
+                String newIndex = index + "." + StringUtil.pad(blockCount, n);
                 finallyBlock = parseBlockOrStatement(finallyContext, newIndex, fb.get(1));
             } else {
                 finallyBlock = runtime.emptyBlock();
@@ -441,10 +442,10 @@ public class ParseStatement extends CommonParse {
                 } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 if (ncs.get(1) instanceof CodeBlock cb) {
-                    String newIndex = index + "." + CommonParse.pad(count, n);
+                    String newIndex = index + "." + StringUtil.pad(count, n);
                     entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
                 } else if (ncs.get(1) instanceof Statement st) {
-                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    String newIndex = index + "." + StringUtil.pad(count, n) + "0";
                     entryBuilder.setStatement(parse(newContext, newIndex, st));
                 } else throw new Summary.ParseException(newContext.info(), "Expect statement");
                 count++;
@@ -475,7 +476,7 @@ public class ParseStatement extends CommonParse {
                     } else {
                         assert Token.TokenType.CASE.equals(csl.get(0).getType());
                         for (int k = 1; k < csl.size(); k += 2) {
-                            String newIndex = index + ".0." + CommonParse.pad(pos, n);
+                            String newIndex = index + ".0." + StringUtil.pad(pos, n);
                             Expression literal = parsers.parseExpression().parse(newContext, newIndex,
                                     newContext.emptyForwardType(), csl.get(k));
                             SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos,
@@ -486,7 +487,7 @@ public class ParseStatement extends CommonParse {
                 }
                 for (int j = 1; j < ccs.size(); j++) {
                     if (ccs.get(j) instanceof Statement s) {
-                        String newIndex = index + ".0." + CommonParse.pad(pos, n);
+                        String newIndex = index + ".0." + StringUtil.pad(pos, n);
                         org.e2immu.language.cst.api.statement.Statement st
                                 = parse(context, newIndex, s);
                         builder.addStatement(st);

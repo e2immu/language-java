@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.ast.CodeBlock;
 import org.parsers.java.ast.Statement;
@@ -29,7 +30,7 @@ public class ParseBlock extends CommonParse {
         int n = codeBlock.size() - 2; // delimiters at front and back: '{', '}'
         for (Node child : codeBlock) {
             if (child instanceof Statement s) {
-                String sIndex = (index.isEmpty() ? "" : index + ".") + CommonParse.pad(count, n);
+                String sIndex = (index.isEmpty() ? "" : index + ".") + StringUtil.pad(count, n);
                 org.e2immu.language.cst.api.statement.Statement statement = parsers.parseStatement()
                         .parse(context, sIndex, s);
                 builder.addStatement(statement);

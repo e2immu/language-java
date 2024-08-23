@@ -30,7 +30,7 @@ java {
 }
 
 dependencies {
-
+    implementation("org.e2immu:e2immu-internal-util:some.version")
     implementation("org.e2immu:e2immu-cst-api:some.version")
     implementation("org.e2immu:e2immu-external-support:some.version")
     implementation("org.e2immu:e2immu-inspection-api:some.version")

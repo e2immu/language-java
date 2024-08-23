@@ -18,8 +18,8 @@ import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
-import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -220,16 +220,16 @@ public class ParseExpression extends CommonParse {
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 Node ncs1 = ncs.get(1);
                 if (ncs1 instanceof CodeBlock cb) {
-                    String newIndex = index + "." + CommonParse.pad(count, n);
+                    String newIndex = index + "." + StringUtil.pad(count, n);
                     entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
                 } else if (ncs1 instanceof Statement statement) {
                     // throw statement is allowed!
-                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    String newIndex = index + "." + StringUtil.pad(count, n) + "0";
                     org.e2immu.language.cst.api.statement.Statement st = parsers.parseStatement()
                             .parse(newContext, newIndex, statement);
                     entryBuilder.setStatement(st);
                 } else if (ncs1 instanceof org.parsers.java.ast.Expression expression) {
-                    String newIndex = index + "." + CommonParse.pad(count, n) + "0";
+                    String newIndex = index + "." + StringUtil.pad(count, n) + "0";
                     Expression pe = parse(newContext, newIndex, forwardType, expression);
                     entryBuilder.setStatement(runtime.newExpressionAsStatement(pe));
                     commonType = commonType == null ? pe.parameterizedType()
