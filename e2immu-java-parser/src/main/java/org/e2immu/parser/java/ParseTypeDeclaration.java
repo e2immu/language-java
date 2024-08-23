@@ -108,17 +108,22 @@ public class ParseTypeDeclaration extends CommonParse {
 
         collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo.primaryType());
 
+        List<Node> typeParametersToParse = new ArrayList<>();
+
         if (td.get(i) instanceof TypeParameters typeParameters) {
             int j = 1;
-            int typeParameterIndex = 0;
             while (j < typeParameters.size()) {
-                TypeParameter typeParameter = parseTypeParameter(newContext, typeParameters.get(j), typeInfo,
-                        typeParameterIndex, true);
-                typeInfo.builder().addTypeParameter(typeParameter);
+                typeParametersToParse.add(typeParameters.get(j));
                 j += 2; // skip the ',' or '>' delimiter
-                typeParameterIndex++;
             }
             i++;
+        }
+
+        if (!typeParametersToParse.isEmpty()) {
+            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, newContext, typeInfo);
+            for (TypeParameter typeParameter : typeParameters) {
+                builder.addTypeParameter(typeParameter);
+            }
         }
 
         TypeNature typeNature = builder.typeNature();
