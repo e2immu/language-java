@@ -103,13 +103,13 @@ public class ParseMethodDeclaration extends CommonParse {
 
         Context contextWithTP = context.newTypeContext();
 
-        int tpIndex = 0;
-        for (Node unparsedTypeParameter : typeParametersToParse) {
-            TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, methodInfo, tpIndex);
-            contextWithTP.typeContext().addToContext(typeParameter);
-            builder.addTypeParameter(typeParameter);
-            tpIndex++;
+        if (!typeParametersToParse.isEmpty()) {
+            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo);
+            for (TypeParameter typeParameter : typeParameters) {
+                builder.addTypeParameter(typeParameter);
+            }
         }
+
         // we need the type parameters in the context, because the return type may be one of them/contain one
         ParameterizedType returnType = rt == null ? runtime.parameterizedTypeReturnTypeOfConstructor()
                 : parsers.parseType().parse(contextWithTP, rt);
@@ -223,9 +223,9 @@ public class ParseMethodDeclaration extends CommonParse {
         Node node2 = fp.get(i);
         if (node2 instanceof Identifier identifier) {
             parameterName = identifier.getSource();
-        } else if(node2 instanceof VariableDeclaratorId vdi) {
+        } else if (node2 instanceof VariableDeclaratorId vdi) {
             // old C-style array type 'I data[]'
-            if(vdi.get(0) instanceof Identifier identifier) {
+            if (vdi.get(0) instanceof Identifier identifier) {
                 parameterName = identifier.getSource();
             } else throw new Summary.ParseException(context.info(), "Expect first part to be Identifier");
             int arrayCount = (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();

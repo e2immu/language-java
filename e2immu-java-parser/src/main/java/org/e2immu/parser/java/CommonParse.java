@@ -54,7 +54,7 @@ public abstract class CommonParse {
 
 
     // code copied from ParseTypeDeclaration
-    protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex) {
+    protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex, boolean complain) {
         String name;
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
@@ -76,7 +76,11 @@ public abstract class CommonParse {
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (tp.get(i) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1));
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain);
+                if (typeBound == null) {
+                    assert !complain;
+                    return null;
+                }
                 builder.addTypeBound(typeBound);
             } else throw new UnsupportedOperationException();
         }
@@ -211,6 +215,34 @@ public abstract class CommonParse {
             case STATIC -> runtime.typeModifierStatic();
             default -> null;
         };
+    }
+
+
+    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner) {
+        int infiniteLoopProtection = typeParametersToParse.size() + 2;
+        boolean resolved = false;
+        TypeParameter[] typeParameters = new TypeParameter[typeParametersToParse.size()];
+        while (infiniteLoopProtection >= 0 && !resolved) {
+            resolved = true;
+            int tpIndex = 0;
+            for (Node unparsedTypeParameter : typeParametersToParse) {
+                if (typeParameters[tpIndex] == null) {
+                    TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner, tpIndex, false);
+                    if (typeParameter != null) {
+                        // paresTypeParameter has added it to the contextWithTP
+                        typeParameters[tpIndex] = typeParameter;
+                    } else {
+                        resolved = false;
+                    }
+                }
+                tpIndex++;
+            }
+            infiniteLoopProtection--;
+        }
+        if (infiniteLoopProtection <= 0) {
+            throw new UnsupportedOperationException("Hit infinite loop protection");
+        }
+        return typeParameters;
     }
 
 }

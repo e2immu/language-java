@@ -113,7 +113,7 @@ public class ParseTypeDeclaration extends CommonParse {
             int typeParameterIndex = 0;
             while (j < typeParameters.size()) {
                 TypeParameter typeParameter = parseTypeParameter(newContext, typeParameters.get(j), typeInfo,
-                        typeParameterIndex);
+                        typeParameterIndex, true);
                 typeInfo.builder().addTypeParameter(typeParameter);
                 j += 2; // skip the ',' or '>' delimiter
                 typeParameterIndex++;

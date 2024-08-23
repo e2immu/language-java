@@ -135,7 +135,11 @@ public class ParseType extends CommonParse {
         }
         ParameterizedType withoutTypeParameters = nt.asSimpleParameterizedType();
         if (ot.size() > i && ot.get(i) instanceof TypeArguments tas) {
-            List<ParameterizedType> typeArguments = parseTypeArguments(context, tas);
+            List<ParameterizedType> typeArguments = parseTypeArguments(context, tas, complain);
+            if (typeArguments == null) {
+                if (complain) throw new Summary.ParseException(context.info(), "Expected type arguments");
+                return null;
+            }
             if (!typeArguments.isEmpty()) {
                 return withoutTypeParameters.withParameters(List.copyOf(typeArguments));
             }
@@ -143,17 +147,23 @@ public class ParseType extends CommonParse {
         return withoutTypeParameters;
     }
 
-    public List<ParameterizedType> parseTypeArguments(Context context, TypeArguments tas) {
+    public List<ParameterizedType> parseTypeArguments(Context context, TypeArguments tas, boolean complain) {
         List<ParameterizedType> typeArguments = new ArrayList<>();
         int j = 1;
         while (j < tas.size()) {
             if (tas.get(j) instanceof TypeArgument ta) {
-                ParameterizedType arg = parse(context, ta);
+                ParameterizedType arg = parse(context, ta, complain);
                 typeArguments.add(arg);
             } else if (tas.get(j) instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
                 typeArguments.add(runtime.parameterizedTypeWildcard());
             } else if (tas.get(j) instanceof Type type) {
-                ParameterizedType arg = parse(context, type);
+                ParameterizedType arg = parse(context, type, complain);
+                if (arg == null) {
+                    if (complain) {
+                        throw new Summary.ParseException(context.info(), "Expected to know type argument");
+                    }
+                    return null;
+                }
                 typeArguments.add(arg);
             } else throw new UnsupportedOperationException();
             j += 2;
