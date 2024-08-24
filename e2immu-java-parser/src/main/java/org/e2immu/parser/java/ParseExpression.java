@@ -57,7 +57,7 @@ public class ParseExpression extends CommonParse {
         List<Comment> comments = comments(node);
 
         if (node instanceof DotName dotName) {
-            return parseDotName(context, index, dotName);
+            return parseDotName(context, comments, source, index, dotName);
         }
         if (node instanceof MethodCall mc) {
             return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
@@ -144,7 +144,7 @@ public class ParseExpression extends CommonParse {
         if (node instanceof ObjectType ot) {
             // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
             if (ot.size() == 3 && Token.TokenType.DOT.equals(ot.get(1).getType())) {
-                return parseDotName(context, index, node);
+                return parseDotName(context, comments, source, index, node);
             }
             // ditto, see TestParseMethodReference
             if (ot.size() == 1 && ot.get(0) instanceof Identifier i) {
@@ -260,7 +260,10 @@ public class ParseExpression extends CommonParse {
         if (name.endsWith(".length")) {
             Variable array = parseVariable(context, comments, source, name.substring(0, name.length() - 7));
             assert array != null;
-            return runtime.newArrayLength(runtime.newVariableExpression(array));
+            return runtime.newArrayLengthBuilder()
+                    .addComments(comments).setSource(source)
+                    .setExpression(runtime.newVariableExpression(array))
+                    .build();
         }
         int lastDot = name.lastIndexOf('.');
         if (lastDot > 0) {
@@ -420,10 +423,10 @@ public class ParseExpression extends CommonParse {
         } else if (XORASSIGN.equals(tt)) {
             binaryOperator = runtime.xorOperatorInt();
             assignmentOperator = runtime.assignXorOperatorInt();
-        } else if(ANDASSIGN.equals(tt)) {
+        } else if (ANDASSIGN.equals(tt)) {
             binaryOperator = runtime.andOperatorInt();
             assignmentOperator = runtime.assignAndOperatorInt();
-        } else if(ORASSIGN.equals(tt)) {
+        } else if (ORASSIGN.equals(tt)) {
             binaryOperator = runtime.orOperatorInt();
             assignmentOperator = runtime.assignOrOperatorInt();
         } else {
@@ -516,7 +519,7 @@ public class ParseExpression extends CommonParse {
         return runtime.newUnaryOperator(methodInfo, expression, runtime.precedenceUnary());
     }
 
-    private Expression parseDotName(Context context, String index, Node dotName) {
+    private Expression parseDotName(Context context, List<Comment> comments, Source source, String index, Node dotName) {
         String name = dotName.get(2).getSource();
         Expression scope;
         FieldReference fr;
@@ -530,11 +533,17 @@ public class ParseExpression extends CommonParse {
             scope = parse(context, index, context.emptyForwardType(), n0);
             if ("length".equals(name)) {
                 if (scope.parameterizedType().arrays() == 0) throw new UnsupportedOperationException();
-                return runtime.newArrayLength(scope);
+                return runtime.newArrayLengthBuilder().setExpression(scope)
+                        .addComments(comments).setSource(source)
+                        .build();
             }
             fr = findField(context, scope, name, true);
         }
-        return runtime.newVariableExpression(fr);
+        return runtime.newVariableExpressionBuilder()
+                .addComments(comments)
+                .setSource(source)
+                .setVariable(fr)
+                .build();
     }
 
     private Cast parseCast(Context context, String index, List<Comment> comments, Source source, CastExpression castExpression) {
