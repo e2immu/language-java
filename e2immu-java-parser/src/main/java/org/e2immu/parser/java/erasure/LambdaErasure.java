@@ -14,14 +14,12 @@ import java.util.stream.Collectors;
 
 public class LambdaErasure extends ErasureExpressionImpl {
     private final Set<MethodResolution.Count> counts;
-    private final Source source;
 
     public LambdaErasure(Runtime runtime, Set<MethodResolution.Count> counts, Source source) {
-        super(runtime);
+        super(runtime, source);
         Objects.requireNonNull(counts);
         Objects.requireNonNull(source);
         this.counts = counts;
-        this.source = source;
     }
 
     @Override

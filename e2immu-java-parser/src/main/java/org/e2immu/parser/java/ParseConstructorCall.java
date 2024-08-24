@@ -77,6 +77,7 @@ public class ParseConstructorCall extends CommonParse {
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
         ParameterizedType formalType = typeInfo.asParameterizedType(runtime);
+        Source source = source(newContext.info(), index, ae);
 
         if (forwardType.erasure()) {
             i++;
@@ -87,7 +88,7 @@ public class ParseConstructorCall extends CommonParse {
             } else {
                 erasureType = formalType;
             }
-            return new ConstructorCallErasure(runtime, erasureType);
+            return new ConstructorCallErasure(runtime, source, erasureType);
         }
 
         Diamond diamond;
@@ -107,7 +108,6 @@ public class ParseConstructorCall extends CommonParse {
         }
 
         List<Comment> comments = comments(ae);
-        Source source = source(newContext.info(), index, ae);
 
         if (ae.get(i) instanceof InvocationArguments ia) {
             if (i + 1 < ae.size() && ae.get(i + 1) instanceof ClassOrInterfaceBody body) {
@@ -123,7 +123,7 @@ public class ParseConstructorCall extends CommonParse {
                     index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedArguments,
                     methodTypeArguments);
             if (constructorCall == null) {
-                return new ConstructorCallErasure(runtime, formalType);
+                return new ConstructorCallErasure(runtime, source, formalType);
             }
             return constructorCall;
         }

@@ -42,7 +42,14 @@ public class ParseMethodCall extends CommonParse {
             Set<ParameterizedType> types = context.methodResolution().computeScope(context, index, methodName,
                     unparsedObject, unparsedArguments);
             LOGGER.debug("Erasure types: {}", types);
-            return new MethodCallErasure(runtime, types, methodName);
+            ParameterizedType common;
+            ParameterizedType first = types.stream().findFirst().orElseThrow();
+            if (types.size() > 1) {
+                common = types.stream().reduce(first, runtime::commonType);
+            } else {
+                common = first;
+            }
+            return new MethodCallErasure(runtime, source, types, common, methodName);
         }
         // now we should have a more correct forward type!
         return context.methodResolution().resolveMethod(context, comments, source, index, forwardType, methodName,

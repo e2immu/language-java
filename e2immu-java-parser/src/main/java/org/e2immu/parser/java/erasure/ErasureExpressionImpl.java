@@ -18,9 +18,11 @@ import java.util.stream.Stream;
 
 public abstract   class ErasureExpressionImpl implements ErasedExpression, Expression {
     protected final Runtime runtime;
+    protected final Source source;
 
-    protected ErasureExpressionImpl(Runtime runtime) {
+    protected ErasureExpressionImpl(Runtime runtime, Source source) {
         this.runtime = runtime;
+        this.source = source;
     }
 
     @Override
@@ -45,7 +47,7 @@ public abstract   class ErasureExpressionImpl implements ErasedExpression, Expre
 
     @Override
     public Source source() {
-        return null;
+        return source;
     }
 
     @Override

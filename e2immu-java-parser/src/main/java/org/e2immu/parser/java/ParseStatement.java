@@ -20,6 +20,7 @@ import org.parsers.java.ast.AssertStatement;
 import org.parsers.java.ast.BreakStatement;
 import org.parsers.java.ast.ContinueStatement;
 import org.parsers.java.ast.DoStatement;
+import org.parsers.java.ast.EmptyStatement;
 import org.parsers.java.ast.ReturnStatement;
 import org.parsers.java.ast.Statement;
 import org.parsers.java.ast.SynchronizedStatement;
@@ -395,6 +396,11 @@ public class ParseStatement extends CommonParse {
             return runtime.newDoBuilder()
                     .addComments(comments).setSource(source).setLabel(label)
                     .setExpression(expression).setBlock(block).build();
+        }
+        if (statement instanceof EmptyStatement) {
+            return runtime.newEmptyStatementBuilder()
+                    .addComments(comments).setSource(source).setLabel(label)
+                    .build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }

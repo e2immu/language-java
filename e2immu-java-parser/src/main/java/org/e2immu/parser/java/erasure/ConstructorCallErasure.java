@@ -1,5 +1,6 @@
 package org.e2immu.parser.java.erasure;
 
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Precedence;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
@@ -12,8 +13,8 @@ import java.util.Set;
 public class ConstructorCallErasure extends ErasureExpressionImpl {
     private final ParameterizedType formalType;
 
-    public ConstructorCallErasure(Runtime runtime, ParameterizedType formalType) {
-        super(runtime);
+    public ConstructorCallErasure(Runtime runtime, Source source, ParameterizedType formalType) {
+        super(runtime, source);
         this.formalType = formalType;
     }
 

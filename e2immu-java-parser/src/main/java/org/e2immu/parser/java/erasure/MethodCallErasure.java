@@ -1,5 +1,6 @@
 package org.e2immu.parser.java.erasure;
 
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Precedence;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
@@ -12,11 +13,16 @@ import java.util.Set;
 public class MethodCallErasure extends ErasureExpressionImpl {
     private final Set<ParameterizedType> returnTypes;
     private final String methodName;
+    private final ParameterizedType commonParameterizedType;
 
-    public MethodCallErasure(Runtime runtime, Set<ParameterizedType> returnTypes, String methodName) {
-        super(runtime);
+    public MethodCallErasure(Runtime runtime, Source source,
+                             Set<ParameterizedType> returnTypes,
+                             ParameterizedType commonParameterizedType,
+                             String methodName) {
+        super(runtime, source);
         this.returnTypes = returnTypes;
         this.methodName = methodName;
+        this.commonParameterizedType = commonParameterizedType;
     }
 
     @Override
@@ -24,6 +30,11 @@ public class MethodCallErasure extends ErasureExpressionImpl {
         if (this == o) return true;
         if (!(o instanceof MethodCallErasure that)) return false;
         return Objects.equals(returnTypes, that.returnTypes) && Objects.equals(methodName, that.methodName);
+    }
+
+    @Override
+    public ParameterizedType parameterizedType() {
+        return commonParameterizedType;
     }
 
     @Override
