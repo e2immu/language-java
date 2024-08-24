@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -94,10 +95,15 @@ public class ParseStatement extends CommonParse {
         if (statement instanceof NoVarDeclaration nvd) {
             int i = 0;
             LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            while (nvd.get(i) instanceof KeyWord) {
-                if (Token.TokenType.FINAL.equals(nvd.get(i).getType())) {
-                    builder.addModifier(runtime.localVariableModifierFinal());
-                } else throw new Summary.ParseException(context.info(), "Expect final");
+            while (true) {
+                if (nvd.get(i) instanceof KeyWord) {
+                    if (Token.TokenType.FINAL.equals(nvd.get(i).getType())) {
+                        builder.addModifier(runtime.localVariableModifierFinal());
+                    } else throw new Summary.ParseException(context.info(), "Expect final");
+                } else if (nvd.get(i) instanceof Annotation a) {
+                    AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                    builder.addAnnotation(ae);
+                } else break;
                 i++;
             }
             ParameterizedType type = parsers.parseType().parse(context, nvd.get(i));
