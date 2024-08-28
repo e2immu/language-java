@@ -60,7 +60,8 @@ public class TestParseFor extends CommonTestParse {
             assertInstanceOf(LocalVariableCreation.class, s.initializers().get(0));
             assertEquals("int i=0,j=10;", s.initializers().get(0).toString());
 
-            assertEquals("j>0&&i<args.length", s.expression().toString());
+            assertEquals("i<args.length&&j>0", s.expression().toString());
+            assertEquals("j>0&&i<args.length", runtime.sortAndSimplify(s.expression()).toString());
 
             assertEquals("i++", s.updaters().get(0).toString());
             assertEquals("--j", s.updaters().get(1).toString());
@@ -89,7 +90,8 @@ public class TestParseFor extends CommonTestParse {
         assertEquals(2, main.methodBody().statements().size());
         if (main.methodBody().statements().get(1) instanceof ForStatement s) {
             assertEquals(2, s.initializers().size());
-            assertEquals("j>0&&i<args.length", s.expression().toString());
+            assertEquals("i<args.length&&j>0", s.expression().toString());
+            assertEquals("j>0&&i<args.length", runtime.sortAndSimplify(s.expression()).toString());
             assertTrue(s.updaters().isEmpty());
         } else fail();
     }
