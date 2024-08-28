@@ -478,10 +478,15 @@ public class ParseExpression extends CommonParse {
             components.add(parsed);
         }
         if (e instanceof ConditionalAndExpression) {
-            return runtime.and(components);
+            return runtime.newAndBuilder()
+                    .addComments(comments).setSource(source)
+                    .addExpressions(components)
+                    .build();
         }
         if (e instanceof ConditionalOrExpression) {
-            return runtime.or(components);
+            return runtime.newOrBuilder()
+                    .addComments(comments).setSource(source)
+                    .addExpressions(components).build();
         }
         throw new UnsupportedOperationException();
     }
