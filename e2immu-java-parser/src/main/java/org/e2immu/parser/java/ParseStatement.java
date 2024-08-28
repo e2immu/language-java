@@ -352,7 +352,7 @@ public class ParseStatement extends CommonParse {
                 return parseOldStyleSwitch(context, index, statement, comments, source, label, no);
             }
             int nn = countStatementsInNewStyleSwitch(statement);
-            if (nn > 0) {
+            if (nn >= 0) {
                 return parseNewStyleSwitch(context, index, statement, comments, source, label, nn);
             }
         }

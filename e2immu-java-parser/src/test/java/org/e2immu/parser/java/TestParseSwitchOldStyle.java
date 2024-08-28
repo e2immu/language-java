@@ -85,4 +85,32 @@ public class TestParseSwitchOldStyle extends CommonTestParse {
                     sso.print(runtime.qualificationDoNotQualifyImplicit()).toString());
         } else fail();
     }
+
+    @Language("java")
+    private static final String INPUT3 = """
+            package a.b;
+            class C {
+              public static void main(String[] args) {
+                switch(args.length) {
+                  case 0:
+                  case 1, 2:
+                  case 3:
+                  default:
+                }
+              }
+            }
+            """;
+
+    // IMPORTANT: we reduce this one to an empty (new-style) switch, because there are no statements
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+        MethodInfo main = typeInfo.findUniqueMethod("main", 1);
+        if (main.methodBody().statements().get(0) instanceof SwitchStatementNewStyle ssns) {
+            assertEquals("switch(args.length){}",
+                    ssns.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+        } else fail();
+    }
+
+
 }

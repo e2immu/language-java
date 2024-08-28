@@ -372,11 +372,14 @@ public class ParseExpression extends CommonParse {
             expressions.add(e);
             commonType = commonType == null ? e.parameterizedType() : runtime.commonType(commonType, e.parameterizedType());
         }
-        if (commonType == null) {
-            commonType = forwardType.type().copyWithOneFewerArrays();
+        ParameterizedType type;
+        if (forwardType.type() != null) {
+            type = forwardType.type().copyWithOneFewerArrays();
+        } else {
+            type = commonType;
         }
-        assert commonType != null;
-        return runtime.newArrayInitializer(List.copyOf(expressions), commonType);
+        assert type != null;
+        return runtime.newArrayInitializer(List.copyOf(expressions), type);
     }
 
     private Expression inlineConditional(Context context, String index, ForwardType forwardType, List<Comment> comments, Source source, Node node) {

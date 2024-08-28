@@ -3,10 +3,12 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.expression.ArrayInitializer;
 import org.e2immu.language.cst.api.expression.BinaryOperator;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
+import org.e2immu.language.cst.api.expression.MethodCall;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.AssertStatement;
 import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -116,4 +118,36 @@ public class TestParseArrayInitializer extends CommonTestParse {
     public void test3() {
         parse(INPUT3);
     }
+
+
+    @Language("java")
+    private static final String INPUT4 = """
+            package a.b;
+            public class X {
+                interface Writer {
+                    void write(byte[] bytes);
+                    void write(char[] chars);
+                    void write(int[] chars);
+                }
+                void method(Writer writer) {
+                    writer.write(new byte[] { 'a', 'b', 'c'});
+                    writer.write(new char[] { 'a', 'b', 'c'});
+                    writer.write(new int[] { 'a', 'b', 'c'});
+                }
+            }
+            """;
+
+    @Test
+    public void test4() {
+        TypeInfo typeInfo = parse(INPUT4);
+        MethodInfo method = typeInfo.findUniqueMethod("method", 1);
+        ExpressionAsStatement eas0 = (ExpressionAsStatement) method.methodBody().statements().get(0);
+        assertEquals("writer.write(new byte[]{'a','b','c'});", eas0.toString());
+        ExpressionAsStatement eas1 = (ExpressionAsStatement) method.methodBody().statements().get(1);
+        assertEquals("writer.write(new char[]{'a','b','c'});", eas1.toString());
+        ExpressionAsStatement eas2 = (ExpressionAsStatement) method.methodBody().statements().get(2);
+        assertEquals("writer.write(new int[]{'a','b','c'});", eas2.toString());
+    }
+
+
 }
