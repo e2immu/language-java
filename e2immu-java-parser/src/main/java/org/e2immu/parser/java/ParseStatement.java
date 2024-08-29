@@ -110,7 +110,15 @@ public class ParseStatement extends CommonParse {
             i++;
             boolean first = true;
             while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
-                Identifier identifier = (Identifier) vd.get(0);
+                Node vd0 = vd.get(0);
+                Identifier identifier;
+                if (vd0 instanceof VariableDeclaratorId vdi) {
+                    identifier = (Identifier) vdi.get(0);
+                    int arrays = (vdi.size() - 1) / 2;
+                    type = type.copyWithArrays(arrays);
+                } else {
+                    identifier = (Identifier) vd0;
+                }
                 Expression expression;
                 if (vd.size() > 2) {
                     ForwardType forwardType = context.newForwardType(type);

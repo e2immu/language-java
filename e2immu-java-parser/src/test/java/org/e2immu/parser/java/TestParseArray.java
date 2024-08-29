@@ -64,10 +64,32 @@ public class TestParseArray extends CommonTestParse {
             }
             """;
 
+    @Language("java")
+    private static final String INPUT3B = """
+            class X {
+                public static long[] method(Long list[]) {
+                  long result[] = new long[list.length];
+                  int i = 0;
+                  for (long v : list) {
+                    result[i++] = v;
+                  }
+                  return result;
+                }
+            }
+            """;
+
+    @Language("java")
+    private final String OUTPUT3 = " class X{static long[] method(Long[] list){long[] result=new long[list.length];int i=0;for(long v:list){result[i++]=v;}return result;}}";
+
     @Test
     public void test3() {
         TypeInfo typeInfo = parse(INPUT3);
-        assertEquals(" class X{static long[] method(Long[] list){long[] result=new long[list.length];int i=0;for(long v:list){result[i++]=v;}return result;}}", typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
+        assertEquals(OUTPUT3, typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
     }
 
+    @Test
+    public void test3B() {
+        TypeInfo typeInfo = parse(INPUT3B);
+        assertEquals(OUTPUT3, typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
+    }
 }
