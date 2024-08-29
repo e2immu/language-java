@@ -705,14 +705,21 @@ public class ParseExpression extends CommonParse {
                 .build();
     }
 
+    private static final long TWO32 = 0xFF_FF_FF_FFL;
+
     private Expression parseLiteral(Context context, LiteralExpression le) {
         Node child = le.children().get(0);
         if (child instanceof IntegerLiteral il) {
             long l = parseLong(il.getSource());
-            if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
+            if (l <= Integer.MAX_VALUE) {
                 return runtime.newInt((int) l);
             }
-            return runtime.newLong(l);
+            if (l <= TWO32) {
+                long complement = ((~l)&TWO32);
+                int negative = (int) (-(complement+1));
+                return runtime.newInt(negative);
+            }
+            throw new UnsupportedOperationException();
         }
         if (child instanceof LongLiteral ll) {
             long l = parseLong(ll.getSource());
@@ -736,6 +743,7 @@ public class ParseExpression extends CommonParse {
             if (c == '\\') {
                 char c2 = cl.charAt(2);
                 c = switch (c2) {
+                    case '0' -> '\0';
                     case 'b' -> '\b';
                     case 'r' -> '\r';
                     case 't' -> '\t';

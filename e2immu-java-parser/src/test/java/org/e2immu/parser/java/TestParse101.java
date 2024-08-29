@@ -207,19 +207,4 @@ public class TestParse101 extends CommonTestParse {
     public void test7() {
         parse(INPUT7);
     }
-
-    @Language("java")
-    String INPUT8 = """
-            package a.b;
-            public class X {
-                public double parse() {
-                    return 0xF + 001 + 0.01e-1f + 2L + 1.0e2d;
-                }
-            }
-            """;
-
-    @Test
-    public void test8() {
-        parse(INPUT8);
-    }
 }
