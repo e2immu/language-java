@@ -216,21 +216,39 @@ public class ParseStatement extends CommonParse {
                 } else {
                     ccBuilder.setFinal(false);
                 }
-                ParameterizedType pt;
-                if (catchBlock.get(j) instanceof Type type) {
-                    pt = parsers.parseType().parse(context, type);
-                    ccBuilder.addType(pt);
+                List<ParameterizedType> exceptionTypes = new ArrayList<>();
+                // Type Operator Type ...
+                while (true) {
+                    Node cbj = catchBlock.get(j);
+                    if (cbj instanceof Type type) {
+                        ParameterizedType pt = parsers.parseType().parse(context, type);
+                        exceptionTypes.add(pt);
+                        ccBuilder.addType(pt);
+                    } else if (cbj instanceof Identifier) {
+                        break;
+                    } else if (!(cbj instanceof Operator operator
+                                 && Token.TokenType.BIT_OR.equals(operator.getType()))) {
+                        throw new UnsupportedOperationException();
+                    }
+                    j++;
+                }
+                if (catchBlock.get(j) instanceof Identifier identifier) {
+                    String variableName = identifier.getSource();
+                    ParameterizedType commonType;
+                    if (exceptionTypes.isEmpty()) throw new UnsupportedOperationException();
+                    else if (exceptionTypes.size() == 1) {
+                        commonType = exceptionTypes.get(0);
+                    } else {
+                        commonType = exceptionTypes.stream().skip(1)
+                                .reduce(exceptionTypes.get(0), runtime::commonType);
+                    }
+                    LocalVariable cv = runtime.newLocalVariable(variableName, commonType);
+                    ccBuilder.setCatchVariable(cv);
+                    catchContext.variableContext().add(cv);
                     j++;
                 } else {
                     throw new UnsupportedOperationException();
                 }
-                if (catchBlock.get(j) instanceof Identifier identifier) {
-                    String variableName = identifier.getSource();
-                    ccBuilder.setVariableName(variableName);
-                    LocalVariable catchVariable = runtime.newLocalVariable(variableName, pt);
-                    catchContext.variableContext().add(catchVariable);
-                    j++;
-                } else throw new UnsupportedOperationException();
                 j++; // ) delimiter
                 if (catchBlock.get(j) instanceof CodeBlock cb) {
                     String newIndex = index + "." + StringUtil.pad(blockCount, n);
