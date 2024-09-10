@@ -106,18 +106,20 @@ public class ParseStatement extends CommonParse {
                 } else break;
                 i++;
             }
-            ParameterizedType type = parsers.parseType().parse(context, nvd.get(i));
+            ParameterizedType baseType = parsers.parseType().parse(context, nvd.get(i));
             i++;
             boolean first = true;
             while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
                 Node vd0 = vd.get(0);
                 Identifier identifier;
+                ParameterizedType type;
                 if (vd0 instanceof VariableDeclaratorId vdi) {
                     identifier = (Identifier) vdi.get(0);
                     int arrays = (vdi.size() - 1) / 2;
-                    type = type.copyWithArrays(arrays);
+                    type = baseType.copyWithArrays(arrays);
                 } else {
                     identifier = (Identifier) vd0;
+                    type = baseType;
                 }
                 Expression expression;
                 if (vd.size() > 2) {

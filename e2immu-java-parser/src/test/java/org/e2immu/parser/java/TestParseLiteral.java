@@ -1,13 +1,16 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.expression.IntConstant;
+import org.e2immu.language.cst.api.expression.LongConstant;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseLiteral extends CommonTestParse {
     @Language("java")
@@ -62,5 +65,28 @@ public class TestParseLiteral extends CommonTestParse {
     public void test() {
         assertEquals(0xFF000000, -16777216);
         assertEquals(0xcafebabe, -889275714);
+    }
+
+    @Language("java")
+    String INPUT3 = """
+            package a.b;
+            public class X {
+                public long parse(long l) {
+                    long ll = l;
+                    ll &= 0x00000000FFFFFFFFl;
+                    return ll;
+                }
+            }
+            """;
+
+    @Test
+    public void test3() {
+        TypeInfo typeInfo = parse(INPUT3);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 1);
+        if (parse.methodBody().statements().get(1) instanceof ExpressionAsStatement eas
+            && eas.expression() instanceof Assignment a) {
+            assertInstanceOf(LongConstant.class, a.value());
+            assertEquals("ll&=4294967295L", a.toString());
+        } else fail();
     }
 }

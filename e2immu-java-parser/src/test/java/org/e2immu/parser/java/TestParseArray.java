@@ -78,8 +78,25 @@ public class TestParseArray extends CommonTestParse {
             }
             """;
 
+
     @Language("java")
-    private final String OUTPUT3 = " class X{static long[] method(Long[] list){long[] result=new long[list.length];int i=0;for(long v:list){result[i++]=v;}return result;}}";
+    private static final String INPUT3C = """
+            class X {
+                public static long[] method(Long list[]) {
+                  long i = 0, result[] = new long[list.length];
+                  for (long v : list) {
+                    result[i++] = v;
+                  }
+                  return result;
+                }
+            }
+            """;
+
+    @Language("java")
+    private static final String OUTPUT3 = " class X{static long[] method(Long[] list){long[] result=new long[list.length];int i=0;for(long v:list){result[i++]=v;}return result;}}";
+
+    @Language("java")
+    private static final String OUTPUT3C = " class X{static long[] method(Long[] list){long i=0,result[]=new long[list.length];for(long v:list){result[i++]=v;}return result;}}";
 
     @Test
     public void test3() {
@@ -91,5 +108,11 @@ public class TestParseArray extends CommonTestParse {
     public void test3B() {
         TypeInfo typeInfo = parse(INPUT3B);
         assertEquals(OUTPUT3, typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
+    }
+
+    @Test
+    public void test3C() {
+        TypeInfo typeInfo = parse(INPUT3C);
+        assertEquals(OUTPUT3C, typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
     }
 }

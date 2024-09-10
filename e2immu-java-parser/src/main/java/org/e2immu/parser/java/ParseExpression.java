@@ -345,6 +345,10 @@ public class ParseExpression extends CommonParse {
         if (typeInfo.enclosingMethod() != null) {
             return findRecursively(typeInfo.enclosingMethod().typeInfo(), name);
         }
+        for(ParameterizedType interfaceImplemented: typeInfo.interfacesImplemented()) {
+            FieldInfo fi = findRecursively(interfaceImplemented.typeInfo(), name);
+            if(fi != null) return fi;
+        }
         return null;
     }
 
@@ -432,6 +436,15 @@ public class ParseExpression extends CommonParse {
         } else if (ORASSIGN.equals(tt)) {
             binaryOperator = runtime.orOperatorInt();
             assignmentOperator = runtime.assignOrOperatorInt();
+        } else if (RSIGNEDSHIFTASSIGN.equals(tt)) {
+            binaryOperator = runtime.signedRightShiftOperatorInt();
+            assignmentOperator = runtime.assignSignedRightShiftOperatorInt();
+        } else if (RUNSIGNEDSHIFTASSIGN.equals(tt)) {
+            binaryOperator = runtime.unsignedRightShiftOperatorInt();
+            assignmentOperator = runtime.assignUnsignedRightShiftOperatorInt();
+        } else if (LSHIFTASSIGN.equals(tt)) {
+            binaryOperator = runtime.leftShiftOperatorInt();
+            assignmentOperator = runtime.assignLeftShiftOperatorInt();
         } else {
             throw new UnsupportedOperationException("NYI");
         }
@@ -560,7 +573,8 @@ public class ParseExpression extends CommonParse {
         // can technically be anything
         ForwardType fwd = context.newForwardType(pt);
         Expression expression = parse(context, index, fwd, castExpression.get(3));
-        return runtime.newCast(expression, pt);
+        return runtime.newCastBuilder().setExpression(expression).setParameterizedType(pt)
+                .setSource(source).addComments(comments).build();
     }
 
     private Expression parseAdditive(Context context, String index, AdditiveExpression ae) {
