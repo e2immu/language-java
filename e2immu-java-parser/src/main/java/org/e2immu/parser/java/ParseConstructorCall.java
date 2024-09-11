@@ -110,9 +110,7 @@ public class ParseConstructorCall extends CommonParse {
         List<Comment> comments = comments(ae);
 
         if (ae.get(i) instanceof InvocationArguments ia) {
-            if (i + 1 < ae.size() && ae.get(i + 1) instanceof ClassOrInterfaceBody body) {
-                return anonymousType(newContext, comments, source, expectedConcreteType, typeAsIs, ia, body, diamond);
-            }
+            boolean isAnonymousType = i + 1 < ae.size() && ae.get(i + 1) instanceof ClassOrInterfaceBody;
             List<Object> unparsedArguments = new ArrayList<>();
             int j = 1;
             while (j < ia.size() && !(ia.get(j) instanceof Delimiter)) {
@@ -121,9 +119,14 @@ public class ParseConstructorCall extends CommonParse {
             }
             Expression constructorCall = newContext.methodResolution().resolveConstructor(newContext, comments, source,
                     index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedArguments,
-                    methodTypeArguments);
-            if (constructorCall == null) {
+                    methodTypeArguments, !isAnonymousType);
+            if (constructorCall == null && !isAnonymousType) {
                 return new ConstructorCallErasure(runtime, source, formalType);
+            }
+            // inAnonymous() call to prevent parsing the method body when we're re-evaluating the arguments
+            if (isAnonymousType) {
+                return anonymousType(newContext, comments, source, constructorCall, expectedConcreteType, typeAsIs, ia,
+                        (ClassOrInterfaceBody) (ae.get(i + 1)), diamond);
             }
             return constructorCall;
         }
@@ -207,6 +210,7 @@ public class ParseConstructorCall extends CommonParse {
     private ConstructorCall anonymousType(Context context,
                                           List<Comment> comments,
                                           Source source,
+                                          Expression constructorCall,
                                           ParameterizedType forwardType,
                                           ParameterizedType type,
                                           InvocationArguments ia,
@@ -226,9 +230,15 @@ public class ParseConstructorCall extends CommonParse {
         } else {
             builder.setParentClass(concreteReturnType);
         }
-        assert ia.size() == 2
-               && Token.TokenType.LPAREN.equals(ia.get(0).getType())
-               && Token.TokenType.RPAREN.equals(ia.get(1).getType());
+        MethodInfo constructor;
+        List<Expression> arguments;
+        if (constructorCall instanceof ConstructorCall cc) {
+            constructor = cc.constructor();
+            arguments = cc.parameterExpressions();
+        } else {
+            constructor = null;
+            arguments = List.of();
+        }
         Context newContext = context.newAnonymousClassBody();
         // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
         // also those of the type we're extending:
@@ -240,8 +250,9 @@ public class ParseConstructorCall extends CommonParse {
                 .setSource(source)
                 .addComments(comments)
                 .setDiamond(diamond)
+                .setConstructor(constructor)
                 .setConcreteReturnType(concreteReturnType)
-                .setParameterExpressions(List.of())
+                .setParameterExpressions(arguments)
                 .setAnonymousClass(anonymousType).build();
     }
 
@@ -254,7 +265,7 @@ public class ParseConstructorCall extends CommonParse {
         }
         ParameterizedType formalType = enumType.asSimpleParameterizedType();
         return context.methodResolution().resolveConstructor(context, List.of(), null,
-                index, formalType, formalType, runtime.diamondNo(), null, unparsedArguments, List.of());
+                index, formalType, formalType, runtime.diamondNo(), null, unparsedArguments, List.of(), true);
     }
 }
 
