@@ -165,10 +165,7 @@ public class ParseMethodDeclaration extends CommonParse {
 
         builder.commitParameters();
         methodModifiers.forEach(builder::addMethodModifier);
-        Access access = access(methodModifiers);
-        Access accessOfEnclosing = newContext.enclosingType().access();
-        Access accessCombined = accessOfEnclosing.combine(access);
-        builder.setAccess(accessCombined);
+        builder.computeAccess();
         builder.addComments(comments(md));
         builder.setSource(source(methodInfo, null, md));
         builder.addAnnotations(annotations);

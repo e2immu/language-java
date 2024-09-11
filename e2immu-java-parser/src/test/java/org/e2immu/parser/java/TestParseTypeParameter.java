@@ -150,12 +150,12 @@ public class TestParseTypeParameter extends CommonTestParse {
         assertEquals(2, copy.typeParameters().size());
         assertEquals("a.b.X.copy(java.util.Hashtable<K,V>)", copy.fullyQualifiedName());
         assertEquals("""
-                static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){Hashtable<K,V> copy=new Hashtable<K,V>();return copy;}\
+                public static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){Hashtable<K,V> copy=new Hashtable<K,V>();return copy;}\
                 """, copy.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         Block newBody = runtime.emptyBlock();
         MethodInfo copyNewBody = copy.withMethodBody(newBody);
         assertEquals("""
-                static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){}\
+                public static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){}\
                 """, copyNewBody.print(runtime.qualificationQualifyFromPrimaryType()).toString());
     }
 

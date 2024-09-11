@@ -236,7 +236,9 @@ public class CommonTestParse {
                 .addParameter("t", runtime.newParameterizedType(T, 0, null));
         apply.builder().computeAccess();
         apply.builder().commit();
-        function.builder().addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
+        function.builder()
+                .setParentClass(runtime.objectParameterizedType())
+                .addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
                 .setSingleAbstractMethod(apply)
                 .computeAccess();
     }
