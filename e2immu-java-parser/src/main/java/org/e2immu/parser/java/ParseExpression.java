@@ -345,9 +345,9 @@ public class ParseExpression extends CommonParse {
         if (typeInfo.enclosingMethod() != null) {
             return findRecursively(typeInfo.enclosingMethod().typeInfo(), name);
         }
-        for(ParameterizedType interfaceImplemented: typeInfo.interfacesImplemented()) {
+        for (ParameterizedType interfaceImplemented : typeInfo.interfacesImplemented()) {
             FieldInfo fi = findRecursively(interfaceImplemented.typeInfo(), name);
-            if(fi != null) return fi;
+            if (fi != null) return fi;
         }
         return null;
     }
@@ -403,7 +403,8 @@ public class ParseExpression extends CommonParse {
                                        AssignmentExpression assignmentExpression,
                                        List<Comment> comments,
                                        Source source) {
-        Expression target = parse(context, index, context.emptyForwardType(), assignmentExpression.get(0));
+        Expression wrappedTarget = parse(context, index, context.emptyForwardType(), assignmentExpression.get(0));
+        Expression target = unwrapEnclosed(wrappedTarget);
         if (!(target instanceof VariableExpression targetVE)) {
             throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
         }
@@ -454,6 +455,13 @@ public class ParseExpression extends CommonParse {
                 .setAssignmentOperatorIsPlus(false)// not relevant for +=, =
                 .setPrefixPrimitiveOperator(null)
                 .addComments(comments).setSource(source).build();
+    }
+
+    private Expression unwrapEnclosed(Expression wrappedTarget) {
+        if (wrappedTarget instanceof EnclosedExpression ee) {
+            return unwrapEnclosed(ee.inner());
+        }
+        return wrappedTarget;
     }
 
     private Expression plusPlusMinMin(Context context, String index, List<Comment> comments, Source source,
@@ -578,19 +586,27 @@ public class ParseExpression extends CommonParse {
     }
 
     private Expression parseAdditive(Context context, String index, AdditiveExpression ae) {
-        Node.NodeType token = ae.get(1).getType();
-
-        ForwardType forwardType;
-        if (token.equals(MINUS)) {
-            forwardType = context.newForwardType(runtime.intParameterizedType());
+        Node.NodeType token1 = ae.get(1).getType();
+        ForwardType fwd1;
+        if (token1.equals(MINUS)) {
+            fwd1 = context.newForwardType(runtime.intParameterizedType());
         } else {
             // for plus, we could have either string, or int; with string, all bets are off
-            forwardType = context.emptyForwardType();
+            fwd1 = context.emptyForwardType();
         }
-        Expression accumulated = parse(context, index, forwardType, ae.get(0));
+        Expression accumulated = parse(context, index, fwd1, ae.get(0));
         int i = 2;
         while (i < ae.size()) {
-            Expression rhs = parse(context, index, forwardType, ae.get(i));
+            Node.NodeType token = ae.get(i - 1).getType();
+            ForwardType fwt;
+            if (token.equals(MINUS)) {
+                fwt = context.newForwardType(runtime.intParameterizedType());
+            } else {
+                // for plus, we could have either string, or int; with string, all bets are off
+                fwt = context.emptyForwardType();
+            }
+
+            Expression rhs = parse(context, index, fwt, ae.get(i));
             MethodInfo operator;
             if (token.equals(PLUS)) {
                 if (accumulated.parameterizedType().isJavaLangString() || rhs.parameterizedType().isJavaLangString()) {
@@ -729,8 +745,8 @@ public class ParseExpression extends CommonParse {
                 return runtime.newInt((int) l);
             }
             if (l <= TWO32) {
-                long complement = ((~l)&TWO32);
-                int negative = (int) (-(complement+1));
+                long complement = ((~l) & TWO32);
+                int negative = (int) (-(complement + 1));
                 return runtime.newInt(negative);
             }
             throw new UnsupportedOperationException();

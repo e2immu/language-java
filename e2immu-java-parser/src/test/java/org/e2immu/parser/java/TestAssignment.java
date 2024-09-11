@@ -4,6 +4,7 @@ import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
+import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -47,5 +48,21 @@ public class TestAssignment extends CommonTestParse {
         if (methodInfo.methodBody().statements().get(statementIndex) instanceof ExpressionAsStatement eas
             && eas.expression() instanceof Assignment a) return a;
         throw new UnsupportedOperationException();
+    }
+
+    @Language("java")
+    private static final String INPUT2 = """
+            package a.b;
+            class C {
+              public int method(int j) {
+                int i = i = j;
+                return i;
+              }
+            }
+            """;
+
+    @Test
+    public void test2() {
+        parse(INPUT2);
     }
 }

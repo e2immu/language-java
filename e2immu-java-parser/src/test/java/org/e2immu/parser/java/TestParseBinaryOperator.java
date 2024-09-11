@@ -7,6 +7,7 @@ import org.e2immu.language.cst.api.expression.Sum;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -152,5 +153,25 @@ public class TestParseBinaryOperator extends CommonTestParse {
             assertTrue(rs.expression().parameterizedType().isJavaLangString());
         } else fail();
 
+    }
+
+
+    @Language("java")
+    private static final String INPUT4 = """
+            package a.b;
+            class C {
+              public int method(int j, int k) {
+                int i = j + k - 1;
+                return i;
+              }
+            }
+            """;
+
+    @Test
+    public void test4() {
+        TypeInfo C = parse(INPUT4);
+        MethodInfo mi = C.findUniqueMethod("method", 2);
+        LocalVariableCreation iLvc = (LocalVariableCreation) mi.methodBody().statements().get(0);
+        assertEquals("int i=j+k-1;", iLvc.toString());
     }
 }

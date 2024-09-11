@@ -121,16 +121,16 @@ public class ParseStatement extends CommonParse {
                     identifier = (Identifier) vd0;
                     type = baseType;
                 }
-                Expression expression;
+                String variableName = identifier.getSource();
+                LocalVariable lv = runtime.newLocalVariable(variableName, type, runtime.newEmptyExpression());
+                context.variableContext().add(lv);
                 if (vd.size() > 2) {
                     ForwardType forwardType = context.newForwardType(type);
-                    expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
-                } else {
-                    expression = runtime.newEmptyExpression();
+                    Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
+                    lv = runtime.newLocalVariable(variableName, type, expression);
+                    // replace! See TestAssignment,2 for the cause of this silly construction
+                    context.variableContext().add(lv);
                 }
-                String variableName = identifier.getSource();
-                LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
-                context.variableContext().add(lv);
                 if (first) {
                     builder.setLocalVariable(lv);
                     first = false;
