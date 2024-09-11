@@ -239,7 +239,7 @@ public class ParseConstructorCall extends CommonParse {
             constructor = null;
             arguments = List.of();
         }
-        Context newContext = context.newAnonymousClassBody();
+        Context newContext = context.newAnonymousClassBody(anonymousType);
         // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
         // also those of the type we're extending:
         newContext.typeContext().addSubTypesOfHierarchy(concreteReturnType.typeInfo());
