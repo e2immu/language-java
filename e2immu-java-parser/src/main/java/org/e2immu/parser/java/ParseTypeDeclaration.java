@@ -416,8 +416,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         // FINALLY, do the fields
         for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-            FieldInfo field = parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration);
-            builder.addField(field);
+            parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration).forEach(builder::addField);
         }
 
         MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);

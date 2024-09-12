@@ -23,7 +23,7 @@ public class ParseFieldDeclaration extends CommonParse {
         super(runtime, parsers);
     }
 
-    public FieldInfo parse(Context context, FieldDeclaration fd) {
+    public List<FieldInfo> parse(Context context, FieldDeclaration fd) {
         int i = 0;
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<FieldModifier> fieldModifiers = new ArrayList<>();
@@ -45,44 +45,64 @@ public class ParseFieldDeclaration extends CommonParse {
             i++;
         }
         boolean isStatic = fieldModifiers.stream().anyMatch(FieldModifier::isStatic);
-        Access access = access(fieldModifiers);
-        Access accessCombined = context.enclosingType().access().combine(access);
+        TypeInfo owner = context.enclosingType();
+        org.e2immu.language.cst.api.expression.Expression scope;
+        if (isStatic) {
+            scope = runtime.newTypeExpression(owner.asSimpleParameterizedType(), runtime.diamondNo());
+        } else {
+            scope = runtime.newVariableExpression(runtime.newThis(owner));
+        }
 
         ParameterizedType parameterizedType;
         if (fd.get(i) instanceof Type type) {
             parameterizedType = parsers.parseType().parse(context, type);
             i++;
         } else throw new UnsupportedOperationException();
-        String name;
+        List<FieldInfo> fields = new ArrayList<>();
+        while (i < fd.size() && fd.get(i) instanceof VariableDeclarator vd) {
+            fields.add(makeField(context, fd, vd, isStatic, parameterizedType, owner, fieldModifiers, annotations, scope));
+            i += 2;
+        }
+        return fields;
+    }
+
+    private FieldInfo makeField(Context context,
+                                FieldDeclaration fd,
+                                VariableDeclarator vd,
+                                boolean isStatic,
+                                ParameterizedType parameterizedType,
+                                TypeInfo owner,
+                                List<FieldModifier> fieldModifiers,
+                                List<AnnotationExpression> annotations,
+                                org.e2immu.language.cst.api.expression.Expression scope) {
+        ParameterizedType type;
+        Node vd0 = vd.get(0);
+        Identifier identifier;
+        if (vd0 instanceof VariableDeclaratorId vdi) {
+            identifier = (Identifier) vdi.get(0);
+            int arrays = (vdi.size() - 1) / 2;
+            type = parameterizedType.copyWithArrays(arrays);
+        } else {
+            identifier = (Identifier) vd0;
+            type = parameterizedType;
+        }
+        String name = identifier.getSource();
         Expression expression;
-        if (fd.get(i) instanceof VariableDeclarator vd) {
-            if (vd.get(0) instanceof Identifier identifier) {
-                name = identifier.getSource();
-            } else throw new UnsupportedOperationException();
-            if (vd.children().size() >= 3 && vd.get(2) instanceof Expression e) {
-                expression = e;
-            } else {
-                expression = null;
-            }
-        } else throw new UnsupportedOperationException();
+        if (vd.children().size() >= 3 && vd.get(2) instanceof Expression e) {
+            expression = e;
+        } else {
+            expression = null;
+        }
 
-
-        TypeInfo owner = context.enclosingType();
-        FieldInfo fieldInfo = runtime.newFieldInfo(name, isStatic, parameterizedType, owner);
+        FieldInfo fieldInfo = runtime.newFieldInfo(name, isStatic, type, owner);
         FieldInfo.Builder builder = fieldInfo.builder();
-        builder.setAccess(accessCombined);
+        fieldModifiers.forEach(builder::addFieldModifier);
+        builder.computeAccess();
         builder.setSource(source(fieldInfo, null, fd));
         builder.addComments(comments(fd));
         builder.addAnnotations(annotations);
 
-        fieldModifiers.forEach(builder::addFieldModifier);
-        org.e2immu.language.cst.api.expression.Expression scope;
-        if(isStatic) {
-            scope = runtime.newTypeExpression(fieldInfo.owner().asSimpleParameterizedType(), runtime.diamondNo());
-        } else {
-            scope = runtime.newVariableExpression(runtime.newThis(fieldInfo.owner()));
-        }
-        FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type()); // FIXME generics
+        FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type());
         context.variableContext().add(fieldReference);
         if (expression != null) {
             ForwardType fwd = context.newForwardType(fieldInfo.type());

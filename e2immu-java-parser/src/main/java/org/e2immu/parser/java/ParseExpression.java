@@ -428,6 +428,9 @@ public class ParseExpression extends CommonParse {
         } else if (SLASHASSIGN.equals(tt)) {
             binaryOperator = runtime.divideOperatorInt();
             assignmentOperator = runtime.assignDivideOperatorInt();
+        } else if (REMASSIGN.equals(tt)) {
+            binaryOperator = runtime.remainderOperatorInt();
+            assignmentOperator = runtime.assignRemainderOperatorInt();
         } else if (XORASSIGN.equals(tt)) {
             binaryOperator = runtime.xorOperatorInt();
             assignmentOperator = runtime.assignXorOperatorInt();
