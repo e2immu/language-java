@@ -88,12 +88,13 @@ public class ParseMethodDeclaration extends CommonParse {
             methodType = runtime.methodTypeCompactConstructor();
         } else if (constructor) {
             methodType = runtime.methodTypeConstructor();
-        } else if (methodModifiers.contains(runtime.methodModifierAbstract())) {
-            methodType = runtime.methodTypeAbstractMethod();
         } else if (methodModifiers.contains(runtime.methodModifierDefault())) {
             methodType = runtime.methodTypeDefaultMethod();
         } else if (methodModifiers.contains(runtime.methodModifierStatic())) {
             methodType = runtime.methodTypeStaticMethod();
+        } else if (methodModifiers.contains(runtime.methodModifierAbstract())
+                   || context.enclosingType().isInterface()) {
+            methodType = runtime.methodTypeAbstractMethod();
         } else {
             methodType = runtime.methodTypeMethod();
         }
