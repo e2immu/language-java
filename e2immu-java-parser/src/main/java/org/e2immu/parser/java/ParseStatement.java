@@ -69,43 +69,54 @@ public class ParseStatement extends CommonParse {
         }
         List<Comment> comments = comments(statement);
         Source source = source(context.enclosingMethod(), index, statement);
+        List<AnnotationExpression> annotations = new ArrayList<>();
+        List<LocalVariableCreation.Modifier> lvcModifiers = new ArrayList<>();
+
+        // annotations
+        int i = 0;
+        while (true) {
+            if (statement.get(i) instanceof Modifiers modifiers) {
+                for (Node node : modifiers.children()) {
+                    if (node instanceof Annotation a) {
+                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                    }
+                }
+            } else if (statement.get(i) instanceof KeyWord) {
+                if (Token.TokenType.FINAL.equals(statement.get(i).getType())) {
+                    lvcModifiers.add(runtime.localVariableModifierFinal());
+                } else break;
+            } else if (statement.get(i) instanceof Annotation a) {
+                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+            } else break;
+            i++;
+        }
 
         if (statement instanceof ExpressionStatement es) {
-            StatementExpression se = (StatementExpression) es.children().get(0);
+            StatementExpression se = (StatementExpression) es.children().get(i);
             Expression e = parsers.parseExpression().parse(context, index, context.emptyForwardType(), se.get(0));
             return runtime.newExpressionAsStatementBuilder().setExpression(e).setSource(source).setLabel(label)
-                    .addComments(comments).build();
+                    .addComments(comments).addAnnotations(annotations).build();
         }
+
         if (statement instanceof ReturnStatement rs) {
             ForwardType forwardType = context.newForwardType(context.enclosingMethod().returnType());
             Expression e;
-            if (rs.size() == 2) {
-                assert rs.get(1) instanceof Delimiter;
+            ++i;
+            if (rs.get(i) instanceof Delimiter) {
                 e = runtime.newEmptyExpression();
             } else {
-                e = parsers.parseExpression().parse(context, index, forwardType, rs.get(1));
+                e = parsers.parseExpression().parse(context, index, forwardType, rs.get(i));
             }
             assert e != null;
             return runtime.newReturnBuilder()
-                    .setExpression(e).setSource(source).addComments(comments).setLabel(label)
+                    .setExpression(e).setSource(source).addComments(comments).setLabel(label).addAnnotations(annotations)
                     .build();
         }
 
         // type declarator delimiter declarator
         if (statement instanceof NoVarDeclaration nvd) {
-            int i = 0;
             LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            while (true) {
-                if (nvd.get(i) instanceof KeyWord) {
-                    if (Token.TokenType.FINAL.equals(nvd.get(i).getType())) {
-                        builder.addModifier(runtime.localVariableModifierFinal());
-                    } else throw new Summary.ParseException(context.info(), "Expect final");
-                } else if (nvd.get(i) instanceof Annotation a) {
-                    AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
-                    builder.addAnnotation(ae);
-                } else break;
-                i++;
-            }
+
             ParameterizedType baseType = parsers.parseType().parse(context, nvd.get(i));
             i++;
             boolean first = true;
@@ -139,47 +150,52 @@ public class ParseStatement extends CommonParse {
                 }
                 i += 2;
             }
-            return builder.setSource(source).addComments(comments).setLabel(label).build();
+            lvcModifiers.forEach(builder::addModifier);
+            return builder.setSource(source).addComments(comments).setLabel(label).addAnnotations(annotations).build();
         }
+
         if (statement instanceof EnhancedForStatement enhancedFor) {
             // kw, del, noVarDecl (objectType, vardcl), operator, name (Name), del, code block
             LocalVariableCreation loopVariableCreation;
             TypeInfo iterable = runtime.getFullyQualified(Iterable.class, false);
             ForwardType forwardType = iterable == null ? context.emptyForwardType() :
                     context.newForwardType(iterable.asSimpleParameterizedType());
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, enhancedFor.get(4));
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, enhancedFor.get(i + 4));
             Context newContext = context.newVariableContext("forEach");
-            if (enhancedFor.get(2) instanceof NoVarDeclaration nvd) {
+            if (enhancedFor.get(i + 2) instanceof NoVarDeclaration nvd) {
                 loopVariableCreation = (LocalVariableCreation) parse(newContext, index, nvd);
             } else throw new UnsupportedOperationException();
-            Node n6 = enhancedFor.get(6);
+            Node n6 = enhancedFor.get(i + 6);
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, n6);
-            return runtime.newForEachBuilder().addComments(comments).setSource(source).setLabel(label)
+            return runtime.newForEachBuilder()
+                    .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
                     .setInitializer(loopVariableCreation).setBlock(block).setExpression(expression).build();
         }
+
         if (statement instanceof IfStatement ifStatement) {
             ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, ifStatement.get(2));
-            Node n4 = ifStatement.get(4);
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, ifStatement.get(i + 2));
+            Node n4 = ifStatement.get(i + 4);
             Context newContext = context.newVariableContext("ifBlock");
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, n4);
             Block elseBlock;
-            if (ifStatement.size() > 5 && ifStatement.get(5) instanceof KeyWord) {
-                assert Token.TokenType.ELSE.equals(ifStatement.get(5).getType());
-                Node n6 = ifStatement.get(6);
+            if (ifStatement.size() > i + 5 && ifStatement.get(i + 5) instanceof KeyWord) {
+                assert Token.TokenType.ELSE.equals(ifStatement.get(i + 5).getType());
+                Node n6 = ifStatement.get(i + 6);
                 Context newContext2 = context.newVariableContext("elseBlock");
                 elseBlock = parseBlockOrStatement(newContext2, index + SECOND_BLOCK, n6);
             } else {
                 elseBlock = runtime.emptyBlock();
             }
             return runtime.newIfElseBuilder()
-                    .addComments(comments).setSource(source).setLabel(label)
+                    .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
                     .setExpression(expression).setIfBlock(block).setElseBlock(elseBlock)
                     .build();
         }
+
         if (statement instanceof TryStatement tryStatement) {
             org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder();
-            int i = 1;
+            ++i;
             Context newContext = context.newVariableContext("tryBlock");
             int mainBlockIndex;
             if (tryStatement.get(i) instanceof ResourcesInTryBlock r) {
@@ -203,7 +219,7 @@ public class ParseStatement extends CommonParse {
             String firstIndex = index + "." + StringUtil.pad(mainBlockIndex, n);
             Block block = parseBlockOrStatement(newContext, firstIndex, tryStatement.get(i));
             i++;
-            builder.setBlock(block).addComments(comments).setSource(source).setLabel(label);
+            builder.setBlock(block).addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations);
             int blockCount = 1 + mainBlockIndex;
             while (i < tryStatement.size() && tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
@@ -270,13 +286,14 @@ public class ParseStatement extends CommonParse {
             }
             return builder.setFinallyBlock(finallyBlock).build();
         }
+
         if (statement instanceof BasicForStatement) {
             org.e2immu.language.cst.api.statement.ForStatement.Builder builder = runtime.newForBuilder();
             Context newContext = context.newVariableContext("for-loop");
 
             // initializers
 
-            int i = 2;
+            i += 2;
             if (statement.get(i) instanceof Delimiter d && Token.TokenType.SEMICOLON.equals(d.getType())) {
                 // no initializer
                 i++;
@@ -322,68 +339,73 @@ public class ParseStatement extends CommonParse {
                 }
             }
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, statement.get(i));
-            return builder.setBlock(block).setSource(source).addComments(comments).setLabel(label).build();
+            return builder.setBlock(block).setSource(source).addComments(comments).setLabel(label)
+                    .addAnnotations(annotations).build();
         }
+
         if (statement instanceof SynchronizedStatement) {
             Context newContext = context.newVariableContext("synchronized");
-            Expression expression = parsers.parseExpression().parse(context, index, context.emptyForwardType(), statement.get(2));
-            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, statement.get(4));
+            Expression expression = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
+                    statement.get(i + 2));
+            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, statement.get(i + 4));
             return runtime.newSynchronizedBuilder().setExpression(expression).setBlock(block)
                     .setSource(source).addComments(comments).setLabel(label).build();
         }
+
         if (statement instanceof BreakStatement) {
             String goToLabel;
-            if (statement.size() > 1 && statement.get(1) instanceof Identifier identifier) {
+            if (statement.size() > i + 1 && statement.get(i + 1) instanceof Identifier identifier) {
                 goToLabel = identifier.getSource();
             } else {
                 goToLabel = null;
             }
             return runtime.newBreakBuilder().setSource(source).addComments(comments).setLabel(label)
-                    .setGoToLabel(goToLabel)
-                    .build();
+                    .addAnnotations(annotations).setGoToLabel(goToLabel).build();
         }
+
         if (statement instanceof ContinueStatement) {
             String goToLabel;
-            if (statement.size() > 1 && statement.get(1) instanceof Identifier identifier) {
+            if (statement.size() > i + 1 && statement.get(i + 1) instanceof Identifier identifier) {
                 goToLabel = identifier.getSource();
             } else {
                 goToLabel = null;
             }
             return runtime.newContinueBuilder().setSource(source).addComments(comments).setLabel(label)
-                    .setGoToLabel(goToLabel)
-                    .build();
+                    .addAnnotations(annotations).setGoToLabel(goToLabel).build();
         }
+
         if (statement instanceof AssertStatement) {
             Expression expression = parsers.parseExpression().parse(context, index,
-                    context.newForwardType(runtime.booleanParameterizedType()), statement.get(1));
-            Expression message = Token.TokenType.COLON.equals(statement.get(2).getType())
+                    context.newForwardType(runtime.booleanParameterizedType()), statement.get(i + 1));
+            Expression message = Token.TokenType.COLON.equals(statement.get(i + 2).getType())
                     ? parsers.parseExpression().parse(context, index, context.newForwardType(runtime.stringParameterizedType()),
-                    statement.get(3))
+                    statement.get(i + 3))
                     : runtime.newEmptyExpression();
             return runtime.newAssertBuilder().setSource(source).addComments(comments).setLabel(label)
-                    .setExpression(expression)
-                    .setMessage(message)
-                    .build();
+                    .addAnnotations(annotations).setExpression(expression).setMessage(message).build();
         }
+
         if (statement instanceof ThrowStatement) {
             TypeInfo throwable = runtime.getFullyQualified(Throwable.class, false);
             ForwardType fwd = throwable != null ? context.newForwardType(throwable.asSimpleParameterizedType())
                     : context.emptyForwardType();
-            Expression expression = parsers.parseExpression().parse(context, index, fwd, statement.get(1));
+            Expression expression = parsers.parseExpression().parse(context, index, fwd, statement.get(i + 1));
             return runtime.newThrowBuilder()
                     .addComments(comments).setSource(source).setLabel(label)
                     .setExpression(expression).build();
         }
+
         if (statement instanceof SwitchStatement) {
             int no = countStatementsInOldStyleSwitch(statement);
             if (no > 0) {
-                return parseOldStyleSwitch(context, index, statement, comments, source, label, no);
+                return parseOldStyleSwitch(context, index, statement, comments, source, annotations, label, no, i);
             }
             int nn = countStatementsInNewStyleSwitch(statement);
             if (nn >= 0) {
-                return parseNewStyleSwitch(context, index, statement, comments, source, label, nn);
+                return parseNewStyleSwitch(context, index, statement, comments, source, annotations, label, nn, i);
             }
         }
+
         if (statement instanceof YieldStatement ys) {
             ForwardType forwardType = context.newForwardType(context.enclosingMethod().returnType());
             Expression e;
@@ -398,49 +420,51 @@ public class ParseStatement extends CommonParse {
                     .setExpression(e).setSource(source).addComments(comments).setLabel(label)
                     .build();
         }
+
         if (statement instanceof CodeBlock cb) {
             return parsers.parseBlock().parse(context, index, label, cb);
         }
+
         if (statement instanceof VarDeclaration varDeclaration) {
             LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            Identifier identifier = (Identifier) varDeclaration.get(1);
+            Identifier identifier = (Identifier) varDeclaration.get(i + 1);
             ForwardType forwardType = context.emptyForwardType();
             Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(3));
             String variableName = identifier.getSource();
             ParameterizedType type = expression.parameterizedType();
             LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
             context.variableContext().add(lv);
-            builder.setLocalVariable(lv);
-            return builder.setSource(source).addComments(comments).setLabel(label).build();
+            lvcModifiers.forEach(builder::addModifier);
+            return builder.setLocalVariable(lv).setSource(source).addComments(comments).setLabel(label)
+                    .addAnnotations(annotations).build();
         }
+
         if (statement instanceof WhileStatement whileStatement) {
             Context newContext = context.newVariableContext("while");
             ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, whileStatement.get(2));
-            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, whileStatement.get(4));
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, whileStatement.get(i + 2));
+            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, whileStatement.get(i + 4));
             return runtime.newWhileBuilder()
-                    .addComments(comments).setSource(source).setLabel(label)
+                    .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
                     .setExpression(expression).setBlock(block).build();
         }
+
         if (statement instanceof DoStatement doStatement) {
             Context newContext = context.newVariableContext("do-while");
             ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
-            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, doStatement.get(1));
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, doStatement.get(4));
+            Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, doStatement.get(i + 1));
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, doStatement.get(i + 4));
             return runtime.newDoBuilder()
-                    .addComments(comments).setSource(source).setLabel(label)
+                    .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
                     .setExpression(expression).setBlock(block).build();
         }
+
         if (statement instanceof EmptyStatement) {
             return runtime.newEmptyStatementBuilder()
-                    .addComments(comments).setSource(source).setLabel(label)
+                    .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
                     .build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
-    }
-
-    private LocalVariableCreation parseResource(Node node) {
-        return null;
     }
 
     private static int countCatchBlocks(TryStatement tryStatement) {
@@ -448,9 +472,11 @@ public class ParseStatement extends CommonParse {
     }
 
     private SwitchStatementNewStyle parseNewStyleSwitch(Context context, String index, Statement statement,
-                                                        List<Comment> comments, Source source, String label, int n) {
+                                                        List<Comment> comments, Source source,
+                                                        List<AnnotationExpression> annotations,
+                                                        String label, int n, int start) {
         Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
-                statement.get(2));
+                statement.get(start + 2));
         ForwardType selectorTypeFwd = context.newForwardType(selector.parameterizedType());
         List<SwitchEntry> entries = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-new-style");
@@ -493,11 +519,13 @@ public class ParseStatement extends CommonParse {
             }
         }
         return runtime.newSwitchStatementNewStyleBuilder().addComments(comments).setSource(source).setLabel(label)
-                .setSelector(selector).addSwitchEntries(entries).build();
+                .addAnnotations(annotations).setSelector(selector).addSwitchEntries(entries).build();
     }
 
     private SwitchStatementOldStyle parseOldStyleSwitch(Context context, String index, Statement statement,
-                                                        List<Comment> comments, Source source, String label, int n) {
+                                                        List<Comment> comments, Source source,
+                                                        List<AnnotationExpression> annotations,
+                                                        String label, int n, int start) {
         Expression selector = parsers.parseExpression().parse(context, index, context.emptyForwardType(),
                 statement.get(2));
         Block.Builder builder = runtime.newBlockBuilder();
@@ -505,7 +533,7 @@ public class ParseStatement extends CommonParse {
         Context newContext = context.newVariableContext("switch-old-style");
         int pos = 0;
 
-        for (int i = 5; i < statement.size(); i++) {
+        for (int i = start + 5; i < statement.size(); i++) {
             if (statement.get(i) instanceof ClassicCaseStatement ccs) {
                 if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
                     if (Token.TokenType._DEFAULT.equals(csl.get(0).getType())) {
@@ -537,11 +565,8 @@ public class ParseStatement extends CommonParse {
             }
         }
         return runtime.newSwitchStatementOldStyleBuilder()
-                .addComments(comments).setSource(source).setLabel(label)
-                .setSelector(selector)
-                .setBlock(builder.build())
-                .addSwitchLabels(switchLabels)
-                .build();
+                .addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations)
+                .setSelector(selector).setBlock(builder.build()).addSwitchLabels(switchLabels).build();
     }
 
     private static int countStatementsInOldStyleSwitch(Statement statement) {
@@ -549,7 +574,7 @@ public class ParseStatement extends CommonParse {
         for (int i = 5; i < statement.size(); i++) {
             if (statement.get(i) instanceof ClassicCaseStatement ccs) {
                 for (int j = 1; j < ccs.size(); j++) {
-                    if (ccs.get(j) instanceof Statement s) {
+                    if (ccs.get(j) instanceof Statement) {
                         n++;
                     }
                 }

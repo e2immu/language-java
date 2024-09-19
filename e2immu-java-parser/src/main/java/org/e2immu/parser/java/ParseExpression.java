@@ -154,6 +154,9 @@ public class ParseExpression extends CommonParse {
         if (node instanceof Identifier i) {
             return parseName(context, comments, source, i.getSource());
         }
+        if (node instanceof NormalAnnotation na) {
+            return parsers.parseAnnotationExpression().parse(context, na);
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
     }
 
