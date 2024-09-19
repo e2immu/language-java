@@ -263,6 +263,11 @@ public class ParseStatement extends CommonParse {
                 while (true) {
                     Node cbj = catchBlock.get(j);
                     if (cbj instanceof Type type) {
+                        for (Node child : type.children()) {
+                            if (child instanceof Annotation a) {
+                                ccBuilder.addAnnotation(parsers.parseAnnotationExpression().parse(context, a));
+                            }
+                        }
                         ParameterizedType pt = parsers.parseType().parse(context, type);
                         exceptionTypes.add(pt);
                         ccBuilder.addType(pt);

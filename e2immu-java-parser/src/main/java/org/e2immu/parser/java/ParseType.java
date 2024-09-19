@@ -117,14 +117,21 @@ public class ParseType extends CommonParse {
         int i = 0;
         StringBuilder sb = new StringBuilder();
         while (i < ot.size()) {
-            if (ot.get(i) instanceof Identifier id) {
-                sb.append(id.getSource());
-            } else throw new Summary.ParseException(context.info(), "Expected an identifier");
-            i++;
-            if (i < ot.size() && ot.get(i) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())) {
+            if (ot.get(i) instanceof Annotation) {
+                // annotations have been processed in CatchClause, we'll skip
+                ++i;
+            } else {
+                if (ot.get(i) instanceof Identifier id) {
+                    sb.append(id.getSource());
+                } else {
+                    throw new Summary.ParseException(context.info(), "Expected an identifier");
+                }
                 i++;
-                sb.append(".");
-            } else break;
+                if (i < ot.size() && ot.get(i) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())) {
+                    i++;
+                    sb.append(".");
+                } else break;
+            }
         }
         String qualifiedName = sb.toString();
         if (qualifiedName.isBlank()) throw new Summary.ParseException(context.info(), "Expected a qualified name");
