@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -75,17 +76,20 @@ public class ParseStatement extends CommonParse {
         // annotations
         int i = 0;
         while (true) {
-            if (statement.get(i) instanceof Modifiers modifiers) {
+            Node si = statement.get(i);
+            if (si instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
                         annotations.add(parsers.parseAnnotationExpression().parse(context, a));
                     }
                 }
-            } else if (statement.get(i) instanceof KeyWord) {
-                if (Token.TokenType.FINAL.equals(statement.get(i).getType())) {
+            } else if (si instanceof KeyWord) {
+                if (Token.TokenType.FINAL.equals(si.getType())) {
                     lvcModifiers.add(runtime.localVariableModifierFinal());
+                } else if (Token.TokenType.VAR.equals(si.getType())) {
+                    lvcModifiers.add(runtime.localVariableModifierVar());
                 } else break;
-            } else if (statement.get(i) instanceof Annotation a) {
+            } else if (si instanceof Annotation a) {
                 annotations.add(parsers.parseAnnotationExpression().parse(context, a));
             } else break;
             i++;
@@ -154,6 +158,20 @@ public class ParseStatement extends CommonParse {
             return builder.setSource(source).addComments(comments).setLabel(label).addAnnotations(annotations).build();
         }
 
+        if (statement instanceof VarDeclaration varDeclaration) {
+            LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
+            Identifier identifier = (Identifier) varDeclaration.get(i);
+            ForwardType forwardType = context.emptyForwardType();
+            Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(i + 2));
+            String variableName = identifier.getSource();
+            ParameterizedType type = expression.parameterizedType();
+            LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
+            context.variableContext().add(lv);
+            lvcModifiers.forEach(builder::addModifier);
+            return builder.setLocalVariable(lv).setSource(source).addComments(comments).setLabel(label)
+                    .addAnnotations(annotations).build();
+        }
+
         if (statement instanceof EnhancedForStatement enhancedFor) {
             // kw, del, noVarDecl (objectType, vardcl), operator, name (Name), del, code block
             LocalVariableCreation loopVariableCreation;
@@ -205,7 +223,13 @@ public class ParseStatement extends CommonParse {
                 while (j < r.size() && !(r.get(j) instanceof Delimiter)) {
                     // resources
                     String newIndex = index + ".0." + StringUtil.pad(rCount, n);
-                    LocalVariableCreation resource = (LocalVariableCreation) parse(newContext, newIndex, (Statement) r.get(j));
+                    Node resourceNode = r.get(j);
+                    Element resource;
+                    if (resourceNode instanceof Statement) {
+                        resource = parse(newContext, newIndex, (Statement) resourceNode);
+                    } else if (resourceNode instanceof Name) {
+                        resource = parsers.parseExpression().parse(newContext, newIndex, context.emptyForwardType(), resourceNode);
+                    } else throw new UnsupportedOperationException("NYI");
                     builder.addResource(resource);
                     j += 2;
                     rCount++;
@@ -423,20 +447,6 @@ public class ParseStatement extends CommonParse {
 
         if (statement instanceof CodeBlock cb) {
             return parsers.parseBlock().parse(context, index, label, cb);
-        }
-
-        if (statement instanceof VarDeclaration varDeclaration) {
-            LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            Identifier identifier = (Identifier) varDeclaration.get(i + 1);
-            ForwardType forwardType = context.emptyForwardType();
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(3));
-            String variableName = identifier.getSource();
-            ParameterizedType type = expression.parameterizedType();
-            LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
-            context.variableContext().add(lv);
-            lvcModifiers.forEach(builder::addModifier);
-            return builder.setLocalVariable(lv).setSource(source).addComments(comments).setLabel(label)
-                    .addAnnotations(annotations).build();
         }
 
         if (statement instanceof WhileStatement whileStatement) {

@@ -162,7 +162,7 @@ public class MyMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitParameter(String name, int access) {
-        if((access & ACC_FINAL) != 0) {
+        if ((access & ACC_FINAL) != 0) {
             isFinalSet.add(name);
         }
     }
@@ -186,17 +186,17 @@ public class MyMethodVisitor extends MethodVisitor {
     @Override
     public void visitEnd() {
         ParameterNameFactory factory = new ParameterNameFactory();
+        int last = numberOfParameters - 1;
         for (int i = 0; i < numberOfParameters; i++) {
             ParamBuilder pib = parameterInspectionBuilders[i];
             ParameterizedType type = types.get(i);
             String name = pib.name == null ? factory.next(type) : pib.name;
             ParameterInfo pi = methodInfo.builder().addParameter(name, type);
             assert pi.index() == pib.index;
-            if (lastParameterIsVarargs && i == numberOfParameters - 1) {
+            if (pib.isVarArgs || lastParameterIsVarargs && i == last) {
                 pi.builder().setVarArgs(true);
             }
             pi.builder().addAnnotations(pib.annotations);
-            pi.builder().setVarArgs(pib.isVarArgs);
             boolean isFinal = isFinalSet.contains(name);
             pi.builder().setIsFinal(isFinal);
             LOGGER.debug("Commit parameterInspection {}", i);
