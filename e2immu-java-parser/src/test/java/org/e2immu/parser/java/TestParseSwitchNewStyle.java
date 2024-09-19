@@ -48,7 +48,7 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
 
                             {System.out.println("all the rest");}}\
                             """,
-                    ssn.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    ssn.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
@@ -86,7 +86,7 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
             assertEquals("""
                             switch(dataType){case 3->{s="x";}case 4->s="z";default->s="y";}\
                             """,
-                    ssn.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    ssn.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 }

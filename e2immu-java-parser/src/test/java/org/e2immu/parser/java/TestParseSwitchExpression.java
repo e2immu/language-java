@@ -47,7 +47,7 @@ public class TestParseSwitchExpression extends CommonTestParse {
 
                             {System.out.println("all the rest");yield 1;}}\
                             """,
-                    se.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    se.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
@@ -86,7 +86,7 @@ public class TestParseSwitchExpression extends CommonTestParse {
 
                             yield "a";}case 3->{{yield "b";}}default->throw new RuntimeException();}\
                             """,
-                    se.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    se.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
@@ -132,7 +132,7 @@ public class TestParseSwitchExpression extends CommonTestParse {
                             case P3->"hello";\
                             default->"x";}\
                             """,
-                    se.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    se.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 }

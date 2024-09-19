@@ -38,7 +38,7 @@ public class TestParseSwitchOldStyle extends CommonTestParse {
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
         if (main.methodBody().statements().get(0) instanceof SwitchStatementOldStyle sso) {
             assertEquals("switch(args.length){case 0:System.out.println(\"zero!\");case 1:case 2:case 3:System.out.println(\"less than 3\");return;default:System.out.println(\"all the rest\");}",
-                    sso.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    sso.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
@@ -82,7 +82,7 @@ public class TestParseSwitchOldStyle extends CommonTestParse {
             assertEquals("""
                             a: switch(dataType){case 3:{s="x";break;}case 4:s="z";b: break a;default:s="y";}\
                             """,
-                    sso.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    sso.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
@@ -108,7 +108,7 @@ public class TestParseSwitchOldStyle extends CommonTestParse {
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
         if (main.methodBody().statements().get(0) instanceof SwitchStatementNewStyle ssns) {
             assertEquals("switch(args.length){}",
-                    ssns.print(runtime.qualificationDoNotQualifyImplicit()).toString());
+                    ssns.print(runtime.qualificationQualifyFromPrimaryType()).toString());
         } else fail();
     }
 
