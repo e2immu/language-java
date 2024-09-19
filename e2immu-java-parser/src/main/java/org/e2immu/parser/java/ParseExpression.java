@@ -283,11 +283,13 @@ public class ParseExpression extends CommonParse {
         if (v != null) {
             return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
         }
-        Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
-        Variable v2 = findField(context, scope, name, false);
-        if (v2 != null) {
-            return runtime.newVariableExpressionBuilder().setVariable(v2).setSource(source).addComments(comments).build();
-        }
+        if (context.enclosingType() != null) {
+            Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
+            Variable v2 = findField(context, scope, name, false);
+            if (v2 != null) {
+                return runtime.newVariableExpressionBuilder().setVariable(v2).setSource(source).addComments(comments).build();
+            }
+        } // else: see for example parsing of annotation '...importhelper.a.Resources', line 6
         NamedType namedType = context.typeContext().get(name, false);
         if (namedType instanceof TypeInfo typeInfo) {
             ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);

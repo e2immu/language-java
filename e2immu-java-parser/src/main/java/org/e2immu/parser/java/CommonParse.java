@@ -130,7 +130,10 @@ public abstract class CommonParse {
                 if (tm != null) typeModifiers.add(tm);
             } else if (child instanceof Identifier id) {
                 identifier = id;
-            } else if (child instanceof ClassOrInterfaceBody || child instanceof RecordBody || child instanceof EnumBody) {
+            } else if (child instanceof ClassOrInterfaceBody
+                       || child instanceof AnnotationTypeBody
+                       || child instanceof RecordBody
+                       || child instanceof EnumBody) {
                 sub = child;
                 break;
             }
