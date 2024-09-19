@@ -63,15 +63,17 @@ public class ParseTypeDeclaration extends CommonParse {
         List<Comment> comments = comments(td);
 
         int i = 0;
-        List<AnnotationExpression> annotations = new ArrayList<>();
+        // in the annotations, we can refer to our own static fields, so we wait a little to parse them
+        // See TestAnnotations,3
+        List<Annotation> annotationsToParse = new ArrayList<>();
         while (true) {
             Node tdi = td.get(i);
             if (tdi instanceof Annotation a) {
-                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                annotationsToParse.add(a);
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                        annotationsToParse.add(a);
                     }
                 }
             } else if (tdi instanceof Delimiter) {
@@ -98,7 +100,6 @@ public class ParseTypeDeclaration extends CommonParse {
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
         builder.setSource(source);
-        builder.addAnnotations(annotations);
         builder.computeAccess();
         builder.setSource(source(typeInfo, null, td));
         builder.setEnclosingMethod(context.enclosingMethod());
@@ -216,6 +217,12 @@ public class ParseTypeDeclaration extends CommonParse {
             constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
+                if (child instanceof TypeDeclaration subTd) {
+                    TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd);
+                    newContext.typeContext().addToContext(subTypeInfo);
+                }
+            }
+            for (Node child : body.children()) {
                 if (child instanceof AnnotationMethodDeclaration amd) {
                     MethodInfo methodInfo = parsers.parseAnnotationMethodDeclaration().parse(newContext, amd);
                     builder.addMethod(methodInfo);
@@ -225,6 +232,11 @@ public class ParseTypeDeclaration extends CommonParse {
         } else throw new UnsupportedOperationException("node " + td.get(i).getClass());
 
         newContext.resolver().add(builder);
+
+        // now that we know the fields, we can safely parse the annotation expressions
+        for (Annotation annotation : annotationsToParse) {
+            builder.addAnnotation(parsers.parseAnnotationExpression().parse(context, annotation));
+        }
 
         /*
         Ensure a constructor when the type is a record and there are no compact constructors.
