@@ -115,4 +115,18 @@ public class TestParseArray extends CommonTestParse {
         TypeInfo typeInfo = parse(INPUT3C);
         assertEquals(OUTPUT3C, typeInfo.print(runtime.qualificationQualifyFromPrimaryType()).toString());
     }
+
+    @Language("java")
+    private static final String INPUT4 = """
+            class Test {
+                public static int method(String[][] array) {
+                    return array[0].length;
+                }
+            }
+            """;
+
+    @Test
+    public void test4() {
+        parse(INPUT4);
+    }
 }
