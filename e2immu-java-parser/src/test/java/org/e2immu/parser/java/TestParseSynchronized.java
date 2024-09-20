@@ -41,7 +41,7 @@ public class TestParseSynchronized extends CommonTestParse {
             if (s.expression() instanceof VariableExpression ve && ve.variable() instanceof FieldReference fr) {
                 assertSame(fieldInfo, fr.fieldInfo());
             } else fail();
-            assertEquals(1, s.block().statements().size());
+            assertEquals(1, s.block().size());
         }
     }
 }

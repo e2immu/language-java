@@ -39,7 +39,7 @@ public class TestExplicitConstructorInvocation extends CommonTestParse {
         MethodInfo c1 = typeInfo.findConstructor(1);
         MethodInfo c2 = typeInfo.findConstructor(2);
 
-        assertEquals(1, c0.methodBody().statements().size());
+        assertEquals(1, c0.methodBody().size());
         if (c0.methodBody().statements().get(0) instanceof ExplicitConstructorInvocation eci) {
             assertFalse(eci.parameterExpressions().isEmpty());
             assertInstanceOf(IntConstant.class, eci.parameterExpressions().get(0));
@@ -47,7 +47,7 @@ public class TestExplicitConstructorInvocation extends CommonTestParse {
             assertSame(c1, eci.methodInfo());
         } else fail();
 
-        assertEquals(2, c1.methodBody().statements().size());
+        assertEquals(2, c1.methodBody().size());
         if (c1.methodBody().statements().get(0) instanceof ExplicitConstructorInvocation eci) {
             assertEquals(2, eci.parameterExpressions().size());
             assertInstanceOf(StringConstant.class, eci.parameterExpressions().get(0));
@@ -55,7 +55,7 @@ public class TestExplicitConstructorInvocation extends CommonTestParse {
             assertSame(c2, eci.methodInfo());
         } else fail();
 
-        assertEquals(2, c2.methodBody().statements().size());
+        assertEquals(2, c2.methodBody().size());
         assertEquals("1", c2.methodBody().statements().get(1).source().index());
     }
 

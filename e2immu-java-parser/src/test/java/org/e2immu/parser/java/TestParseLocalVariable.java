@@ -39,7 +39,7 @@ public class TestParseLocalVariable extends CommonTestParse {
         assertEquals("a.b.C.length(String[])", methodInfo.fullyQualifiedName());
 
         Block block = methodInfo.methodBody();
-        assertEquals(2, block.statements().size());
+        assertEquals(2, block.size());
         if (block.statements().get(0) instanceof LocalVariableCreation lvc) {
             LocalVariable lv = lvc.localVariable();
             assertTrue(lvc.hasSingleDeclaration());

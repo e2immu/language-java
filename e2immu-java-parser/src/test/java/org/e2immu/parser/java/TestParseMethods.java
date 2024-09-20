@@ -47,7 +47,7 @@ public class TestParseMethods extends CommonTestParse {
         TypeInfo E = typeInfo.findSubType("E");
         MethodInfo mb = typeInfo.findUniqueMethod("methodB", 1);
         assertSame(E, mb.exceptionTypes().get(0).typeInfo());
-        assertEquals(1, mb.methodBody().statements().size());
+        assertEquals(1, mb.methodBody().size());
         if (mb.methodBody().statements().get(0) instanceof ThrowStatement throwStatement
             && throwStatement.expression() instanceof ConstructorCall cc) {
             assertSame(E, cc.constructor().typeInfo());

@@ -85,7 +85,7 @@ public class TestParseSplitExpression0 extends CommonTestParse {
         MethodInfo constructor = typeInfo.findConstructor(1);
         assertSame(constructor, typeInfo.constructors().get(0));
         assertTrue(constructor.isPublic());
-        assertEquals(1, constructor.methodBody().statements().size());
+        assertEquals(1, constructor.methodBody().size());
         if (constructor.methodBody().statements().get(0) instanceof ExpressionAsStatement eas
             && eas.expression() instanceof Assignment assignment) {
             assertEquals("this.base=base", assignment.toString());
@@ -104,7 +104,7 @@ public class TestParseSplitExpression0 extends CommonTestParse {
         assertTrue(method.isAbstract());
 
         MethodInfo compute = typeInfo.findUniqueMethod("compute", 1);
-        assertEquals(1, compute.methodBody().statements().size());
+        assertEquals(1, compute.methodBody().size());
         if (compute.methodBody().statements().get(0) instanceof ReturnStatement rs
             && rs.expression() instanceof Cast cast
             && cast.expression() instanceof MethodCall mc) {
@@ -130,7 +130,7 @@ public class TestParseSplitExpression0 extends CommonTestParse {
         } else fail();
 
         MethodInfo same6 = typeInfo.findUniqueMethod("same6", 1);
-        assertEquals(2, same6.methodBody().statements().size());
+        assertEquals(2, same6.methodBody().size());
         if (same6.methodBody().statements().get(1) instanceof ReturnStatement rs
             && rs.expression() instanceof MethodCall mc) {
             assertEquals(4, mc.parameterExpressions().size());

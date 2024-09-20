@@ -87,7 +87,7 @@ public class TestParseFields extends CommonTestParse {
         MethodInfo methodInfo = typeInfo.methods().get(0);
         assertEquals("a", methodInfo.name());
         Block block = methodInfo.methodBody();
-        assertEquals(1, block.statements().size());
+        assertEquals(1, block.size());
         if (block.statements().get(0) instanceof ReturnStatement rs) {
             if (rs.expression() instanceof VariableExpression ve) {
                 if (ve.variable() instanceof FieldReference fr) {

@@ -38,7 +38,7 @@ public class TestParseAssert extends CommonTestParse {
 
 
         Block block = methodInfo.methodBody();
-        assertEquals(4, block.statements().size());
+        assertEquals(4, block.size());
         if (block.statements().get(0) instanceof AssertStatement as) {
             assertTrue(as.message().isEmpty());
             assertEquals("args!=null", as.expression().toString());

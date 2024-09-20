@@ -62,7 +62,7 @@ public class TestParseSubType extends CommonTestParse {
         MethodInfo i2 = subType2.methods().get(0);
         assertEquals("i", i.name());
         Block block = i2.methodBody();
-        assertEquals(1, block.statements().size());
+        assertEquals(1, block.size());
 
         TypeInfo jj= typeInfo.findSubType("JJ");
         assertEquals("I,II,J",

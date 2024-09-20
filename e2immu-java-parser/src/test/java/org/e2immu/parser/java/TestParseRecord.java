@@ -35,7 +35,7 @@ public class TestParseRecord extends CommonTestParse {
         MethodInfo cc = typeInfo.findConstructor(2);
         assertTrue(cc.isSyntheticConstructor());
         assertTrue(cc.isSynthetic());
-        assertEquals(2, cc.methodBody().statements().size());
+        assertEquals(2, cc.methodBody().size());
         assertEquals("this.s=s;", cc.methodBody().statements().get(0).toString());
 
         TypeInfo p = typeInfo.findSubType("P");
@@ -53,7 +53,7 @@ public class TestParseRecord extends CommonTestParse {
 
         MethodInfo ccR = r.findConstructor(0);
         assertTrue(ccR.methodType().isCompactConstructor());
-        assertEquals(2, ccR.methodBody().statements().size());
+        assertEquals(2, ccR.methodBody().size());
     }
 
     @Language("java")

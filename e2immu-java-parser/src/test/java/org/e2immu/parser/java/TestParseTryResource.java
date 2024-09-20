@@ -47,8 +47,8 @@ public class TestParseTryResource extends CommonTestParse {
                 assertEquals("0.1.0", eas.source().index());
             } else fail();
             assertEquals(1, tryStatement.catchClauses().size());
-            assertEquals(1, tryStatement.catchClauses().get(0).block().statements().size());
-            assertEquals(1, tryStatement.finallyBlock().statements().size());
+            assertEquals(1, tryStatement.catchClauses().get(0).block().size());
+            assertEquals(1, tryStatement.finallyBlock().size());
 
             assertEquals("""
                     try(A a=new A();){System.out.println(a);}catch(Exception e){System.out.println("exception"+args[0]);}finally{System.out.println("bye");}\

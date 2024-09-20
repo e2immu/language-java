@@ -87,7 +87,7 @@ public class TestParseFor extends CommonTestParse {
     public void test3() {
         TypeInfo typeInfo = parse(INPUT3);
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
-        assertEquals(2, main.methodBody().statements().size());
+        assertEquals(2, main.methodBody().size());
         if (main.methodBody().statements().get(1) instanceof ForStatement s) {
             assertEquals(2, s.initializers().size());
             assertEquals("i<args.length&&j>0", s.expression().toString());
@@ -118,7 +118,7 @@ public class TestParseFor extends CommonTestParse {
     public void test4() {
         TypeInfo typeInfo = parse(INPUT4);
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
-        assertEquals(2, main.methodBody().statements().size());
+        assertEquals(2, main.methodBody().size());
         if (main.methodBody().statements().get(1) instanceof ForStatement s) {
             assertTrue(s.initializers().isEmpty());
             assertTrue(s.expression() instanceof BooleanConstant bc && bc.constant());

@@ -38,7 +38,7 @@ public class TestParseArrayInitializer extends CommonTestParse {
         MethodInfo methodInfo = typeInfo.findUniqueMethod("test", 1);
 
         Block block = methodInfo.methodBody();
-        assertEquals(6, block.statements().size());
+        assertEquals(6, block.size());
         if (block.statements().get(0) instanceof LocalVariableCreation lvc &&
             lvc.localVariable().assignmentExpression() instanceof ArrayInitializer ai) {
             assertTrue(ai.parameterizedType().copyWithOneFewerArrays().isInt());
