@@ -224,14 +224,17 @@ public class ParseStatement extends CommonParse {
                     // resources
                     String newIndex = index + "+" + StringUtil.pad(rCount, n);
                     Node resourceNode = r.get(j);
-                    Element resource;
+                    org.e2immu.language.cst.api.statement.Statement resource;
                     if (resourceNode instanceof Statement) {
                         resource = parse(newContext, newIndex, (Statement) resourceNode);
                     } else if (resourceNode instanceof Name) {
                         Expression e = parsers.parseExpression().parse(newContext, newIndex, context.emptyForwardType(),
                                 resourceNode);
                         if (e instanceof VariableExpression ve) {
-                            resource = ve.withSource(source(context.info(), newIndex, resourceNode));
+                            resource = runtime.newExpressionAsStatementBuilder()
+                                    .setSource(source(context.info(), newIndex, resourceNode))
+                                    .setExpression(ve)
+                                    .build();
                         } else throw new UnsupportedOperationException();
                     } else throw new UnsupportedOperationException("NYI");
                     builder.addResource(resource);
