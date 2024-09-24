@@ -21,8 +21,8 @@ public class TestParseTryResource extends CommonTestParse {
               class A implements AutoCloseable {
                   void close() { }
               }
-              public static void main(String[] args) {
-                try(A a = new A()) {
+              public static void method(String[] args, A b) {
+                try(A a = new A(); b) {
                    System.out.println(a);
                 } catch(Exception e) {
                    System.out.println("exception"+args[0]);
@@ -36,22 +36,23 @@ public class TestParseTryResource extends CommonTestParse {
     @Test
     public void test() {
         TypeInfo typeInfo = parse(INPUT);
-        MethodInfo main = typeInfo.findUniqueMethod("main", 1);
+        MethodInfo main = typeInfo.findUniqueMethod("method", 2);
         if (main.methodBody().statements().get(0) instanceof TryStatement tryStatement) {
-            assertEquals(1, tryStatement.resources().size());
-            assertEquals("0.0.0", tryStatement.resources().get(0).source().index());
+            assertEquals(2, tryStatement.resources().size());
+            assertEquals("0+0@7:9-7:21", tryStatement.resources().get(0).source().toString());
+            assertEquals("0+1@7:24-7:24", tryStatement.resources().get(1).source().toString());
             if (tryStatement.block().statements().get(0) instanceof ExpressionAsStatement eas) {
                 if (eas.expression() instanceof MethodCall mc) {
                     assertEquals("a", mc.parameterExpressions().get(0).toString());
                 }
-                assertEquals("0.1.0", eas.source().index());
+                assertEquals("0.0.0", eas.source().index());
             } else fail();
             assertEquals(1, tryStatement.catchClauses().size());
             assertEquals(1, tryStatement.catchClauses().get(0).block().size());
             assertEquals(1, tryStatement.finallyBlock().size());
 
             assertEquals("""
-                    try(A a=new A();){System.out.println(a);}catch(Exception e){System.out.println("exception"+args[0]);}finally{System.out.println("bye");}\
+                    try(A a=new A();b){System.out.println(a);}catch(Exception e){System.out.println("exception"+args[0]);}finally{System.out.println("bye");}\
                     """, tryStatement.toString());
         } else fail();
     }

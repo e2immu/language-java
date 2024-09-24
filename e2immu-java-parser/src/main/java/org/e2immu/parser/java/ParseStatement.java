@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.expression.VariableExpression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -215,36 +216,36 @@ public class ParseStatement extends CommonParse {
             org.e2immu.language.cst.api.statement.TryStatement.Builder builder = runtime.newTryBuilder();
             ++i;
             Context newContext = context.newVariableContext("tryBlock");
-            int mainBlockIndex;
             if (tryStatement.get(i) instanceof ResourcesInTryBlock r) {
                 int j = 1;
                 int rCount = 0;
                 int n = (r.size() - 1) / 2;
                 while (j < r.size() && !(r.get(j) instanceof Delimiter)) {
                     // resources
-                    String newIndex = index + ".0." + StringUtil.pad(rCount, n);
+                    String newIndex = index + "+" + StringUtil.pad(rCount, n);
                     Node resourceNode = r.get(j);
                     Element resource;
                     if (resourceNode instanceof Statement) {
                         resource = parse(newContext, newIndex, (Statement) resourceNode);
                     } else if (resourceNode instanceof Name) {
-                        resource = parsers.parseExpression().parse(newContext, newIndex, context.emptyForwardType(), resourceNode);
+                        Expression e = parsers.parseExpression().parse(newContext, newIndex, context.emptyForwardType(),
+                                resourceNode);
+                        if (e instanceof VariableExpression ve) {
+                            resource = ve.withSource(source(context.info(), newIndex, resourceNode));
+                        } else throw new UnsupportedOperationException();
                     } else throw new UnsupportedOperationException("NYI");
                     builder.addResource(resource);
                     j += 2;
                     rCount++;
                 }
                 i++;
-                mainBlockIndex = 1;
-            } else {
-                mainBlockIndex = 0;
             }
-            int n = countCatchBlocks(tryStatement) + mainBlockIndex + 2;
-            String firstIndex = index + "." + StringUtil.pad(mainBlockIndex, n);
+            int n = countCatchBlocks(tryStatement) + 2;
+            String firstIndex = index + "." + StringUtil.pad(0, n);
             Block block = parseBlockOrStatement(newContext, firstIndex, tryStatement.get(i));
             i++;
             builder.setBlock(block).addComments(comments).setSource(source).setLabel(label).addAnnotations(annotations);
-            int blockCount = 1 + mainBlockIndex;
+            int blockCount = 1;
             while (i < tryStatement.size() && tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
                 org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
