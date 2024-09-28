@@ -8,6 +8,7 @@ import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.e2immu.language.cst.api.variable.FieldReference;
 
 import java.util.List;
@@ -25,6 +26,7 @@ class RecordSynthetics {
         MethodInfo cc = runtime.newConstructor(typeInfo, runtime.methodTypeSyntheticConstructor());
         Block.Builder methodBody = runtime.newBlockBuilder();
         Access publicAccess = runtime.accessPublic();
+        int count = 0;
         for (ParseTypeDeclaration.RecordField rf : recordFields) {
             ParameterInfo pi = cc.builder().addParameter(rf.fieldInfo().name(), rf.fieldInfo().type());
             pi.builder().setSynthetic(true).setAccess(publicAccess).setVarArgs(rf.varargs()).commit();
@@ -32,7 +34,11 @@ class RecordSynthetics {
                     .setValue(runtime.newVariableExpression(pi))
                     .setTarget(runtime.newVariableExpression(runtime.newFieldReference(rf.fieldInfo())))
                     .build();
-            methodBody.addStatement(runtime.newExpressionAsStatement(assignment));
+            Source statementSource = runtime.newParserSource(cc, "" + count, rf.source().beginLine(),
+                    rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
+            methodBody.addStatement(runtime.newExpressionAsStatementBuilder()
+                    .setExpression(assignment).setSource(statementSource).build());
+            ++count;
         }
         cc.builder()
                 .commitParameters()
@@ -50,15 +56,16 @@ class RecordSynthetics {
         return recordFields.stream().map(this::createAccessor).toList();
     }
 
-    private MethodInfo createAccessor(ParseTypeDeclaration.RecordField recordField) {
-        FieldReference fr = runtime.newFieldReference(recordField.fieldInfo());
-        Block methodBody = runtime.newBlockBuilder()
-                .addStatement(runtime.newReturnStatement(runtime.newVariableExpression(fr)))
-                .build();
-        MethodInfo methodInfo = runtime.newMethod(recordField.fieldInfo().owner(), recordField.fieldInfo().name(),
+    private MethodInfo createAccessor(ParseTypeDeclaration.RecordField rf) {
+        MethodInfo methodInfo = runtime.newMethod(rf.fieldInfo().owner(), rf.fieldInfo().name(),
                 runtime.methodTypeMethod());
+        FieldReference fr = runtime.newFieldReference(rf.fieldInfo());
+        Source source = runtime.newParserSource(methodInfo, "0", rf.source().beginLine(),
+                rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
+        ReturnStatement rs = runtime.newReturnBuilder().setExpression(runtime.newVariableExpression(fr)).setSource(source).build();
+        Block methodBody = runtime.newBlockBuilder().addStatement(rs).build();
         MethodInfo.Builder builder = methodInfo.builder();
-        builder.setReturnType(recordField.fieldInfo().type())
+        builder.setReturnType(rf.fieldInfo().type())
                 .setAccess(runtime.accessPublic())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .setSynthetic(true)

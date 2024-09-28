@@ -3,6 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,15 @@ public class TestParseRecord extends CommonTestParse {
         assertTrue(cc.isSyntheticConstructor());
         assertTrue(cc.isSynthetic());
         assertEquals(2, cc.methodBody().size());
-        assertEquals("this.s=s;", cc.methodBody().statements().get(0).toString());
+        Statement s0 = cc.methodBody().statements().get(0);
+        assertEquals("this.s=s;", s0.toString());
+        assertEquals("0", s0.source().index());
+        assertSame(cc, s0.source().parent());
+
+        MethodInfo accessor0 = typeInfo.findUniqueMethod("s", 0);
+        Statement a0 = accessor0.methodBody().statements().get(0);
+        assertEquals("0", a0.source().index());
+        assertSame(accessor0, a0.source().parent());
 
         TypeInfo p = typeInfo.findSubType("P");
         assertTrue(p.typeNature().isRecord());
