@@ -342,6 +342,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 ? runtime.methodModifierPrivate() : runtime.methodModifierPublic());
         builder.setSynthetic(true);
         builder.computeAccess();
+        builder.commit();
         return methodInfo;
     }
 
