@@ -7,9 +7,7 @@ import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -17,6 +15,7 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.language.inspection.api.parser.TypeContext;
+import org.e2immu.language.inspection.api.util.GetSetUtil;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -26,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
@@ -253,6 +251,10 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             // finally, add synthetic methods if needed
             rs.createAccessors(recordFields).forEach(builder::addMethod);
+        }
+
+        if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {
+            GetSetUtil.createSyntheticFieldsCorrespondingToGetSetAnnotation(runtime, typeInfo);
         }
         return typeInfo;
     }

@@ -23,6 +23,7 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.inspection.api.resource.SourceFile;
+import org.e2immu.language.inspection.api.util.GetSetUtil;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,7 +278,7 @@ public class MyClassVisitor extends ClassVisitor {
             return null; // jdk
         }
         methodInspectionBuilder.setReturnType(types.get(types.size() - 1));
-        if(exceptions != null) {
+        if (exceptions != null) {
             for (String exception : exceptions) {
                 // java/io/IOException
                 String fqnName = localTypeMap.pathToFqn(exception);
@@ -378,6 +379,10 @@ public class MyClassVisitor extends ClassVisitor {
                 LOGGER.debug("Visit end of class {}", currentType.fullyQualifiedName());
                 if (currentTypeBuilder == null)
                     throw new UnsupportedOperationException("? was expecting a type inspection builder");
+
+                if (currentType.isAbstract()) {
+                    GetSetUtil.createSyntheticFieldsCorrespondingToGetSetAnnotation(runtime, currentType);
+                }
                 currentTypeBuilder.setSingleAbstractMethod(functionalInterface());
                 currentTypeBuilder.commit();
                 currentTypeBuilder = null;
