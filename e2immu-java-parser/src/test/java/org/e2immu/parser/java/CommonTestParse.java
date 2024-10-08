@@ -16,9 +16,7 @@ import org.parsers.java.JavaParser;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 
@@ -107,7 +105,7 @@ public class CommonTestParse {
 
         TypeParameter tpClass = runtime.newTypeParameter(0, "C",
                 runtime.classTypeInfo()).builder().commit();
-        runtime.classTypeInfo().builder().addTypeParameter(tpClass);
+        runtime.classTypeInfo().builder().addOrSetTypeParameter(tpClass);
         MethodInfo getClass = runtime.newMethod(runtime.objectTypeInfo(), "getClass", runtime.methodTypeMethod());
         getClass.builder()
                 .setAccess(runtime.accessPublic())
@@ -171,7 +169,7 @@ public class CommonTestParse {
 
         enumTypeInfo.builder()
                 .setParentClass(runtime.objectParameterizedType())
-                .addTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo).builder().commit());
+                .addOrSetTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo).builder().commit());
         enumTypeInfo.builder().commit();
 
         exception.builder().setTypeNature(runtime.typeNatureClass());
@@ -205,8 +203,8 @@ public class CommonTestParse {
         ParameterizedType htTpVPt = runtime.newParameterizedType(htTpV, 0, null);
         hashtable.builder()
                 .setParentClass(runtime.objectParameterizedType())
-                .addTypeParameter(htTpK)
-                .addTypeParameter(htTpV);
+                .addOrSetTypeParameter(htTpK)
+                .addOrSetTypeParameter(htTpV);
         MethodInfo htConstructor = runtime.newConstructor(hashtable);
         htConstructor.builder()
                 .setReturnType(hashtable.asParameterizedType(runtime))
@@ -229,7 +227,7 @@ public class CommonTestParse {
     private void defineFunction() {
         TypeParameter T = runtime.newTypeParameter(0, "T", function).builder().commit();
         TypeParameter R = runtime.newTypeParameter(1, "R", function).builder().commit();
-        function.builder().addTypeParameter(T).addTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
+        function.builder().addOrSetTypeParameter(T).addOrSetTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
         MethodInfo apply = runtime.newMethod(function, "apply", runtime.methodTypeAbstractMethod());
         apply.builder().setReturnType(runtime.newParameterizedType(R, 0, null))
                 .addMethodModifier(runtime.methodModifierPublic())
@@ -246,7 +244,7 @@ public class CommonTestParse {
     private void defineBiConsumer() {
         TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer).builder().commit();
         TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer).builder().commit();
-        biConsumer.builder().addTypeParameter(T).addTypeParameter(U).setTypeNature(runtime.typeNatureInterface());
+        biConsumer.builder().addOrSetTypeParameter(T).addOrSetTypeParameter(U).setTypeNature(runtime.typeNatureInterface());
         MethodInfo accept = runtime.newMethod(biConsumer, "accept", runtime.methodTypeAbstractMethod());
         accept.builder().setReturnType(runtime.voidParameterizedType())
                 .addMethodModifier(runtime.methodModifierPublic())

@@ -121,7 +121,7 @@ public class ParseTypeDeclaration extends CommonParse {
         if (!typeParametersToParse.isEmpty()) {
             TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, newContext, typeInfo);
             for (TypeParameter typeParameter : typeParameters) {
-                builder.addTypeParameter(typeParameter);
+                builder.addOrSetTypeParameter(typeParameter);
             }
         }
 

@@ -122,6 +122,25 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     }
 
     @Test
+    public void testExtends4() {
+        TypeInfo SliceSpliterator = compiledTypesManager.getOrLoad("java.util.stream.StreamSpliterators.SliceSpliterator");
+        assertEquals(2, SliceSpliterator.typeParameters().size());
+
+        TypeInfo OfPrimitive = SliceSpliterator.findSubType("OfPrimitive");
+        /*
+        String signature = """
+                <T:Ljava/lang/Object;\    pos = 21
+                T_SPLITR::Ljava/util/Spliterator$OfPrimitive<TT;TT_CONS;TT_SPLITR;>;\
+                T_CONS:Ljava/lang/Object;>\
+                Ljava/util/stream/StreamSpliterators$SliceSpliterator<TT;TT_SPLITR;>;\
+                Ljava/util/Spliterator$OfPrimitive<TT;TT_CONS;TT_SPLITR;>;
+                """;
+        */
+        // not 6!
+        assertEquals(3, OfPrimitive.typeParameters().size());
+    }
+
+    @Test
     public void testGenericsAbstractClassLoaderValue() throws URISyntaxException {
         TypeParameterContext context = new TypeParameterContext();
         TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().
@@ -151,7 +170,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         assertEquals("Type param E extends Enum<E>", tp0.toString());
         assertEquals("E=TP#0 in EnumSet", tp0.typeParameter().toString());
         assertSame(enumSet.typeParameters().get(0), tp0.typeParameter());
-        
+
         TypeInfo enumSetProxy = enumSet.findSubType("SerializationProxy");
         assertEquals("E=TP#0 in SerializationProxy", enumSetProxy.typeParameters().get(0).toString());
     }

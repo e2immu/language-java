@@ -56,7 +56,9 @@ record ParseGenerics(Runtime runtime,
                         name -> {
                             TypeParameter typeParameter = runtime.newTypeParameter(index.getAndIncrement(), name, typeInfo);
                             typeContext.add(typeParameter);
-                            typeInfo.builder().addTypeParameter(typeParameter);
+                            // we may be re-writing the parameter, because of the outer loop
+                            // see TestParseGenerics,testExtends4
+                            typeInfo.builder().addOrSetTypeParameter(typeParameter);
                             return typeParameter;
                         },
                         runtime,
