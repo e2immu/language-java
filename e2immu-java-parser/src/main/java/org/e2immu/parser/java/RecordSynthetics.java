@@ -70,6 +70,7 @@ class RecordSynthetics {
                 .setMethodBody(methodBody)
                 .addOverrides(runtime.computeMethodOverrides().overrides(methodInfo))
                 .commit();
+        runtime.setGetSetField(methodInfo, rf.fieldInfo());
         return methodInfo;
     }
 }
