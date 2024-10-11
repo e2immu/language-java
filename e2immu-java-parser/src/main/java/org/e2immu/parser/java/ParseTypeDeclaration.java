@@ -28,9 +28,11 @@ import java.util.List;
 
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
+    private final GetSetUtil getSetUtil;
 
     public ParseTypeDeclaration(Runtime runtime, Parsers parsers) {
         super(runtime, parsers);
+        this.getSetUtil = new GetSetUtil(runtime);
     }
 
     public TypeInfo parse(Context context,
@@ -254,7 +256,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {
-            GetSetUtil.createSyntheticFieldsCorrespondingToGetSetAnnotation(runtime, typeInfo);
+            getSetUtil.createSyntheticFieldsCorrespondingToGetSetAnnotation(typeInfo);
         }
         return typeInfo;
     }
