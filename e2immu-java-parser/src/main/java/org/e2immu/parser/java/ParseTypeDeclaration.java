@@ -256,7 +256,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {
-            getSetUtil.createSyntheticFieldsCorrespondingToGetSetAnnotation(typeInfo);
+            getSetUtil.createSyntheticFields(typeInfo);
         }
         return typeInfo;
     }

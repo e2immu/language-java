@@ -381,7 +381,7 @@ public class MyClassVisitor extends ClassVisitor {
                     throw new UnsupportedOperationException("? was expecting a type inspection builder");
 
                 if (currentType.isAbstract()) {
-                    new GetSetUtil(runtime).createSyntheticFieldsCorrespondingToGetSetAnnotation(currentType);
+                    new GetSetUtil(runtime).createSyntheticFields(currentType);
                 }
                 currentTypeBuilder.setSingleAbstractMethod(functionalInterface());
                 currentTypeBuilder.commit();
