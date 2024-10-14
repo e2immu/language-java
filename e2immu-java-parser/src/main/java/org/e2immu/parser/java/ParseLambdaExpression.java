@@ -50,7 +50,9 @@ public class ParseLambdaExpression extends CommonParse {
 
         int typeIndex = context.anonymousTypeCounters().newIndex(context.enclosingType());
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(), typeIndex);
+        assert source != null;
         anonymousType.builder()
+                .setSource(source)
                 .setAccess(runtime.accessPrivate())
                 .setTypeNature(runtime.typeNatureClass())
                 .setParentClass(runtime.objectParameterizedType());
