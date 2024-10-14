@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.expression.Precedence;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.MethodResolution;
 
@@ -39,7 +40,7 @@ public class LambdaErasure extends ErasureExpressionImpl {
     public Set<ParameterizedType> erasureTypes() {
         return counts.stream()
                 .map(count -> runtime.syntheticFunctionalType(count.parameters(), !count.isVoid()))
-                .map(ti -> ti.asParameterizedType(runtime))
+                .map(NamedType::asParameterizedType)
                 .collect(Collectors.toUnmodifiableSet());
     }
 

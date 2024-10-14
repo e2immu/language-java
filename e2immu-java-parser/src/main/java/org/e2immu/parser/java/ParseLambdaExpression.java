@@ -69,7 +69,7 @@ public class ParseLambdaExpression extends CommonParse {
         // add all formal -> concrete of the parameters of the SAM, without the return type
         Map<NamedType, ParameterizedType> extra = new HashMap<>();
         methodInfo.parameters().forEach(pi -> {
-            Map<NamedType, ParameterizedType> map = pi.parameterizedType().initialTypeParameterMap(runtime);
+            Map<NamedType, ParameterizedType> map = pi.parameterizedType().initialTypeParameterMap();
             extra.putAll(map);
         });
         ForwardType newForward = context.newForwardType(returnTypeOfLambda, false, extra);

@@ -37,18 +37,18 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     @Test
     public void testNormalTypeParameter() {
         TypeInfo typeInfo = compiledTypesManager.getOrLoad(Spliterator.class);
-        assertEquals("java.util.Spliterator<T>", typeInfo.asParameterizedType(runtime)
+        assertEquals("java.util.Spliterator<T>", typeInfo.asParameterizedType()
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
-        assertEquals("java.util.Spliterator<>", typeInfo.asParameterizedType(runtime).
-                printForMethodFQN(false, DiamondEnum.YES));
-        assertEquals("java.util.Spliterator", typeInfo.asParameterizedType(runtime)
+        assertEquals("java.util.Spliterator<>", typeInfo.asParameterizedType()
+                .printForMethodFQN(false, DiamondEnum.YES));
+        assertEquals("java.util.Spliterator", typeInfo.asParameterizedType()
                 .printForMethodFQN(false, DiamondEnum.NO));
     }
 
     @Test
     public void testWildcard() {
         TypeInfo typeInfo = compiledTypesManager.getOrLoad(Collection.class);
-        assertEquals("java.util.Collection<E>", typeInfo.asParameterizedType(runtime)
+        assertEquals("java.util.Collection<E>", typeInfo.asParameterizedType()
                 .printForMethodFQN(false, DiamondEnum.SHOW_ALL));
         MethodInfo containsAll = typeInfo.methods().stream()
                 .filter(m -> m.name().equals("containsAll")).findFirst().orElseThrow();
@@ -86,7 +86,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
                 false, visited).toString());
         assertSame(K, typeBoundK.parameters().get(0).typeParameter());
 
-        ParameterizedType pt = typeInfo.asParameterizedType(runtime);
+        ParameterizedType pt = typeInfo.asParameterizedType();
         assertEquals("java.util.EnumMap<K extends Enum<K>,V>",
                 pt.printForMethodFQN(false, DiamondEnum.SHOW_ALL));
     }
@@ -108,7 +108,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     @Test
     public void testExtends3() {
         TypeInfo typeInfo = compiledTypesManager.getOrLoad(Spliterator.OfPrimitive.class);
-        ParameterizedType pt = typeInfo.asParameterizedType(runtime);
+        ParameterizedType pt = typeInfo.asParameterizedType();
         String fqn = "java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR extends java.util.Spliterator.OfPrimitive<T,T_CONS,T_SPLITR>>";
         assertEquals("Type " + fqn, pt.toString());
 

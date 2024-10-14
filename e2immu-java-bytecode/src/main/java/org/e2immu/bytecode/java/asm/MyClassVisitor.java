@@ -107,7 +107,7 @@ public class MyClassVisitor extends ClassVisitor {
                     errorStateForType(parentFqName);
                     return;
                 }
-                currentTypeBuilder.setParentClass(typeInfo.asParameterizedType(runtime));
+                currentTypeBuilder.setParentClass(typeInfo.asParameterizedType());
             } else {
                 LOGGER.debug("No parent name for {}", fqName);
             }
@@ -122,7 +122,7 @@ public class MyClassVisitor extends ClassVisitor {
                             errorStateForType(fqn);
                             return;
                         }
-                        currentTypeBuilder.addInterfaceImplemented(typeInfo.asParameterizedType(runtime));
+                        currentTypeBuilder.addInterfaceImplemented(typeInfo.asParameterizedType());
                     } // else: ignore!
                 }
             }

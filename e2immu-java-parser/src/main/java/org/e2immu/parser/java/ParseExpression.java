@@ -287,7 +287,7 @@ public class ParseExpression extends CommonParse {
             return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
         }
         if (context.enclosingType() != null) {
-            Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
+            Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
             Variable v2 = findField(context, scope, name, false);
             if (v2 != null) {
                 return runtime.newVariableExpressionBuilder().setVariable(v2).setSource(source).addComments(comments).build();
@@ -319,7 +319,7 @@ public class ParseExpression extends CommonParse {
         // sufficient (e.g. TestMethodCall4,3)
         Map<NamedType, ParameterizedType> map;
         if (typeInfo == fieldInfo.owner()) {
-            map = pt.initialTypeParameterMap(runtime);
+            map = pt.initialTypeParameterMap();
         } else {
             // either fieldInfo.owner() is a super type of typeInfo,
             boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
@@ -327,7 +327,7 @@ public class ParseExpression extends CommonParse {
             boolean ownerIsEnclosingType = typeInfo.primaryType().equals(fieldInfo.owner().primaryType());
             assert ownerIsSuperType || ownerIsEnclosingType;
 
-            ParameterizedType superType = fieldInfo.owner().asParameterizedType(runtime);
+            ParameterizedType superType = fieldInfo.owner().asParameterizedType();
             // we need to obtain a translation map to get the concrete types or type bounds
             map = context.genericsHelper().mapInTermsOfParametersOfSuperType(context.enclosingType(), superType);
         }
@@ -563,7 +563,7 @@ public class ParseExpression extends CommonParse {
         Node n0 = dotName.get(0);
         if (n0 instanceof LiteralExpression le) {
             if ("this".equals(le.getAsString())) {
-                scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
+                scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
                 fr = findField(context, scope, name, true);
             } else throw new UnsupportedOperationException("NYI");
         } else {
@@ -804,10 +804,11 @@ public class ParseExpression extends CommonParse {
             return runtime.nullConstant();
         }
         if (child instanceof ThisLiteral) {
-            return runtime.newVariableExpression(runtime.newThis(context.enclosingType()));
+            return runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
         }
         if (!le.children().isEmpty() && le.get(0) instanceof KeyWord kw && SUPER.equals(kw.getType())) {
-            return runtime.newVariableExpression(runtime.newThis(context.enclosingType().parentClass().typeInfo(),
+            return runtime.newVariableExpression(runtime.newThis(
+                    context.enclosingType().parentClass().typeInfo().asParameterizedType(),
                     null, true));
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());

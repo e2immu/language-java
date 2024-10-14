@@ -76,7 +76,7 @@ public class ParseConstructorCall extends CommonParse {
         ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(i));
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
-        ParameterizedType formalType = typeInfo.asParameterizedType(runtime);
+        ParameterizedType formalType = typeInfo.asParameterizedType();
         Source source = source(newContext.info(), index, ae);
 
         if (forwardType.erasure()) {
@@ -201,7 +201,7 @@ public class ParseConstructorCall extends CommonParse {
 
     private ParameterizedType inferDiamond(Context context, TypeInfo formalType, ParameterizedType type) {
         if (type.typeInfo() == formalType) return type;
-        ParameterizedType formalPt = formalType.asParameterizedType(runtime);
+        ParameterizedType formalPt = formalType.asParameterizedType();
         Map<NamedType, ParameterizedType> typeParameterMap = context.genericsHelper().translateMap(formalPt, type,
                 false);
         return formalPt.applyTranslation(runtime, typeParameterMap);

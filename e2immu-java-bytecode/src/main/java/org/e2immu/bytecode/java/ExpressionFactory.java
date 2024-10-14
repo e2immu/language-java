@@ -51,7 +51,7 @@ public class ExpressionFactory {
                             if (ti == null) {
                                 throw new UnsupportedOperationException("Cannot load type " + t.getClassName());
                             }
-                            yield ti.asParameterizedType(runtime);
+                            yield ti.asParameterizedType();
                         }
                     };
             return runtime.newTypeExpression(parameterizedType, runtime.diamondShowAll());

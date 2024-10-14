@@ -50,7 +50,7 @@ public class ParseFieldDeclaration extends CommonParse {
         if (isStatic) {
             scope = runtime.newTypeExpression(owner.asSimpleParameterizedType(), runtime.diamondNo());
         } else {
-            scope = runtime.newVariableExpression(runtime.newThis(owner));
+            scope = runtime.newVariableExpression(runtime.newThis(owner.asParameterizedType()));
         }
 
         ParameterizedType parameterizedType;

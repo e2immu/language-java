@@ -207,7 +207,7 @@ public class CommonTestParse {
                 .addOrSetTypeParameter(htTpV);
         MethodInfo htConstructor = runtime.newConstructor(hashtable);
         htConstructor.builder()
-                .setReturnType(hashtable.asParameterizedType(runtime))
+                .setReturnType(hashtable.asParameterizedType())
                 .setAccess(runtime.accessPublic()).commit();
         hashtable.builder().addConstructor(htConstructor);
         MethodInfo htPut = runtime.newMethod(hashtable, "put", runtime.methodTypeAbstractMethod());
