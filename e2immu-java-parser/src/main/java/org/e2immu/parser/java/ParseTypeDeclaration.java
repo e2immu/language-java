@@ -6,6 +6,7 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -52,9 +53,6 @@ public class ParseTypeDeclaration extends CommonParse {
     }
 
     record RecordField(List<Comment> comments, Source source, FieldInfo fieldInfo, boolean varargs) {
-    }
-
-    record ConstructorCounts(int normal, int compact) {
     }
 
     private TypeInfo internalParse(Context context,
@@ -175,7 +173,6 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         Node body = td.get(i);
-        ConstructorCounts constructorCounts;
         if (body instanceof ClassOrInterfaceBody || body instanceof RecordBody || body instanceof EnumBody) {
             Context contextForBody = newContext.newTypeBody();
             if (body instanceof RecordBody) {
@@ -214,7 +211,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
                 new EnumSynthetics(runtime, typeInfo, builder).create(newContext, enumFields);
             }
-            constructorCounts = parseBody(contextForBody, body, typeNature, typeInfo, builder);
+            parseBody(contextForBody, body, typeNature, typeInfo, builder);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof TypeDeclaration subTd) {
@@ -228,7 +225,6 @@ public class ParseTypeDeclaration extends CommonParse {
                     builder.addMethod(methodInfo);
                 }
             }
-            constructorCounts = new ConstructorCounts(0, 0);
         } else throw new UnsupportedOperationException("node " + td.get(i).getClass());
 
         newContext.resolver().add(builder);
@@ -247,7 +243,7 @@ public class ParseTypeDeclaration extends CommonParse {
         if (typeNature.isRecord()) {
             RecordSynthetics rs = new RecordSynthetics(runtime, typeInfo);
             assert recordFields != null;
-            if (constructorCounts.normal == 0 && constructorCounts.compact == 0) {
+            if (!haveConstructorMatchingFields(builder)) {
                 MethodInfo cc = rs.createSyntheticConstructor(source, recordFields);
                 builder.addConstructor(cc);
             }
@@ -259,6 +255,19 @@ public class ParseTypeDeclaration extends CommonParse {
             getSetUtil.createSyntheticFields(typeInfo);
         }
         return typeInfo;
+    }
+
+    private boolean haveConstructorMatchingFields(TypeInfo.Builder builder) {
+        return builder.constructors().stream().anyMatch(mi -> {
+            if (mi.parameters().size() != builder.fields().size()) return false;
+            int i = 0;
+            for (FieldInfo fieldInfo : builder.fields()) {
+                ParameterInfo pi = mi.parameters().get(i);
+                if (!pi.parameterizedType().equals(fieldInfo.type())) return false;
+                i++;
+            }
+            return true;
+        });
     }
 
     private String fullyQualifiedName(Either<CompilationUnit, TypeInfo> packageNameOrEnclosing, String simpleName) {
@@ -350,23 +359,22 @@ public class ParseTypeDeclaration extends CommonParse {
         return methodInfo;
     }
 
-    ConstructorCounts parseBody(Context newContext,
-                                Node body,
-                                TypeNature typeNature,
-                                TypeInfo typeInfo,
-                                TypeInfo.Builder builder) {
+    void parseBody(Context newContext,
+                   Node body,
+                   TypeNature typeNature,
+                   TypeInfo typeInfo,
+                   TypeInfo.Builder builder) {
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
-        int countCompactConstructors = 0;
         int countNormalConstructors = 0;
         int countStaticInializers = 0;
 
         for (Node child : body.children()) {
             if (!(child instanceof EmptyDeclaration)) {
                 if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
-                else if (child instanceof CompactConstructorDeclaration) ++countCompactConstructors;
-                else if (child instanceof ConstructorDeclaration) ++countNormalConstructors;
-                else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
+                else if (child instanceof ConstructorDeclaration && !(child instanceof CompactConstructorDeclaration)) {
+                    ++countNormalConstructors;
+                } else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
             }
         }
 
@@ -438,8 +446,6 @@ public class ParseTypeDeclaration extends CommonParse {
 
         MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);
         builder.setSingleAbstractMethod(sam);
-
-        return new ConstructorCounts(countNormalConstructors, countCompactConstructors);
     }
 
 }
