@@ -13,6 +13,7 @@ import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.This;
 import org.e2immu.language.cst.impl.element.MultiLineComment;
+import org.e2immu.language.cst.impl.element.SingleLineComment;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ public class TestParseFields extends CommonTestParse {
     @Language("java")
     private static final String INPUT = """
             package a.b;
+            // class comment
             class C {
               /* not final */
               int a;
@@ -34,6 +36,8 @@ public class TestParseFields extends CommonTestParse {
               public int a() {
                   return a;
               }
+              // comment for t
+              String t = "t", s = "s";
             }
             """;
 
@@ -42,10 +46,16 @@ public class TestParseFields extends CommonTestParse {
         TypeInfo typeInfo = parse(INPUT);
         assertEquals("C", typeInfo.simpleName());
 
+        assertEquals(1, typeInfo.comments().size());
+        if (typeInfo.comments().get(0) instanceof SingleLineComment c) {
+            assertEquals(" class comment", c.comment());
+        } else fail();
+
+
         FieldInfo a = typeInfo.fields().get(0);
         assertSame(a, typeInfo.getFieldByName("a", true));
         assertTrue(a.access().isPackage());
-        assertEquals(4, a.source().beginLine());
+        assertEquals(5, a.source().beginLine());
         assertEquals(1, a.comments().size());
         if (a.comments().get(0) instanceof MultiLineComment mlc) {
             assertEquals("/* not final */", mlc.print(null).toString());
@@ -96,5 +106,13 @@ public class TestParseFields extends CommonTestParse {
             } else fail("Have " + rs.expression().getClass());
             assertEquals("return this.a;", rs.toString());
         } else fail();
+
+
+        FieldInfo t = typeInfo.getFieldByName("t", true);
+        assertEquals(1, t.comments().size());
+        FieldInfo s = typeInfo.getFieldByName("s", true);
+        assertTrue(s.comments().isEmpty());
+        FieldInfo u = typeInfo.getFieldByName("u", false);
+        assertNull(u);
     }
 }

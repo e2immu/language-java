@@ -42,10 +42,8 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
         if (main.methodBody().statements().get(0) instanceof SwitchStatementNewStyle ssn) {
             assertEquals("""
-                            // noinspection ALL
-
                             switch(args.length){case 0->System.out.println("zero!");case 1,2->{System.out.println("less than 3");return;}default->// noinspection ALL
-
+                            
                             {System.out.println("all the rest");}}\
                             """,
                     ssn.print(runtime.qualificationQualifyFromPrimaryType()).toString());
@@ -55,23 +53,23 @@ public class TestParseSwitchNewStyle extends CommonTestParse {
     @Language("java")
     private static final String INPUT2 = """
             package org.e2immu.analyser.resolver.testexample;
-
+            
             public class NewSwitchStatement_0 {
-
+            
                 public static String method(int dataType) {
                     String s;
                     switch (dataType) {
-
+            
                         case 3 -> {
                             s = "x";
                         }
-
+            
                         case 4 ->
                             s = "z";
-
+            
                         default ->
                             s = "y";
-
+            
                     }
                     return s;
                 }

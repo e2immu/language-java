@@ -44,7 +44,7 @@ public class TestParseSwitchExpression extends CommonTestParse {
             && rs.expression() instanceof SwitchExpression se) {
             assertEquals("""
                             switch(args.length){case 0->-1;case 1,2->{System.out.println("less than 3");yield -2;}default->// noinspection ALL
-
+                            
                             {System.out.println("all the rest");yield 1;}}\
                             """,
                     se.print(runtime.qualificationQualifyFromPrimaryType()).toString());
@@ -80,10 +80,8 @@ public class TestParseSwitchExpression extends CommonTestParse {
         if (main.methodBody().statements().get(0) instanceof ReturnStatement rs
             && rs.expression() instanceof SwitchExpression se) {
             assertEquals("""
-                            switch(i){case 0->"0";case 1,2->//noinspection ALL
-
-                            {//noinspection ALL
-
+                            switch(i){case 0->"0";case 1,2->{//noinspection ALL
+                            
                             yield "a";}case 3->{{yield "b";}}default->throw new RuntimeException();}\
                             """,
                     se.print(runtime.qualificationQualifyFromPrimaryType()).toString());
@@ -94,9 +92,9 @@ public class TestParseSwitchExpression extends CommonTestParse {
     private static final String INPUT3 = """
             package a.b;
             public class SwitchExpression_1 {
-
+            
                 enum Property {P1, P2, P3, P4, P5, P6}
-
+            
                 String method(Property p, int i) {
                     if (i < 0) return "negative";
                     return switch (p) {

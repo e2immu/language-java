@@ -29,16 +29,35 @@ public abstract class CommonParse {
         this.parsers = parsers;
     }
 
+    /*
+    Note: we're not using Node.getAllTokens(), because that method recurses down unconditionally
+     */
     public List<Comment> comments(Node node) {
-        return node.getAllTokens(true).stream().map(t -> {
-            if (t instanceof SingleLineComment slc) {
-                return runtime.newSingleLineComment(slc.getSource());
-            }
-            if (t instanceof MultiLineComment multiLineComment) {
-                return runtime.newMultilineComment(multiLineComment.getSource());
-            }
-            return null;
-        }).filter(Objects::nonNull).toList();
+        Node.TerminalNode tn = firstTerminal(node);
+        if (tn != null) {
+            return tn.precedingUnparsedTokens().stream()
+                    .map(t -> {
+                        if (t instanceof SingleLineComment slc) {
+                            return runtime.newSingleLineComment(slc.getSource());
+                        }
+                        if (t instanceof MultiLineComment multiLineComment) {
+                            return runtime.newMultilineComment(multiLineComment.getSource());
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+        return List.of();
+    }
+
+    private Node.TerminalNode firstTerminal(Node node) {
+        if (node instanceof Node.TerminalNode tn) return tn;
+        for (Node child : node) {
+            Node.TerminalNode tn = firstTerminal(child);
+            if (tn != null) return tn;
+        }
+        return null;
     }
 
     /*

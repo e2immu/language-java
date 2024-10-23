@@ -59,9 +59,12 @@ public class ParseFieldDeclaration extends CommonParse {
             i++;
         } else throw new UnsupportedOperationException();
         List<FieldInfo> fields = new ArrayList<>();
+        boolean first = true;
         while (i < fd.size() && fd.get(i) instanceof VariableDeclarator vd) {
-            fields.add(makeField(context, fd, vd, isStatic, parameterizedType, owner, fieldModifiers, annotations, scope));
+            fields.add(makeField(context, fd, vd, isStatic, parameterizedType, owner, fieldModifiers, annotations,
+                    scope, first));
             i += 2;
+            first = false;
         }
         return fields;
     }
@@ -74,7 +77,8 @@ public class ParseFieldDeclaration extends CommonParse {
                                 TypeInfo owner,
                                 List<FieldModifier> fieldModifiers,
                                 List<AnnotationExpression> annotations,
-                                org.e2immu.language.cst.api.expression.Expression scope) {
+                                org.e2immu.language.cst.api.expression.Expression scope,
+                                boolean first) {
         ParameterizedType type;
         Node vd0 = vd.get(0);
         Identifier identifier;
@@ -98,8 +102,11 @@ public class ParseFieldDeclaration extends CommonParse {
         FieldInfo.Builder builder = fieldInfo.builder();
         fieldModifiers.forEach(builder::addFieldModifier);
         builder.computeAccess();
-        builder.setSource(source(fieldInfo, null, fd));
-        builder.addComments(comments(fd));
+        builder.setSource(source(fieldInfo, null, vd));
+        if (first) {
+            builder.addComments(comments(fd));
+        } // else: comment is only on the first field in the sequence, see e.g. TestFieldComments in java-parser
+        builder.addComments(comments(vd));
         builder.addAnnotations(annotations);
 
         FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type());
