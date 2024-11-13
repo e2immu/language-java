@@ -35,8 +35,8 @@ public class TestTranslate extends CommonTestParse {
                 .setAccess(runtime.accessPackage());
         MethodInfo print = typeInfo.findUniqueMethod("print", 0);
         TranslationMap tm = runtime.newTranslationMapBuilder()
-                .setRecurseIntoScopeVariables(true)
-                .put(typeInfo.asSimpleParameterizedType(), cc.asSimpleParameterizedType()).build();
+                .put(typeInfo.asSimpleParameterizedType(), cc.asSimpleParameterizedType())
+                .build();
         MethodInfo ccPrint = print.translate(tm).get(0);
         if (ccPrint.methodBody().statements().get(0) instanceof ReturnStatement rs) {
             if (rs.expression() instanceof BinaryOperator bo) {
