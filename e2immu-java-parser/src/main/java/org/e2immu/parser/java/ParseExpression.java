@@ -737,7 +737,7 @@ public class ParseExpression extends CommonParse {
                 .setOperator(operator)
                 .setLhs(lhs).setRhs(rhs)
                 .setParameterizedType(runtime.booleanParameterizedType())
-                .setPrecedence(runtime.precedenceMultiplicative())
+                .setPrecedence(runtime.precedenceEquality())
                 .setSource(source(context.info(), index, eq))
                 .addComments(comments(eq))
                 .build();
