@@ -1,6 +1,7 @@
 package org.e2immu.parser.java.erasure;
 
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.Precedence;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
@@ -30,6 +31,11 @@ public class MethodCallErasure extends ErasureExpressionImpl {
         if (this == o) return true;
         if (!(o instanceof MethodCallErasure that)) return false;
         return Objects.equals(returnTypes, that.returnTypes) && Objects.equals(methodName, that.methodName);
+    }
+
+    @Override
+    public Expression withSource(Source source) {
+        return new MethodCallErasure(runtime, source, returnTypes, commonParameterizedType, methodName);
     }
 
     @Override

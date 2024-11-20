@@ -1,6 +1,7 @@
 package org.e2immu.parser.java.erasure;
 
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.Precedence;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
@@ -35,6 +36,10 @@ public class LambdaErasure extends ErasureExpressionImpl {
         return Objects.hash(counts, source);
     }
 
+    @Override
+    public Expression withSource(Source source) {
+        return new LambdaErasure(runtime, counts, source);
+    }
 
     @Override
     public Set<ParameterizedType> erasureTypes() {
