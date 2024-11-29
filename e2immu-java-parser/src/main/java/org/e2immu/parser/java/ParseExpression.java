@@ -422,8 +422,14 @@ public class ParseExpression extends CommonParse {
             binaryOperator = null;
             assignmentOperator = null;
         } else if (Token.TokenType.PLUSASSIGN.equals(tt)) {
-            binaryOperator = runtime.plusOperatorInt();
-            assignmentOperator = runtime.assignPlusOperatorInt();
+            // String s += c; with c a char, is legal!
+            if (value.parameterizedType().isJavaLangString() || target.parameterizedType().isJavaLangString()) {
+                binaryOperator = runtime.plusOperatorString();
+                assignmentOperator = runtime.assignPlusOperatorString();
+            } else {
+                binaryOperator = runtime.plusOperatorInt();
+                assignmentOperator = runtime.assignPlusOperatorInt();
+            }
         } else if (MINUSASSIGN.equals(tt)) {
             binaryOperator = runtime.minusOperatorInt();
             assignmentOperator = runtime.assignMinusOperatorInt();
