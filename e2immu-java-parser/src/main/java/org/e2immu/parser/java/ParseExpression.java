@@ -388,7 +388,9 @@ public class ParseExpression extends CommonParse {
             type = commonType;
         }
         assert type != null;
-        return runtime.newArrayInitializer(List.copyOf(expressions), type);
+        return runtime.newArrayInitializerBuilder()
+                .setExpressions(expressions).setCommonType(type).setSource(source).addComments(comments)
+                .build();
     }
 
     private Expression inlineConditional(Context context, String index, ForwardType forwardType, List<Comment> comments, Source source, Node node) {
