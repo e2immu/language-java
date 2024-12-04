@@ -38,6 +38,14 @@ public class TestParseFields extends CommonTestParse {
               }
               // comment for t
               String t = "t", s = "s";
+              public int aa() {
+                  return C.this.a;
+              }
+            }
+            class D extends C {
+                public int a() {
+                    return C.super.a;
+                }
             }
             """;
 

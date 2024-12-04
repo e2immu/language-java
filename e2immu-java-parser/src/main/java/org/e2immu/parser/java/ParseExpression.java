@@ -157,7 +157,22 @@ public class ParseExpression extends CommonParse {
         if (node instanceof NormalAnnotation na) {
             return parsers.parseAnnotationExpression().parse(context, na);
         }
+        if (node instanceof DotThis || node instanceof DotSuper) {
+            return parseDotThisDotSuper(context, node, source);
+        }
         throw new UnsupportedOperationException("node " + node.getClass());
+    }
+
+    private VariableExpression parseDotThisDotSuper(Context context, Node node, Source source) {
+        ParameterizedType type;
+        if (node.get(0) instanceof Name name) {
+            type = parsers.parseType().parse(context, name);
+        } else throw new Summary.ParseException(context.info(), "expected Name");
+        boolean isSuper = node instanceof DotSuper;
+        TypeInfo explicitType = type.bestTypeInfo();
+        return runtime.newVariableExpressionBuilder()
+                .setSource(source)
+                .setVariable(runtime.newThis(type, explicitType, isSuper)).build();
     }
 
     private Expression parseInstanceOf(Context context, String index, ForwardType forwardType,
