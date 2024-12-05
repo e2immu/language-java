@@ -275,16 +275,18 @@ public class ParseExpression extends CommonParse {
     can be a type (scope of a method), or a variable
      */
     private Expression parseName(Context context, List<Comment> comments, Source source, String name) {
-        if (name.endsWith(".length")) {
-            Variable array = parseVariable(context, comments, source, name.substring(0, name.length() - 7));
-            assert array != null;
-            return runtime.newArrayLengthBuilder()
-                    .addComments(comments).setSource(source)
-                    .setExpression(runtime.newVariableExpression(array))
-                    .build();
-        }
         int lastDot = name.lastIndexOf('.');
         if (lastDot > 0) {
+            String trimmedAfterDot = name.substring(lastDot + 1).trim();
+            if ("length".equals(trimmedAfterDot)) {
+                String beforeDot = name.substring(0, lastDot);
+                Variable array = parseVariable(context, comments, source, beforeDot);
+                assert array != null;
+                return runtime.newArrayLengthBuilder()
+                        .addComments(comments).setSource(source)
+                        .setExpression(runtime.newVariableExpression(array))
+                        .build();
+            }
             NamedType namedType = context.typeContext().get(name, false);
             if (namedType instanceof TypeInfo typeInfo) {
                 ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);

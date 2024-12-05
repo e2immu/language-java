@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -128,5 +129,21 @@ public class TestParseArray extends CommonTestParse {
     @Test
     public void test4() {
         parse(INPUT4);
+    }
+
+    @Language("java")
+    private static final String INPUT5 = """
+            class Test {
+                public static String dot(final double[] r1, final double[] r2) {
+                    return r1.length + " " + r2.
+                           length;
+                }
+            }
+            """;
+
+    @DisplayName("length on a different line")
+    @Test
+    public void test5() {
+        parse(INPUT5);
     }
 }
