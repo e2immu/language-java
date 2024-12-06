@@ -95,7 +95,7 @@ public class ParseLambdaExpression extends CommonParse {
         } else throw new Summary.ParseException(context.info(), "Expected either expression or code block");
 
 
-        miBuilder.setAccess(runtime.accessPrivate());
+        miBuilder.setAccess(runtime.accessPublic());
         miBuilder.setSynthetic(true);
         miBuilder.setMethodBody(methodBody);
         miBuilder.setReturnType(concreteReturnType);
