@@ -217,12 +217,13 @@ public class MyClassVisitor extends ClassVisitor {
             fieldInspectionBuilder.addFieldModifier(runtime.fieldModifierVolatile());
         if ((access & Opcodes.ACC_ENUM) != 0) fieldInspectionBuilder.setSynthetic(true); // what we use synthetic for
 
+        Expression expression;
         if (value != null) {
-            Expression expression = ExpressionFactory.from(runtime, localTypeMap, value);
-            if (expression.isEmpty()) {
-                fieldInspectionBuilder.setInitializer(expression);
-            }
+            expression = ExpressionFactory.from(runtime, localTypeMap, value);
+        } else {
+            expression = runtime.newEmptyExpression();
         }
+        fieldInspectionBuilder.setInitializer(expression);
         return new MyFieldVisitor(runtime, typeParameterContext, fieldInfo, localTypeMap);
     }
 

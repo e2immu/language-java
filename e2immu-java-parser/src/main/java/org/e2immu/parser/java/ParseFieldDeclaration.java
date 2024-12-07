@@ -106,27 +106,17 @@ public class ParseFieldDeclaration extends CommonParse {
         if (first) {
             builder.addComments(comments(fd));
         } // else: comment is only on the first field in the sequence, see e.g. TestFieldComments in java-parser
-        builder.addComments(comments(vd));
-        builder.addAnnotations(annotations);
+        builder.addComments(comments(vd)).addAnnotations(annotations);
 
         FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type());
         context.variableContext().add(fieldReference);
         if (expression != null) {
             ForwardType fwd = context.newForwardType(fieldInfo.type());
-            context.resolver().add(fieldInfo, fieldInfo.builder(), fwd, null, expression, context);
+            context.resolver().add(fieldInfo, builder, fwd, null, expression, context);
         } else {
-            fieldInfo.builder().commit();
+            builder.setInitializer(runtime.newEmptyExpression()).commit();
         }
         return fieldInfo;
-    }
-
-    private Access access(List<FieldModifier> fieldModifiers) {
-        for (FieldModifier fieldModifier : fieldModifiers) {
-            if (fieldModifier.isPublic()) return runtime.accessPublic();
-            if (fieldModifier.isPrivate()) return runtime.accessPrivate();
-            if (fieldModifier.isProtected()) return runtime.accessProtected();
-        }
-        return runtime.accessPackage();
     }
 
     private FieldModifier modifier(KeyWord keyWord) {

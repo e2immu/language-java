@@ -191,6 +191,7 @@ public class ParseTypeDeclaration extends CommonParse {
                         FieldInfo fieldInfo = runtime.newFieldInfo(name, true, type, typeInfo);
                         fieldInfo.builder()
                                 .setSynthetic(true) // to distinguish them from normal, non-enum fields
+                                .setInitializer(runtime.newEmptyExpression())
                                 .addFieldModifier(runtime.fieldModifierFinal())
                                 .addFieldModifier(runtime.fieldModifierPublic())
                                 .addFieldModifier(runtime.fieldModifierStatic())
@@ -336,6 +337,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
         fieldInfo.builder()
+                .setInitializer(runtime.newEmptyExpression())
                 .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())
                 .addAnnotations(annotations)
