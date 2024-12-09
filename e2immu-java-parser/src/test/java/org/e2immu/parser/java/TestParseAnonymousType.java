@@ -44,6 +44,7 @@ public class TestParseAnonymousType extends CommonTestParse {
                 assertEquals("return i+s;", rs.toString());
                 assertEquals("0", rs.source().index());
             }
+            assertSame(methodInfo, cc.anonymousClass().enclosingMethod());
         } else fail();
     }
 }

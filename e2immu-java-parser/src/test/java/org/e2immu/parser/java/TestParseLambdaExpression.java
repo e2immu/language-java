@@ -7,8 +7,7 @@ import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseLambdaExpression extends CommonTestParse {
 
@@ -42,6 +41,7 @@ public class TestParseLambdaExpression extends CommonTestParse {
             assertEquals("Type String", lambda.concreteReturnType().toString());
             assertEquals(2, lambda.concreteFunctionalType().parameters().size());
             assertEquals("Type java.util.function.Function<a.b.C,String>", lambda.concreteFunctionalType().toString());
+            assertSame(mapper, lambda.methodInfo().typeInfo().enclosingMethod());
         } else fail();
     }
 
