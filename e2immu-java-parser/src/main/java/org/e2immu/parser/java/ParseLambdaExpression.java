@@ -81,9 +81,9 @@ public class ParseLambdaExpression extends CommonParse {
         Node le1 = le.get(1);
         if (le1 instanceof org.parsers.java.ast.Expression e) {
             // simple function or supplier
-            Expression expression = parsers.parseExpression().parse(newContext, index, newForward, e);
+            Expression expression = parsers.parseExpression().parse(newContext, "0", newForward, e);
             concreteReturnType = expression.parameterizedType();
-            Source expressionSource = source(context.info(), index, e);
+            Source expressionSource = source(context.info(), "0", e);
             Statement returnStatement = runtime.newReturnBuilder()
                     .setSource(expressionSource)
                     .setExpression(expression)
