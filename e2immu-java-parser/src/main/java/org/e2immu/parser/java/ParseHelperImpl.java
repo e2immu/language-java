@@ -66,7 +66,8 @@ public class ParseHelperImpl implements ParseHelper {
                 e = runtime.emptyBlock();
             } else throw new Summary.ParseException(context.info(), "Expected either empty block, or statements");
         } else if (expression instanceof CodeBlock codeBlock) {
-            e = parsers.parseBlock().parse(context, "", null, codeBlock, eci == null ? 0 : 1);
+            e = parsers.parseBlock().parse(context, "", null, codeBlock, false,
+                    eci == null ? 0 : 1);
         } else {
             e = parseStatements(context, forwardType, expression, eci != null);
         }

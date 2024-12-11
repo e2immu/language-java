@@ -455,7 +455,8 @@ public class ParseStatement extends CommonParse {
         }
 
         if (statement instanceof CodeBlock cb) {
-            return parsers.parseBlock().parse(context, index, label, cb);
+            // important: for reasons of consistency, an individual block has statements with index .0.n, not just .n
+            return parsers.parseBlock().parse(context, index, label, cb, true, 0);
         }
 
         if (statement instanceof WhileStatement whileStatement) {

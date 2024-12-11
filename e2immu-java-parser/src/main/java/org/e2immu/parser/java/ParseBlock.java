@@ -19,18 +19,20 @@ public class ParseBlock extends CommonParse {
     }
 
     public Block parse(Context context, String index, String label, CodeBlock codeBlock) {
-        return parse(context, index, label, codeBlock, 0);
+        return parse(context, index, label, codeBlock, false, 0);
     }
 
-    public Block parse(Context context, String index, String label, CodeBlock codeBlock, int startCount) {
+    public Block parse(Context context, String index, String label, CodeBlock codeBlock,
+                       boolean asSeparateStatement, int startCount) {
         Source source = source(context.info(), index, codeBlock);
         List<Comment> comments = comments(codeBlock);
         Block.Builder builder = runtime.newBlockBuilder();
         int count = startCount;
         int n = codeBlock.size() - 2; // delimiters at front and back: '{', '}'
+        String dot = asSeparateStatement ? ".0." : ".";
         for (Node child : codeBlock) {
             if (child instanceof Statement s) {
-                String sIndex = (index.isEmpty() ? "" : index + ".") + StringUtil.pad(count, n);
+                String sIndex = (index.isEmpty() ? "" : index + dot) + StringUtil.pad(count, n);
                 org.e2immu.language.cst.api.statement.Statement statement = parsers.parseStatement()
                         .parse(context, sIndex, s);
                 builder.addStatement(statement);
