@@ -26,6 +26,7 @@ import org.parsers.java.ast.*;
 import org.parsers.java.ast.ArrayInitializer;
 import org.parsers.java.ast.MethodCall;
 import org.parsers.java.ast.MethodReference;
+import org.parsers.java.ast.SwitchExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,116 +57,83 @@ public class ParseExpression extends CommonParse {
         Source source = source(context.info(), index, node);
         List<Comment> comments = comments(node);
 
-        if (node instanceof DotName dotName) {
-            return parseDotName(context, comments, source, index, dotName);
-        }
-        if (node instanceof MethodCall mc) {
-            return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
-        }
-        if (node instanceof LiteralExpression le) {
-            return parseLiteral(context, le);
-        }
-        if (node instanceof ConditionalAndExpression || node instanceof ConditionalOrExpression) {
-            return parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
-        }
-        if (node instanceof AdditiveExpression ae) {
-            return parseAdditive(context, index, ae);
-        }
-        if (node instanceof MultiplicativeExpression
-            || node instanceof AndExpression
-            || node instanceof InclusiveOrExpression
-            || node instanceof ExclusiveOrExpression
-            || node instanceof ShiftExpression) {
-            return parseMultiplicative(context, index, node);
-        }
-        if (node instanceof RelationalExpression re) {
-            return parseRelational(context, index, re);
-        }
-        if (node instanceof EqualityExpression eq) {
-            return parseEquality(context, index, eq);
-        }
-        if (node instanceof UnaryExpression || node instanceof UnaryExpressionNotPlusMinus) {
-            return parseUnaryExpression(context, index, (org.parsers.java.ast.Expression) node);
-        }
-        if (node instanceof Name name) {
-            if (name.children().stream().allMatch(n -> n instanceof Delimiter || n instanceof Identifier)) {
-                return parseName(context, comments, source, name.getAsString());
+        return switch (node) {
+            case AdditiveExpression ae -> parseAdditive(context, index, ae);
+            case AllocationExpression ae -> parsers.parseConstructorCall().parse(context, index, forwardType, ae);
+            case ArrayAccess aa -> parseArrayAccess(context, index, forwardType, aa, comments, source);
+            case ArrayInitializer ai -> arrayInitializer(context, index, forwardType, comments, source, ai);
+            case AssignmentExpression ae -> parseAssignment(context, index, ae, comments, source);
+            case AndExpression ae -> parseMultiplicative(context, index, ae);
+            case CastExpression ce -> parseCast(context, index, comments, source, ce);
+            case ClassLiteral cl -> parseClassLiteral(context, cl);
+            case ConditionalAndExpression ca -> parseConditionalExpression(context, comments, source, index, ca);
+            case ConditionalOrExpression co -> parseConditionalExpression(context, comments, source, index, co);
+            case DotName dotName -> parseDotName(context, comments, source, index, dotName);
+            case DotSuper ds -> parseDotThisDotSuper(context, ds, source);
+            case DotThis dt -> parseDotThisDotSuper(context, dt, source);
+            case EqualityExpression eq -> parseEquality(context, index, eq);
+            case ExclusiveOrExpression eo -> parseMultiplicative(context, index, eo);
+            case Identifier i -> parseName(context, comments, source, i.getSource());
+            case InclusiveOrExpression io -> parseMultiplicative(context, index, io);
+            case InstanceOfExpression ioe -> parseInstanceOf(context, index, forwardType, comments, source, ioe);
+            case LambdaExpression le ->
+                    parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
+            case LiteralExpression le -> parseLiteral(context, le);
+            case MemberValueArrayInitializer ai -> arrayInitializer(context, index, forwardType, comments, source, ai);
+            case MethodCall mc -> parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
+            case MethodReference mr ->
+                    parsers.parseMethodReference().parse(context, comments, source, index, forwardType, mr);
+            case MultiplicativeExpression me -> parseMultiplicative(context, index, me);
+            case Name name -> {
+                if (name.children().stream().allMatch(n -> n instanceof Delimiter || n instanceof Identifier)) {
+                    yield parseName(context, comments, source, name.getAsString());
+                }
+                yield parse(context, index, forwardType, name.getFirst());
             }
-            return parse(context, index, forwardType, name.get(0));
+            case NormalAnnotation na -> parsers.parseAnnotationExpression().parse(context, na);
+            case ObjectType ot -> parseObjectType(context, index, node, ot, comments, source);
+            case Parentheses p -> parseParentheses(context, index, comments, source, forwardType, p);
+            case PostfixExpression pe -> plusPlusMinMin(context, index, comments, source, 0, 1, false, pe);
+            case PreDecrementExpression pd -> plusPlusMinMin(context, index, comments, source, 1, 0, true, pd);
+            case PreIncrementExpression pe -> plusPlusMinMin(context, index, comments, source, 1, 0, true, pe);
+            case RelationalExpression re -> parseRelational(context, index, re);
+            case ShiftExpression se -> parseMultiplicative(context, index, se);
+            case SwitchExpression se ->
+                    parseSwitchExpression(context, index, forwardType, comments, source, node.getFirst());
+            case TernaryExpression te -> inlineConditional(context, index, forwardType, comments, source, te);
+            case UnaryExpression ue -> parseUnaryExpression(context, index, ue);
+            case UnaryExpressionNotPlusMinus ue -> parseUnaryExpression(context, index, ue);
+            default -> throw new IllegalStateException("Unexpected value: " + node.getClass());
+        };
+    }
+
+    private Expression parseObjectType(Context context, String index, Node node, ObjectType ot,
+                                       List<Comment> comments, Source source) {
+        // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
+        if (ot.size() == 3 && DOT.equals(ot.get(1).getType())) {
+            return parseDotName(context, comments, source, index, node);
         }
-        if (node instanceof CastExpression castExpression) {
-            return parseCast(context, index, comments, source, castExpression);
-        }
-        if (node instanceof AssignmentExpression assignmentExpression) {
-            return parseAssignment(context, index, assignmentExpression, comments, source);
-        }
-        if (node instanceof ArrayAccess arrayAccess) {
-            assert arrayAccess.size() == 4 : "Not implemented";
-            Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
-            ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
-            Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
-            Variable variable = runtime.newDependentVariable(ae, ie);
-            return runtime.newVariableExpressionBuilder().addComments(comments).setSource(source)
-                    .setVariable(variable).build();
-        }
-        if (node instanceof ClassLiteral cl) {
-            return parseClassLiteral(context, cl);
-        }
-        if (node instanceof Parentheses p) {
-            return parseParentheses(context, index, comments, source, forwardType, p);
-        }
-        if (node instanceof AllocationExpression ae) {
-            return parsers.parseConstructorCall().parse(context, index, forwardType, ae);
-        }
-        if (node instanceof MethodReference mr) {
-            return parsers.parseMethodReference().parse(context, comments, source, index, forwardType, mr);
-        }
-        if (node instanceof LambdaExpression le) {
-            return parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
-        }
-        if (node instanceof PostfixExpression) {
-            return plusPlusMinMin(context, index, comments, source, 0, 1, false, node);
-        }
-        if (node instanceof PreIncrementExpression || node instanceof PreDecrementExpression) {
-            return plusPlusMinMin(context, index, comments, source, 1, 0, true, node);
-        }
-        if (node instanceof TernaryExpression) {
-            return inlineConditional(context, index, forwardType, comments, source, node);
-        }
-        if (node instanceof ArrayInitializer || node instanceof MemberValueArrayInitializer) {
-            return arrayInitializer(context, index, forwardType, comments, source, node);
-        }
-        if (node instanceof org.parsers.java.ast.SwitchExpression) {
-            return parseSwitchExpression(context, index, forwardType, comments, source, node.get(0));
-        }
-        if (node instanceof InstanceOfExpression ioe) {
-            return parseInstanceOf(context, index, forwardType, comments, source, ioe);
-        }
-        if (node instanceof ObjectType ot) {
-            // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
-            if (ot.size() == 3 && Token.TokenType.DOT.equals(ot.get(1).getType())) {
-                return parseDotName(context, comments, source, index, node);
-            }
-            // ditto, see TestParseMethodReference
-            if (ot.size() == 1 && ot.get(0) instanceof Identifier i) {
-                return parseName(context, comments, source, i.getSource());
-            }
-        }
-        if (node instanceof Identifier i) {
+        // ditto, see TestParseMethodReference
+        if (ot.size() == 1 && ot.get(0) instanceof Identifier i) {
             return parseName(context, comments, source, i.getSource());
         }
-        if (node instanceof NormalAnnotation na) {
-            return parsers.parseAnnotationExpression().parse(context, na);
-        }
-        if (node instanceof DotThis || node instanceof DotSuper) {
-            return parseDotThisDotSuper(context, node, source);
-        }
-        throw new UnsupportedOperationException("node " + node.getClass());
+        throw new UnsupportedOperationException();
+    }
+
+    private VariableExpression parseArrayAccess(Context context, String index, ForwardType forwardType,
+                                                ArrayAccess arrayAccess, List<Comment> comments, Source source) {
+        assert arrayAccess.size() == 4 : "Not implemented";
+        Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
+        ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
+        Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
+        Variable variable = runtime.newDependentVariable(ae, ie);
+        return runtime.newVariableExpressionBuilder().addComments(comments).setSource(source)
+                .setVariable(variable).build();
     }
 
     private VariableExpression parseDotThisDotSuper(Context context, Node node, Source source) {
         ParameterizedType type;
-        if (node.get(0) instanceof Name name) {
+        if (node.getFirst() instanceof Name name) {
             type = parsers.parseType().parse(context, name);
         } else throw new Summary.ParseException(context.info(), "expected Name");
         boolean isSuper = node instanceof DotSuper;
@@ -220,9 +188,9 @@ public class ParseExpression extends CommonParse {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
-                    if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
+                    if (_DEFAULT.equals(nsl.getFirst().getType())) {
                         conditions.add(runtime.newEmptyExpression());
-                    } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
+                    } else if (!CASE.equals(nsl.getFirst().getType())) {
                         throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
                     }
                     int j = 1;
@@ -230,7 +198,7 @@ public class ParseExpression extends CommonParse {
                         Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, nsl.get(j));
                         conditions.add(c);
                         Node next = nsl.get(j + 1);
-                        if (!Token.TokenType.COMMA.equals(next.getType())) break;
+                        if (!COMMA.equals(next.getType())) break;
                         j += 2;
                     }
                     entryBuilder.addConditions(conditions);
@@ -427,7 +395,7 @@ public class ParseExpression extends CommonParse {
                                        AssignmentExpression assignmentExpression,
                                        List<Comment> comments,
                                        Source source) {
-        Expression wrappedTarget = parse(context, index, context.emptyForwardType(), assignmentExpression.get(0));
+        Expression wrappedTarget = parse(context, index, context.emptyForwardType(), assignmentExpression.getFirst());
         Expression target = unwrapEnclosed(wrappedTarget);
         if (!(target instanceof VariableExpression targetVE)) {
             throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
@@ -437,50 +405,62 @@ public class ParseExpression extends CommonParse {
         MethodInfo assignmentOperator;
         MethodInfo binaryOperator;
         Node.NodeType tt = assignmentExpression.get(1).getType();
-        if (ASSIGN.equals(tt)) {
-            binaryOperator = null;
-            assignmentOperator = null;
-        } else if (Token.TokenType.PLUSASSIGN.equals(tt)) {
-            // String s += c; with c a char, is legal!
-            if (value.parameterizedType().isJavaLangString() || target.parameterizedType().isJavaLangString()) {
-                binaryOperator = runtime.plusOperatorString();
-                assignmentOperator = runtime.assignPlusOperatorString();
-            } else {
-                binaryOperator = runtime.plusOperatorInt();
-                assignmentOperator = runtime.assignPlusOperatorInt();
+        switch (tt) {
+            case Token.TokenType.ASSIGN -> {
+                binaryOperator = null;
+                assignmentOperator = null;
             }
-        } else if (MINUSASSIGN.equals(tt)) {
-            binaryOperator = runtime.minusOperatorInt();
-            assignmentOperator = runtime.assignMinusOperatorInt();
-        } else if (STARASSIGN.equals(tt)) {
-            binaryOperator = runtime.multiplyOperatorInt();
-            assignmentOperator = runtime.assignMultiplyOperatorInt();
-        } else if (SLASHASSIGN.equals(tt)) {
-            binaryOperator = runtime.divideOperatorInt();
-            assignmentOperator = runtime.assignDivideOperatorInt();
-        } else if (REMASSIGN.equals(tt)) {
-            binaryOperator = runtime.remainderOperatorInt();
-            assignmentOperator = runtime.assignRemainderOperatorInt();
-        } else if (XORASSIGN.equals(tt)) {
-            binaryOperator = runtime.xorOperatorInt();
-            assignmentOperator = runtime.assignXorOperatorInt();
-        } else if (ANDASSIGN.equals(tt)) {
-            binaryOperator = runtime.andOperatorInt();
-            assignmentOperator = runtime.assignAndOperatorInt();
-        } else if (ORASSIGN.equals(tt)) {
-            binaryOperator = runtime.orOperatorInt();
-            assignmentOperator = runtime.assignOrOperatorInt();
-        } else if (RSIGNEDSHIFTASSIGN.equals(tt)) {
-            binaryOperator = runtime.signedRightShiftOperatorInt();
-            assignmentOperator = runtime.assignSignedRightShiftOperatorInt();
-        } else if (RUNSIGNEDSHIFTASSIGN.equals(tt)) {
-            binaryOperator = runtime.unsignedRightShiftOperatorInt();
-            assignmentOperator = runtime.assignUnsignedRightShiftOperatorInt();
-        } else if (LSHIFTASSIGN.equals(tt)) {
-            binaryOperator = runtime.leftShiftOperatorInt();
-            assignmentOperator = runtime.assignLeftShiftOperatorInt();
-        } else {
-            throw new UnsupportedOperationException("NYI");
+            case Token.TokenType.PLUSASSIGN -> {
+                // String s += c; with c a char, is legal!
+                if (value.parameterizedType().isJavaLangString() || target.parameterizedType().isJavaLangString()) {
+                    binaryOperator = runtime.plusOperatorString();
+                    assignmentOperator = runtime.assignPlusOperatorString();
+                } else {
+                    binaryOperator = runtime.plusOperatorInt();
+                    assignmentOperator = runtime.assignPlusOperatorInt();
+                }
+            }
+            case Token.TokenType.MINUSASSIGN -> {
+                binaryOperator = runtime.minusOperatorInt();
+                assignmentOperator = runtime.assignMinusOperatorInt();
+            }
+            case Token.TokenType.STARASSIGN -> {
+                binaryOperator = runtime.multiplyOperatorInt();
+                assignmentOperator = runtime.assignMultiplyOperatorInt();
+            }
+            case Token.TokenType.SLASHASSIGN -> {
+                binaryOperator = runtime.divideOperatorInt();
+                assignmentOperator = runtime.assignDivideOperatorInt();
+            }
+            case Token.TokenType.REMASSIGN -> {
+                binaryOperator = runtime.remainderOperatorInt();
+                assignmentOperator = runtime.assignRemainderOperatorInt();
+            }
+            case Token.TokenType.XORASSIGN -> {
+                binaryOperator = runtime.xorOperatorInt();
+                assignmentOperator = runtime.assignXorOperatorInt();
+            }
+            case Token.TokenType.ANDASSIGN -> {
+                binaryOperator = runtime.andOperatorInt();
+                assignmentOperator = runtime.assignAndOperatorInt();
+            }
+            case Token.TokenType.ORASSIGN -> {
+                binaryOperator = runtime.orOperatorInt();
+                assignmentOperator = runtime.assignOrOperatorInt();
+            }
+            case Token.TokenType.RSIGNEDSHIFTASSIGN -> {
+                binaryOperator = runtime.signedRightShiftOperatorInt();
+                assignmentOperator = runtime.assignSignedRightShiftOperatorInt();
+            }
+            case Token.TokenType.RUNSIGNEDSHIFTASSIGN -> {
+                binaryOperator = runtime.unsignedRightShiftOperatorInt();
+                assignmentOperator = runtime.assignUnsignedRightShiftOperatorInt();
+            }
+            case Token.TokenType.LSHIFTASSIGN -> {
+                binaryOperator = runtime.leftShiftOperatorInt();
+                assignmentOperator = runtime.assignLeftShiftOperatorInt();
+            }
+            case null, default -> throw new UnsupportedOperationException("NYI");
         }
         return runtime.newAssignmentBuilder().setValue(value).setTarget(targetVE)
                 .setBinaryOperator(binaryOperator)
@@ -526,8 +506,7 @@ public class ParseExpression extends CommonParse {
     }
 
     private Expression parseConditionalExpression(Context context, List<Comment> comments, Source source,
-                                                  String index, org.parsers.java.ast.Expression e) {
-
+                                                  String index, Node e) {
         List<Expression> components = new ArrayList<>();
         ForwardType fwd = context.newForwardType(runtime.booleanParameterizedType());
         for (int i = 0; i < e.size(); i += 2) {
@@ -557,7 +536,7 @@ public class ParseExpression extends CommonParse {
                 .build();
     }
 
-    private Expression parseUnaryExpression(Context context, String index, org.parsers.java.ast.Expression ue) {
+    private Expression parseUnaryExpression(Context context, String index, Node ue) {
         MethodInfo methodInfo;
         ForwardType forwardType;
         if (ue.get(0) instanceof Operator operator) {
@@ -585,7 +564,7 @@ public class ParseExpression extends CommonParse {
         String name = dotName.get(2).getSource();
         Expression scope;
         FieldReference fr;
-        Node n0 = dotName.get(0);
+        Node n0 = dotName.getFirst();
         if (n0 instanceof LiteralExpression le) {
             if ("this".equals(le.getAsString())) {
                 scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
@@ -627,7 +606,7 @@ public class ParseExpression extends CommonParse {
             // for plus, we could have either string, or int; with string, all bets are off
             fwd1 = context.emptyForwardType();
         }
-        Expression accumulated = parse(context, index, fwd1, ae.get(0));
+        Expression accumulated = parse(context, index, fwd1, ae.getFirst());
         int i = 2;
         while (i < ae.size()) {
             Node.NodeType token = ae.get(i - 1).getType();
@@ -668,42 +647,51 @@ public class ParseExpression extends CommonParse {
 
     private Expression parseMultiplicative(Context context, String index, Node me) {
         ForwardType fwd = context.newForwardType(runtime.intParameterizedType());
-        Expression accumulated = parse(context, index, fwd, me.get(0));
+        Expression accumulated = parse(context, index, fwd, me.getFirst());
         int i = 2;
         while (i < me.size()) {
             Expression rhs = parse(context, index, fwd, me.get(i));
             Node.NodeType token = me.get(i - 1).getType();
             MethodInfo operator;
             Precedence precedence;
-            if (token.equals(STAR)) {
-                operator = runtime.multiplyOperatorInt();
-                precedence = runtime.precedenceMultiplicative();
-            } else if (token.equals(SLASH)) {
-                operator = runtime.divideOperatorInt();
-                precedence = runtime.precedenceMultiplicative();
-            } else if (token.equals(REM)) {
-                precedence = runtime.precedenceMultiplicative();
-                operator = runtime.remainderOperatorInt();
-            } else if (token.equals(BIT_AND)) {
-                precedence = runtime.precedenceBitwiseAnd();
-                operator = runtime.andOperatorInt();
-            } else if (token.equals(BIT_OR)) {
-                precedence = runtime.precedenceBitwiseOr();
-                operator = runtime.orOperatorInt();
-            } else if (token.equals(XOR)) {
-                precedence = runtime.precedenceBitwiseXor();
-                operator = runtime.xorOperatorInt();
-            } else if (token.equals(LSHIFT)) {
-                precedence = runtime.precedenceShift();
-                operator = runtime.leftShiftOperatorInt();
-            } else if (token.equals(RSIGNEDSHIFT)) {
-                precedence = runtime.precedenceShift();
-                operator = runtime.signedRightShiftOperatorInt();
-            } else if (token.equals(RUNSIGNEDSHIFT)) {
-                precedence = runtime.precedenceShift();
-                operator = runtime.unsignedRightShiftOperatorInt();
-            } else {
-                throw new UnsupportedOperationException();
+            switch (token) {
+                case Token.TokenType.STAR -> {
+                    operator = runtime.multiplyOperatorInt();
+                    precedence = runtime.precedenceMultiplicative();
+                }
+                case Token.TokenType.SLASH -> {
+                    operator = runtime.divideOperatorInt();
+                    precedence = runtime.precedenceMultiplicative();
+                }
+                case Token.TokenType.REM -> {
+                    precedence = runtime.precedenceMultiplicative();
+                    operator = runtime.remainderOperatorInt();
+                }
+                case Token.TokenType.BIT_AND -> {
+                    precedence = runtime.precedenceBitwiseAnd();
+                    operator = runtime.andOperatorInt();
+                }
+                case Token.TokenType.BIT_OR -> {
+                    precedence = runtime.precedenceBitwiseOr();
+                    operator = runtime.orOperatorInt();
+                }
+                case Token.TokenType.XOR -> {
+                    precedence = runtime.precedenceBitwiseXor();
+                    operator = runtime.xorOperatorInt();
+                }
+                case Token.TokenType.LSHIFT -> {
+                    precedence = runtime.precedenceShift();
+                    operator = runtime.leftShiftOperatorInt();
+                }
+                case Token.TokenType.RSIGNEDSHIFT -> {
+                    precedence = runtime.precedenceShift();
+                    operator = runtime.signedRightShiftOperatorInt();
+                }
+                case Token.TokenType.RUNSIGNEDSHIFT -> {
+                    precedence = runtime.precedenceShift();
+                    operator = runtime.unsignedRightShiftOperatorInt();
+                }
+                default -> throw new UnsupportedOperationException();
             }
             ParameterizedType pt = runtime.widestTypeUnbox(accumulated.parameterizedType(), rhs.parameterizedType());
             accumulated = runtime.newBinaryOperatorBuilder()
@@ -724,18 +712,13 @@ public class ParseExpression extends CommonParse {
         Expression lhs = parse(context, index, fwd, re.get(0));
         Expression rhs = parse(context, index, fwd, re.get(2));
         Node.NodeType token = re.get(1).getType();
-        MethodInfo operator;
-        if (token.equals(LE)) {
-            operator = runtime.lessEqualsOperatorInt();
-        } else if (token.equals(LT)) {
-            operator = runtime.lessOperatorInt();
-        } else if (token.equals(GE)) {
-            operator = runtime.greaterEqualsOperatorInt();
-        } else if (token.equals(GT)) {
-            operator = runtime.greaterOperatorInt();
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        MethodInfo operator = switch (token) {
+            case Token.TokenType.LE -> runtime.lessEqualsOperatorInt();
+            case Token.TokenType.LT -> runtime.lessOperatorInt();
+            case Token.TokenType.GE -> runtime.greaterEqualsOperatorInt();
+            case Token.TokenType.GT -> runtime.greaterOperatorInt();
+            default -> throw new UnsupportedOperationException();
+        };
         return runtime.newBinaryOperatorBuilder()
                 .setOperator(operator)
                 .setLhs(lhs).setRhs(rhs)
@@ -771,72 +754,66 @@ public class ParseExpression extends CommonParse {
     private static final long TWO32 = 0xFF_FF_FF_FFL;
 
     private Expression parseLiteral(Context context, LiteralExpression le) {
-        Node child = le.children().get(0);
-        if (child instanceof IntegerLiteral il) {
-            long l = parseLong(il.getSource());
-            if (l <= Integer.MAX_VALUE) {
-                return runtime.newInt((int) l);
+        Node child = le.children().getFirst();
+        return switch (child) {
+            case BooleanLiteral bl -> runtime.newBoolean("true".equals(bl.getSource()));
+            case CharacterLiteral cl -> runtime.newChar(computeCharacterLiteral(cl));
+            case FloatingPointLiteral fp -> {
+                String src = fp.getSource().toLowerCase().replace("_", "");
+                if (src.endsWith("f") || src.endsWith("F")) {
+                    yield runtime.newFloat(Float.parseFloat(src.substring(0, src.length() - 1)));
+                }
+                if (src.endsWith("d") || src.endsWith("D")) {
+                    yield runtime.newDouble(Double.parseDouble(src.substring(0, src.length() - 1)));
+                }
+                yield runtime.newDouble(Double.parseDouble(src));
             }
-            if (l <= TWO32) {
-                long complement = ((~l) & TWO32);
-                int negative = (int) (-(complement + 1));
-                return runtime.newInt(negative);
+            case IntegerLiteral il -> {
+                long l = parseLong(il.getSource());
+                if (l <= Integer.MAX_VALUE) {
+                    yield runtime.newInt((int) l);
+                }
+                if (l <= TWO32) {
+                    long complement = ((~l) & TWO32);
+                    int negative = (int) (-(complement + 1));
+                    yield runtime.newInt(negative);
+                }
+                throw new UnsupportedOperationException();
             }
-            throw new UnsupportedOperationException();
-        }
-        if (child instanceof LongLiteral ll) {
-            long l = parseLong(ll.getSource());
-            return runtime.newLong(l);
-        }
-        if (child instanceof FloatingPointLiteral fp) {
-            String src = fp.getSource().toLowerCase().replace("_", "");
-            if (src.endsWith("f") || src.endsWith("F")) {
-                return runtime.newFloat(Float.parseFloat(src.substring(0, src.length() - 1)));
+            case LongLiteral ll -> runtime.newLong(parseLong(ll.getSource()));
+            case NullLiteral nl -> runtime.nullConstant();
+            case StringLiteral sl -> runtime.newStringConstant(sl.getString());
+            case ThisLiteral tl ->
+                    runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
+            default -> {
+                if (!le.children().isEmpty() && le.getFirst() instanceof KeyWord kw && SUPER.equals(kw.getType())) {
+                    yield runtime.newVariableExpression(runtime.newThis(
+                            context.enclosingType().parentClass().typeInfo().asParameterizedType(),
+                            null, true));
+                }
+                throw new UnsupportedOperationException("literal expression " + le.getClass());
             }
-            if (src.endsWith("d") || src.endsWith("D")) {
-                return runtime.newDouble(Double.parseDouble(src.substring(0, src.length() - 1)));
-            }
-            return runtime.newDouble(Double.parseDouble(src));
+        };
+    }
+
+    private static char computeCharacterLiteral(CharacterLiteral cl) {
+        char c = cl.charAt(1);
+        if (c == '\\') {
+            char c2 = cl.charAt(2);
+            return switch (c2) {
+                case '0' -> '\0';
+                case 'b' -> '\b';
+                case 'r' -> '\r';
+                case 't' -> '\t';
+                case 'n' -> '\n';
+                case 'f' -> '\f';
+                case '\'' -> '\'';
+                case '\\' -> '\\';
+                case '"' -> '"';
+                default -> throw new UnsupportedOperationException();
+            };
         }
-        if (child instanceof BooleanLiteral bl) {
-            return runtime.newBoolean("true".equals(bl.getSource()));
-        }
-        if (child instanceof CharacterLiteral cl) {
-            char c = cl.charAt(1);
-            if (c == '\\') {
-                char c2 = cl.charAt(2);
-                c = switch (c2) {
-                    case '0' -> '\0';
-                    case 'b' -> '\b';
-                    case 'r' -> '\r';
-                    case 't' -> '\t';
-                    case 'n' -> '\n';
-                    case 'f' -> '\f';
-                    case '\'' -> '\'';
-                    case '\\' -> '\\';
-                    case '"' -> '"';
-                    default -> {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-            return runtime.newChar(c);
-        }
-        if (child instanceof StringLiteral sl) {
-            return runtime.newStringConstant(sl.getString());
-        }
-        if (child instanceof NullLiteral) {
-            return runtime.nullConstant();
-        }
-        if (child instanceof ThisLiteral) {
-            return runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
-        }
-        if (!le.children().isEmpty() && le.get(0) instanceof KeyWord kw && SUPER.equals(kw.getType())) {
-            return runtime.newVariableExpression(runtime.newThis(
-                    context.enclosingType().parentClass().typeInfo().asParameterizedType(),
-                    null, true));
-        }
-        throw new UnsupportedOperationException("literal expression " + le.getClass());
+        return c;
     }
 
     private static long parseLong(String s) {
