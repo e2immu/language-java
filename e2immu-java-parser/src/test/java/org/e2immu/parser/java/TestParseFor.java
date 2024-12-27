@@ -61,7 +61,7 @@ public class TestParseFor extends CommonTestParse {
             assertEquals("int i=0,j=10;", s.initializers().get(0).toString());
 
             assertEquals("i<args.length&&j>0", s.expression().toString());
-            assertEquals("j>0&&i<args.length", runtime.sortAndSimplify(s.expression()).toString());
+            assertEquals("j>=1&&-1+args.length>=i", runtime.sortAndSimplify(true, s.expression()).toString());
 
             assertEquals("i++", s.updaters().get(0).toString());
             assertEquals("--j", s.updaters().get(1).toString());
@@ -91,7 +91,7 @@ public class TestParseFor extends CommonTestParse {
         if (main.methodBody().statements().get(1) instanceof ForStatement s) {
             assertEquals(2, s.initializers().size());
             assertEquals("i<args.length&&j>0", s.expression().toString());
-            assertEquals("j>0&&i<args.length", runtime.sortAndSimplify(s.expression()).toString());
+            assertEquals("j>0&&i<args.length", runtime.sortAndSimplify(false, s.expression()).toString());
             assertTrue(s.updaters().isEmpty());
         } else fail();
     }

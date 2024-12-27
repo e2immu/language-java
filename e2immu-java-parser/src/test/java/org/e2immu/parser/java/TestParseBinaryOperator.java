@@ -60,13 +60,13 @@ public class TestParseBinaryOperator extends CommonTestParse {
         MethodInfo or = typeInfo.findUniqueMethod("or", 2);
         if (or.methodBody().statements().get(0) instanceof ReturnStatement rs) {
             assertEquals("b||this.c||!a", rs.expression().toString());
-            assertEquals("this.c||!a||b", runtime.sortAndSimplify(rs.expression()).toString());
+            assertEquals("this.c||!a||b", runtime.sortAndSimplify(true, rs.expression()).toString());
         } else fail();
         MethodInfo subtract = typeInfo.findUniqueMethod("subtract", 2);
         if (subtract.methodBody().statements().get(0) instanceof ReturnStatement rs) {
             assertEquals("return i-j;", rs.toString());
             assertInstanceOf(BinaryOperator.class, rs.expression());
-            Expression ss = runtime.sortAndSimplify(rs.expression());
+            Expression ss = runtime.sortAndSimplify(true, rs.expression());
             if (ss instanceof Sum s) {
                 assertEquals("i", s.lhs().toString());
                 if (s.rhs() instanceof Negation n) {
