@@ -61,6 +61,9 @@ public class TestParseArrayInitializer extends CommonTestParse {
             assertEquals(2, cc.parameterizedType().arrays());
             assertEquals(runtime.stringParameterizedType(), cc.parameterizedType().copyWithoutArrays());
             assertEquals("new String[][]{{\"a\"},{}}", cc.toString());
+            assertEquals(2, cc.parameterExpressions().size());
+            assertTrue(cc.parameterExpressions().get(0).isEmpty());
+            assertTrue(cc.parameterExpressions().get(1).isEmpty());
         } else fail();
         if (block.statements().get(4) instanceof LocalVariableCreation lvc &&
             lvc.localVariable().assignmentExpression() instanceof ConstructorCall cc) {
