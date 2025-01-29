@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -100,16 +101,10 @@ public class ParseExpression extends CommonParse {
             return parseAssignment(context, index, assignmentExpression, comments, source);
         }
         if (node instanceof ArrayAccess arrayAccess) {
-            assert arrayAccess.size() == 4 : "Not implemented";
-            Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
-            ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
-            Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
-            Variable variable = runtime.newDependentVariable(ae, ie);
-            return runtime.newVariableExpressionBuilder().addComments(comments).setSource(source)
-                    .setVariable(variable).build();
+            return parseArrayAccess(context, index, forwardType, arrayAccess, comments, source);
         }
         if (node instanceof ClassLiteral cl) {
-            return parseClassLiteral(context, cl);
+            return parseClassLiteral(context, comments, source, cl);
         }
         if (node instanceof Parentheses p) {
             return parseParentheses(context, index, comments, source, forwardType, p);
@@ -163,16 +158,28 @@ public class ParseExpression extends CommonParse {
         throw new UnsupportedOperationException("node " + node.getClass());
     }
 
+    private VariableExpression parseArrayAccess(Context context, String index, ForwardType forwardType, ArrayAccess arrayAccess, List<Comment> comments, Source source) {
+        assert arrayAccess.size() == 4 : "Not implemented";
+        Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
+        ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
+        Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
+        Variable variable = runtime.newDependentVariable(ae, ie);
+        return runtime.newVariableExpressionBuilder().addComments(comments).setSource(source)
+                .setVariable(variable).build();
+    }
+
     private VariableExpression parseDotThisDotSuper(Context context, Node node, Source source) {
         ParameterizedType type;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (node.get(0) instanceof Name name) {
-            type = parsers.parseType().parse(context, name);
+            type = parsers.parseType().parse(context, name, detailedSourcesBuilder);
         } else throw new Summary.ParseException(context.info(), "expected Name");
         boolean isSuper = node instanceof DotSuper;
         TypeInfo explicitType = type.bestTypeInfo();
         return runtime.newVariableExpressionBuilder()
-                .setSource(source)
-                .setVariable(runtime.newThis(type, explicitType, isSuper)).build();
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .setVariable(runtime.newThis(type, explicitType, isSuper))
+                .build();
     }
 
     private Expression parseInstanceOf(Context context, String index, ForwardType forwardType,
@@ -181,17 +188,20 @@ public class ParseExpression extends CommonParse {
         assert INSTANCEOF.equals(ioe.get(1).getType());
         ParameterizedType testType;
         LocalVariable patternVariable;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (ioe.get(2) instanceof NoVarDeclaration nvd) {
-            testType = parsers.parseType().parse(context, nvd.get(0));
+            testType = parsers.parseType().parse(context, nvd.get(0), detailedSourcesBuilder);
             String lvName = nvd.get(1).getSource();
             patternVariable = runtime.newLocalVariable(lvName, testType);
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(patternVariable, source(nvd));
             context.variableContext().add(patternVariable);
         } else {
-            testType = parsers.parseType().parse(context, ioe.get(2));
+            testType = parsers.parseType().parse(context, ioe.get(2), detailedSourcesBuilder);
             patternVariable = null;
         }
         return runtime.newInstanceOfBuilder()
-                .setSource(source).addComments(comments)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addComments(comments)
                 .setExpression(expression).setTestType(testType).setPatternVariable(patternVariable)
                 .build();
     }
@@ -266,9 +276,13 @@ public class ParseExpression extends CommonParse {
                 .addSwitchEntries(entries).build();
     }
 
-    private Expression parseClassLiteral(Context context, ClassLiteral cl) {
-        ParameterizedType pt = parsers.parseType().parse(context, cl);
-        return runtime.newClassExpression(pt.typeInfo());
+    private Expression parseClassLiteral(Context context, List<Comment> comments, Source source, ClassLiteral cl) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        ParameterizedType pt = parsers.parseType().parse(context, cl, detailedSourcesBuilder);
+        return runtime.newClassExpressionBuilder(pt.typeInfo())
+                .addComments(comments)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .build();
     }
 
     /*
@@ -609,13 +623,16 @@ public class ParseExpression extends CommonParse {
     }
 
     private Cast parseCast(Context context, String index, List<Comment> comments, Source source, CastExpression castExpression) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+
         // 0 = '(', 2 = ')'
-        ParameterizedType pt = parsers.parseType().parse(context, castExpression.get(1));
+        ParameterizedType pt = parsers.parseType().parse(context, castExpression.get(1), detailedSourcesBuilder);
         // can technically be anything
         ForwardType fwd = context.newForwardType(pt);
         Expression expression = parse(context, index, fwd, castExpression.get(3));
         return runtime.newCastBuilder().setExpression(expression).setParameterizedType(pt)
-                .setSource(source).addComments(comments).build();
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addComments(comments).build();
     }
 
     private Expression parseAdditive(Context context, String index, AdditiveExpression ae) {

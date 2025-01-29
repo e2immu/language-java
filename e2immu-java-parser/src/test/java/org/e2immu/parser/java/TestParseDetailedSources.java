@@ -1,14 +1,13 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.DetailedSources;
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseDetailedSources extends CommonTestParse {
 
@@ -23,7 +22,7 @@ public class TestParseDetailedSources extends CommonTestParse {
                 final int len2 = args[0].length();
               }
               private Hashtable<String, Integer> table;
-            
+              Hashtable<String, String> table2;
             }
             """;
 
@@ -71,5 +70,16 @@ public class TestParseDetailedSources extends CommonTestParse {
         assertEquals("8-21:8-26", dst.detail(table.type().parameters().get(0)).compact2());
         assertEquals("8-29:8-35", dst.detail(table.type().parameters().get(1)).compact2());
         assertEquals("8-38:8-42", dst.detail(table.name()).compact2());
+
+        FieldInfo table2 = typeInfo.getFieldByName("table2", true);
+        DetailedSources dst2 = table2.source().detailedSources();
+        assertEquals("9-3:9-27", dst2.detail(table2.type()).compact2());
+        assertEquals("9-3:9-11", dst2.detail(table2.type().typeInfo()).compact2());
+        ParameterizedType stringPt = table2.type().parameters().get(0);
+        assertNotSame(runtime.stringParameterizedType(), stringPt);
+        assertEquals(runtime.stringParameterizedType(), stringPt);
+        assertEquals("9-13:9-18", dst2.detail(stringPt).compact2());
+        assertEquals("9-21:9-26", dst2.detail(table2.type().parameters().get(1)).compact2());
+        assertEquals("9-29:9-34", dst2.detail(table2.name()).compact2());
     }
 }

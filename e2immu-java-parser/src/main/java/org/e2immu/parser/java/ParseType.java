@@ -28,10 +28,6 @@ public class ParseType extends CommonParse {
     ObjectType + Delimiter + Delimiter (3 children, nodes is a ReferenceType)
 
      */
-    public ParameterizedType parse(Context context, List<Node> nodes) {
-        return parse(context, nodes, true, null);
-    }
-
     public ParameterizedType parse(Context context, List<Node> nodes, DetailedSources.Builder detailedSourcesBuilder) {
         return parse(context, nodes, true, detailedSourcesBuilder);
     }
@@ -49,7 +45,7 @@ public class ParseType extends CommonParse {
         ParameterizedType pt;
         Node n0 = nodes.get(0);
         if (n0 instanceof ReferenceType rt) {
-            return parse(context, rt);
+            return parse(context, rt, detailedSourcesBuilder);
         }
         if (nodes instanceof ObjectType ot) {
             pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);

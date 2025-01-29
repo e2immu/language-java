@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
@@ -59,6 +60,7 @@ public class ParseTypeDeclaration extends CommonParse {
                                    Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                    TypeDeclaration td) {
         List<Comment> comments = comments(td);
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         int i = 0;
         // in the annotations, we can refer to our own static fields, so we wait a little to parse them
@@ -86,6 +88,7 @@ public class ParseTypeDeclaration extends CommonParse {
         String simpleName;
         if (td.get(i) instanceof Identifier identifier) {
             simpleName = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(simpleName, source(identifier));
             i++;
         } else throw new UnsupportedOperationException();
 
@@ -97,7 +100,6 @@ public class ParseTypeDeclaration extends CommonParse {
         Source source = source(typeInfo, "", td);
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
-        builder.setSource(source);
         builder.computeAccess();
         builder.setSource(source(typeInfo, null, td));
         builder.setEnclosingMethod(context.enclosingMethod());
@@ -119,7 +121,8 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         if (!typeParametersToParse.isEmpty()) {
-            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, newContext, typeInfo);
+            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, newContext, typeInfo,
+                    detailedSourcesBuilder);
             for (TypeParameter typeParameter : typeParameters) {
                 builder.addOrSetTypeParameter(typeParameter);
             }
@@ -145,7 +148,7 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setParentClass(runtime.objectParameterizedType());
         if (td.get(i) instanceof ExtendsList extendsList) {
             for (int j = 1; j < extendsList.size(); j += 2) {
-                ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j), detailedSourcesBuilder);
                 if (typeNature.isInterface()) {
                     builder.addInterfaceImplemented(pt);
                 } else {
@@ -157,7 +160,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         if (td.get(i) instanceof ImplementsList implementsList) {
             for (int j = 1; j < implementsList.size(); j += 2) {
-                ParameterizedType pt = parsers.parseType().parse(newContext, implementsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, implementsList.get(j), detailedSourcesBuilder);
                 builder.addInterfaceImplemented(pt);
             }
             i++;
@@ -166,7 +169,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         if (td.get(i) instanceof PermitsList permitsList) {
             for (int j = 1; j < permitsList.size(); j += 2) {
-                ParameterizedType pt = parsers.parseType().parse(newContext, permitsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, permitsList.get(j), detailedSourcesBuilder);
                 builder.addPermittedType(pt.typeInfo());
             }
             i++;
@@ -255,6 +258,8 @@ public class ParseTypeDeclaration extends CommonParse {
         if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {
             getSetUtil.createSyntheticFields(typeInfo);
         }
+
+        builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         return typeInfo;
     }
 
@@ -298,16 +303,21 @@ public class ParseTypeDeclaration extends CommonParse {
 
     private RecordField parseRecordField(Context context, TypeInfo typeInfo, RecordComponent rc) {
         int i = 0;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         List<AnnotationExpression> annotations = new ArrayList<>();
         while (true) {
             Node tdi = rc.get(i);
             if (tdi instanceof Annotation a) {
-                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                annotations.add(ae);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                        annotations.add(ae);
+                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
                     }
                 }
             } else break;
@@ -316,7 +326,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
         ParameterizedType pt;
         if (rc.get(i) instanceof Type type) {
-            pt = parsers.parseType().parse(context, type);
+            pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             i++;
         } else throw new Summary.ParseException(typeInfo, "Expected type in record component");
         boolean varargs;
@@ -332,6 +342,7 @@ public class ParseTypeDeclaration extends CommonParse {
         String name;
         if (rc.get(i) instanceof Identifier identifier) {
             name = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
         } else {
             throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
         }
@@ -343,7 +354,8 @@ public class ParseTypeDeclaration extends CommonParse {
                 .addAnnotations(annotations)
                 .computeAccess()
                 .commit();
-        Source source = source(fieldInfo, "", rc);
+        Source source1 = source(fieldInfo, "", rc);
+        Source source = detailedSourcesBuilder == null ? source1 : source1.withDetailedSources(detailedSourcesBuilder.build());
         List<Comment> comments = comments(rc);
         return new RecordField(comments, source, fieldInfo, varargs);
     }

@@ -117,7 +117,8 @@ public class ParseMethodDeclaration extends CommonParse {
         Context contextWithTP = context.newTypeContext();
 
         if (!typeParametersToParse.isEmpty()) {
-            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo);
+            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo,
+                    detailedSourcesBuilder);
             for (TypeParameter typeParameter : typeParameters) {
                 builder.addTypeParameter(typeParameter);
             }
@@ -142,7 +143,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } // a constructor can be a "compact" one in records
         if (md.get(i) instanceof ThrowsList throwsList) {
             for (int j = 1; j < throwsList.size(); j += 2) {
-                ParameterizedType pt = parsers.parseType().parse(newContext, throwsList.get(j));
+                ParameterizedType pt = parsers.parseType().parse(newContext, throwsList.get(j), detailedSourcesBuilder);
                 builder.addExceptionType(pt);
             }
             i++;

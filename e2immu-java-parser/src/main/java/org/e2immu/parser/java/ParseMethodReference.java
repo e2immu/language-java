@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.MethodReference;
@@ -29,10 +30,11 @@ public class ParseMethodReference extends CommonParse {
                             ForwardType forwardType,
                             org.parsers.java.ast.MethodReference mr) {
         Expression scope;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         Node n0 = mr.get(0);
         if (n0 instanceof Type) {
             // BEWARE! even if n0 represents a variable, we may end up in this branch
-            ParameterizedType pt = parsers.parseType().parse(context, n0, false, null);
+            ParameterizedType pt = parsers.parseType().parse(context, n0, false, detailedSourcesBuilder);
             if (pt != null) {
                 scope = runtime.newTypeExpression(pt, runtime.diamondNo());
             } else if (n0 instanceof ObjectType ot) {
@@ -51,14 +53,16 @@ public class ParseMethodReference extends CommonParse {
         } else {
             throw new UnsupportedOperationException();
         }
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(methodName, source(mr2));
+        Source source1 = detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build());
         if (forwardType.erasure()) {
             Either<Set<MethodResolution.Count>, Expression> either = context.methodResolution()
-                    .computeMethodReferenceErasureCounts(context, comments, source, scope, methodName);
+                    .computeMethodReferenceErasureCounts(context, comments, source1, scope, methodName);
             if (either.isRight()) return either.getRight();
-            return new LambdaErasure(runtime, either.getLeft(), source);
+            return new LambdaErasure(runtime, either.getLeft(), source1);
         }
 
-        return context.methodResolution().resolveMethodReference(context, comments, source, index, forwardType,
+        return context.methodResolution().resolveMethodReference(context, comments, source1, index, forwardType,
                 scope, methodName);
     }
 

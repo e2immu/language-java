@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.Lambda;
@@ -169,16 +170,24 @@ public class ParseLambdaExpression extends CommonParse {
                 if (lambdaParameters.get(i) instanceof LambdaParameter lp) {
                     ParameterizedType type;
                     Lambda.OutputVariant outputVariant;
+                    DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+
                     if (lp.get(0) instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
                         type = forwardType.type().parameters().get(1);
                         outputVariant = runtime.lambdaOutputVariantEmpty();
                     } else {
-                        type = parsers.parseType().parse(context, lp.get(0));
+                        type = parsers.parseType().parse(context, lp.get(0), detailedSourcesBuilder);
                         outputVariant = runtime.lambdaOutputVariantTyped();
                     }
                     Identifier identifier = (Identifier) lp.get(1);
                     ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type.ensureBoxed(runtime));
                     outputVariants.add(outputVariant);
+
+                    Source source = source(pi, null, lp);
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
+                    pi.builder().setSource(detailedSourcesBuilder == null ? source
+                            : source.withDetailedSources(detailedSourcesBuilder.build()));
+
                     pi.builder().commit();
                     newContext.variableContext().add(pi);
                 } else if (lambdaParameters.get(i) instanceof Delimiter) {

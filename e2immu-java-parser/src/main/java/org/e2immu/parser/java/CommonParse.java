@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.Info;
@@ -74,6 +75,7 @@ public abstract class CommonParse {
         return runtime.newParserSource(null, null, node.getBeginLine(), node.getBeginColumn(),
                 node.getEndLine(), node.getEndColumn());
     }
+
     // meant for detailed sources
     public Source source(Node node, int start, int end) {
         Node s = node.get(start);
@@ -84,7 +86,8 @@ public abstract class CommonParse {
 
 
     // code copied from ParseTypeDeclaration
-    protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex, boolean complain) {
+    protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex,
+                                               boolean complain, DetailedSources.Builder detailedSourcesBuilder) {
         String name;
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
@@ -106,7 +109,8 @@ public abstract class CommonParse {
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (tp.get(i) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain, null);
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain,
+                        detailedSourcesBuilder);
                 if (typeBound == null) {
                     assert !complain;
                     return null;
@@ -220,7 +224,8 @@ public abstract class CommonParse {
     }
 
 
-    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner) {
+    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner,
+                                                    DetailedSources.Builder detailedSourcesBuilder) {
         int infiniteLoopProtection = typeParametersToParse.size() + 2;
         boolean resolved = false;
         TypeParameter[] typeParameters = new TypeParameter[typeParametersToParse.size()];
@@ -229,7 +234,8 @@ public abstract class CommonParse {
             int tpIndex = 0;
             for (Node unparsedTypeParameter : typeParametersToParse) {
                 if (typeParameters[tpIndex] == null) {
-                    TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner, tpIndex, false);
+                    TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner,
+                            tpIndex, false, detailedSourcesBuilder);
                     if (typeParameter != null) {
                         // paresTypeParameter has added it to the contextWithTP
                         typeParameters[tpIndex] = typeParameter;

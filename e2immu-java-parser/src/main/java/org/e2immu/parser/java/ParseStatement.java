@@ -217,6 +217,7 @@ public class ParseStatement extends CommonParse {
             int blockCount = 1;
             while (i < tryStatement.size() && tryStatement.get(i) instanceof CatchBlock catchBlock) {
                 Context catchContext = context.newVariableContext("catchBlock" + blockCount);
+                DetailedSources.Builder detailedSourcesBuilderCb = context.newDetailedSourcesBuilder();
                 org.e2immu.language.cst.api.statement.TryStatement.CatchClause.Builder ccBuilder
                         = runtime.newCatchClauseBuilder();
                 int j = 2;
@@ -235,10 +236,12 @@ public class ParseStatement extends CommonParse {
                     if (cbj instanceof Type type) {
                         for (Node child : type.children()) {
                             if (child instanceof Annotation a) {
-                                ccBuilder.addAnnotation(parsers.parseAnnotationExpression().parse(context, a));
+                                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                                ccBuilder.addAnnotation(ae);
+                                if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(ae, source(a));
                             }
                         }
-                        ParameterizedType pt = parsers.parseType().parse(context, type);
+                        ParameterizedType pt = parsers.parseType().parse(context, type, detailedSourcesBuilderCb);
                         exceptionTypes.add(pt);
                         ccBuilder.addType(pt);
                     } else if (cbj instanceof Identifier) {
@@ -260,6 +263,7 @@ public class ParseStatement extends CommonParse {
                                 .reduce(exceptionTypes.get(0), runtime::commonType);
                     }
                     LocalVariable cv = runtime.newLocalVariable(variableName, commonType);
+                    if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(cv, source(identifier));
                     ccBuilder.setCatchVariable(cv);
                     catchContext.variableContext().add(cv);
                     j++;
@@ -271,7 +275,10 @@ public class ParseStatement extends CommonParse {
                     String newIndex = index + "." + StringUtil.pad(blockCount, n);
                     Block cbb = parsers.parseBlock().parse(catchContext, newIndex, null, cb);
                     blockCount++;
-                    builder.addCatchClause(ccBuilder.setBlock(cbb).build());
+                    Source source1 = source(context.info(), newIndex, catchBlock);
+                    Source source2 = detailedSourcesBuilderCb == null
+                            ? source1 : source1.withDetailedSources(detailedSourcesBuilderCb.build());
+                    builder.addCatchClause(ccBuilder.setBlock(cbb).setSource(source2).build());
                 } else throw new UnsupportedOperationException();
                 i++;
             }

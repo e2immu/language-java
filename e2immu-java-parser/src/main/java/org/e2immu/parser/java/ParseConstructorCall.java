@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -74,11 +75,14 @@ public class ParseConstructorCall extends CommonParse {
         } else {
             methodTypeArguments = List.of();
         }
-        ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(i));
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(i), detailedSourcesBuilder);
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
         ParameterizedType formalType = typeInfo.asParameterizedType();
-        Source source = source(newContext.info(), index, ae);
+        Source source1 = source(newContext.info(), index, ae);
+        // all other aspects of detailed sources can be found in the components of the ConstructorCall object
+        Source source = detailedSourcesBuilder == null ? source1 : source1.withDetailedSources(detailedSourcesBuilder.build());
 
         if (forwardType.erasure()) {
             i++;

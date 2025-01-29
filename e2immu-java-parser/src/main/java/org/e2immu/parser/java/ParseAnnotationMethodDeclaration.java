@@ -1,5 +1,7 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -24,10 +26,11 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         MethodInfo.MethodType methodType;
         ParameterizedType returnType;
         Node typeNode = amd.children().get(i);
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (typeNode instanceof Type type) {
             // depending on the modifiers...
             methodType = runtime.methodTypeMethod();
-            returnType = parsers.parseType().parse(context, type);
+            returnType = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             i++;
         } else throw new Summary.ParseException(context.info(), "Expect Type, got " + typeNode.getClass());
         String name;
@@ -41,7 +44,8 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         builder.commitParameters();
 
         builder.addComments(comments(amd));
-        builder.setSource(source(methodInfo, null, amd));
+        Source source = source(methodInfo, null, amd);
+        builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         return methodInfo;
     }
 }
