@@ -32,7 +32,7 @@ public class ParseMethodReference extends CommonParse {
         Node n0 = mr.get(0);
         if (n0 instanceof Type) {
             // BEWARE! even if n0 represents a variable, we may end up in this branch
-            ParameterizedType pt = parsers.parseType().parse(context, n0, false);
+            ParameterizedType pt = parsers.parseType().parse(context, n0, false, null);
             if (pt != null) {
                 scope = runtime.newTypeExpression(pt, runtime.diamondNo());
             } else if (n0 instanceof ObjectType ot) {

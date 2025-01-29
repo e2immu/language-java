@@ -68,7 +68,8 @@ public class ParseConstructorCall extends CommonParse {
         List<ParameterizedType> methodTypeArguments;
         // new <String>Parameterized(...) == generics on the constructor, see TestConstructor,2
         if (ae.get(1) instanceof TypeArguments tas) {
-            methodTypeArguments = parsers.parseType().parseTypeArguments(newContext, tas, true);
+            methodTypeArguments = parsers.parseType().parseTypeArguments(newContext, tas, true,
+                    null);
             ++i;
         } else {
             methodTypeArguments = List.of();

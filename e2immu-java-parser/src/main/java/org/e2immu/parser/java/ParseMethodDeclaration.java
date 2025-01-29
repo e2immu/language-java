@@ -1,5 +1,7 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -42,21 +44,30 @@ public class ParseMethodDeclaration extends CommonParse {
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<MethodModifier> methodModifiers = new ArrayList<>();
         List<Node> typeParametersToParse = new ArrayList<>();
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         while (true) {
             Node mdi = md.get(i);
             if (mdi instanceof Annotation a) {
-                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                annotations.add(ae);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
             } else if (mdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                        annotations.add(ae);
+                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
                     } else if (node instanceof KeyWord keyWord) {
-                        methodModifiers.add(modifier(keyWord));
+                        MethodModifier m = modifier(keyWord);
+                        methodModifiers.add(m);
+                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
                     }
                 }
             } else if (mdi instanceof KeyWord keyWord) {
-                methodModifiers.add(modifier(keyWord));
+                MethodModifier m = modifier(keyWord);
+                methodModifiers.add(m);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
             } else if (mdi instanceof TypeParameters) {
                 int j = 1;
                 while (j < mdi.size()) {
@@ -80,6 +91,7 @@ public class ParseMethodDeclaration extends CommonParse {
         String name;
         if (md.get(i) instanceof Identifier identifier) {
             name = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
             i++;
         } else throw new UnsupportedOperationException();
 
@@ -113,9 +125,8 @@ public class ParseMethodDeclaration extends CommonParse {
 
         // we need the type parameters in the context, because the return type may be one of them/contain one
         ParameterizedType returnType = rt == null ? runtime.parameterizedTypeReturnTypeOfConstructor()
-                : parsers.parseType().parse(contextWithTP, rt);
+                : parsers.parseType().parse(contextWithTP, rt, detailedSourcesBuilder);
         builder.setReturnType(returnType);
-
         ForwardType forwardType = contextWithTP.newForwardType(returnType);
         Context newContext = contextWithTP.newVariableContextForMethodBlock(methodInfo, forwardType);
 
@@ -168,13 +179,15 @@ public class ParseMethodDeclaration extends CommonParse {
         methodModifiers.forEach(builder::addMethodModifier);
         builder.computeAccess();
         builder.addComments(comments(md));
-        builder.setSource(source(methodInfo, null, md));
+        Source source = source(methodInfo, null, md);
+        builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         builder.addAnnotations(annotations);
         return methodInfo;
     }
 
     private void parseFormalParameter(Context context, MethodInfo.Builder builder, FormalParameter fp) {
         ParameterizedType typeOfParameter;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
         boolean isFinal = false;
@@ -182,7 +195,9 @@ public class ParseMethodDeclaration extends CommonParse {
         if (node0 instanceof Modifiers) {
             for (Node modifier : node0) {
                 if (modifier instanceof Annotation a) {
-                    annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                    AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                    annotations.add(ae);
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
                 } else if (modifier instanceof KeyWord kw) {
                     if (Token.TokenType.FINAL.equals(kw.getType())) {
                         isFinal = true;
@@ -193,7 +208,9 @@ public class ParseMethodDeclaration extends CommonParse {
             }
             ++i;
         } else if (node0 instanceof Annotation a) {
-            annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+            AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+            annotations.add(ae);
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
             ++i;
         } else if (node0 instanceof KeyWord kw) {
             if (Token.TokenType.FINAL.equals(kw.getType())) {
@@ -204,7 +221,7 @@ public class ParseMethodDeclaration extends CommonParse {
         Node node1 = fp.get(i);
         boolean varargs;
         if (node1 instanceof Type type) {
-            ParameterizedType pt = parsers.parseType().parse(context, type);
+            ParameterizedType pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             if (fp.get(i + 1) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
                 ++i;
                 typeOfParameter = pt.copyWithArrays(pt.arrays() + 1);
@@ -221,19 +238,22 @@ public class ParseMethodDeclaration extends CommonParse {
         Node node2 = fp.get(i);
         if (node2 instanceof Identifier identifier) {
             parameterName = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
         } else if (node2 instanceof VariableDeclaratorId vdi) {
             // old C-style array type 'I data[]'
             if (vdi.get(0) instanceof Identifier identifier) {
                 parameterName = identifier.getSource();
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
             } else throw new Summary.ParseException(context.info(), "Expect first part to be Identifier");
             int arrayCount = (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();
             typeOfParameter = typeOfParameter.copyWithArrays(arrayCount);
         } else {
             throw new UnsupportedOperationException();
         }
-
+        Source source = source(context.info(), "", fp);
         ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter, comments(fp),
-                source(context.info(), "", fp), annotations);
+                detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()),
+                annotations);
         ParameterInfo.Builder piBuilder = pi.builder();
         piBuilder.addAnnotations(annotations).setVarArgs(varargs).setIsFinal(isFinal);
         // do not commit yet!

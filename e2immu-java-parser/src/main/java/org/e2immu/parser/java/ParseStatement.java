@@ -461,8 +461,7 @@ public class ParseStatement extends CommonParse {
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
 
         Node typeNode = nvd.get(i);
-        ParameterizedType baseType = parsers.parseType().parse(context, typeNode);
-        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(baseType, source(typeNode));
+        ParameterizedType baseType = parsers.parseType().parse(context, typeNode, detailedSourcesBuilder);
         i++;
         boolean first = true;
         while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {

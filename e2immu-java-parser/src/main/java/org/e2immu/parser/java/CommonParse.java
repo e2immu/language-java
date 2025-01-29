@@ -74,6 +74,13 @@ public abstract class CommonParse {
         return runtime.newParserSource(null, null, node.getBeginLine(), node.getBeginColumn(),
                 node.getEndLine(), node.getEndColumn());
     }
+    // meant for detailed sources
+    public Source source(Node node, int start, int end) {
+        Node s = node.get(start);
+        Node e = node.get(end);
+        return runtime.newParserSource(null, null, s.getBeginLine(), s.getBeginColumn(),
+                e.getEndLine(), e.getEndColumn());
+    }
 
 
     // code copied from ParseTypeDeclaration
@@ -99,7 +106,7 @@ public abstract class CommonParse {
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (tp.get(i) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain);
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain, null);
                 if (typeBound == null) {
                     assert !complain;
                     return null;
