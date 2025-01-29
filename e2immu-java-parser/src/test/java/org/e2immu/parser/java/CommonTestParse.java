@@ -262,14 +262,18 @@ public class CommonTestParse {
     }
 
     protected Context parseReturnContext(String input) {
-        return parseReturnBoth(input, false).context;
+        return parseReturnBoth(input, false, false).context;
     }
 
     protected TypeInfo parse(String input) {
-        return parseReturnBoth(input, true).types.get(0);
+        return parse(input, false);
     }
 
-    protected ParseResult parseReturnBoth(String input, boolean failFast) {
+    protected TypeInfo parse(String input, boolean detailedSources) {
+        return parseReturnBoth(input, true, detailedSources).types.get(0);
+    }
+
+    protected ParseResult parseReturnBoth(String input, boolean failFast, boolean detailedSources) {
         Summary failFastSummary = new SummaryImpl(failFast);
         Supplier<JavaParser> parser = () -> {
             JavaParser p = new JavaParser(input);
@@ -280,7 +284,7 @@ public class CommonTestParse {
         SourceTypeMapImpl stm = new SourceTypeMapImpl();
         TypeContextImpl typeContext = new TypeContextImpl(compiledTypesManager, stm);
         Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
-        Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext);
+        Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext, detailedSources);
 
         ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(failFastSummary, runtime);
         CompilationUnit cu;

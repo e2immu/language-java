@@ -69,6 +69,12 @@ public abstract class CommonParse {
                 node.getEndColumn());
     }
 
+    // meant for detailed sources
+    public Source source(Node node) {
+        return runtime.newParserSource(null, null, node.getBeginLine(), node.getBeginColumn(),
+                node.getEndLine(), node.getEndColumn());
+    }
+
 
     // code copied from ParseTypeDeclaration
     protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex, boolean complain) {

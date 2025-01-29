@@ -1,7 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
-import org.e2immu.language.cst.api.element.Element;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -73,6 +73,7 @@ public class ParseStatement extends CommonParse {
         Source source = source(context.enclosingMethod(), index, statement);
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<LocalVariableCreation.Modifier> lvcModifiers = new ArrayList<>();
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         // annotations
         int i = 0;
@@ -81,17 +82,26 @@ public class ParseStatement extends CommonParse {
             if (si instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                        annotations.add(ae);
+                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
                     }
                 }
             } else if (si instanceof KeyWord) {
+                LocalVariableCreation.Modifier m;
                 if (Token.TokenType.FINAL.equals(si.getType())) {
-                    lvcModifiers.add(runtime.localVariableModifierFinal());
+                    m = runtime.localVariableModifierFinal();
                 } else if (Token.TokenType.VAR.equals(si.getType())) {
-                    lvcModifiers.add(runtime.localVariableModifierVar());
-                } else break;
+                    m = runtime.localVariableModifierVar();
+                } else {
+                    break;
+                }
+                lvcModifiers.add(m);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(si));
             } else if (si instanceof Annotation a) {
-                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                annotations.add(ae);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
             } else break;
             i++;
         }
@@ -120,57 +130,13 @@ public class ParseStatement extends CommonParse {
 
         // type declarator delimiter declarator
         if (statement instanceof NoVarDeclaration nvd) {
-            LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-
-            ParameterizedType baseType = parsers.parseType().parse(context, nvd.get(i));
-            i++;
-            boolean first = true;
-            while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
-                Node vd0 = vd.get(0);
-                Identifier identifier;
-                ParameterizedType type;
-                if (vd0 instanceof VariableDeclaratorId vdi) {
-                    identifier = (Identifier) vdi.get(0);
-                    int arrays = (vdi.size() - 1) / 2;
-                    type = baseType.copyWithArrays(arrays);
-                } else {
-                    identifier = (Identifier) vd0;
-                    type = baseType;
-                }
-                String variableName = identifier.getSource();
-                LocalVariable lv = runtime.newLocalVariable(variableName, type, runtime.newEmptyExpression());
-                context.variableContext().add(lv);
-                if (vd.size() > 2) {
-                    ForwardType forwardType = context.newForwardType(type);
-                    Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
-                    lv = runtime.newLocalVariable(variableName, type, expression);
-                    // replace! See TestAssignment,2 for the cause of this silly construction
-                    context.variableContext().add(lv);
-                }
-                if (first) {
-                    builder.setLocalVariable(lv);
-                    first = false;
-                } else {
-                    builder.addOtherLocalVariable(lv);
-                }
-                i += 2;
-            }
-            lvcModifiers.forEach(builder::addModifier);
-            return builder.setSource(source).addComments(comments).setLabel(label).addAnnotations(annotations).build();
+            return localVariableCreation(context, index, nvd, i, lvcModifiers, source, detailedSourcesBuilder,
+                    comments, label, annotations);
         }
 
         if (statement instanceof VarDeclaration varDeclaration) {
-            LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-            Identifier identifier = (Identifier) varDeclaration.get(i);
-            ForwardType forwardType = context.emptyForwardType();
-            Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(i + 2));
-            String variableName = identifier.getSource();
-            ParameterizedType type = expression.parameterizedType();
-            LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
-            context.variableContext().add(lv);
-            lvcModifiers.forEach(builder::addModifier);
-            return builder.setLocalVariable(lv).setSource(source).addComments(comments).setLabel(label)
-                    .addAnnotations(annotations).build();
+            return localVariableCreationWithVar(context, index, varDeclaration, i, lvcModifiers, source,
+                    detailedSourcesBuilder, comments, label, annotations);
         }
 
         if (statement instanceof EnhancedForStatement enhancedFor) {
@@ -485,6 +451,83 @@ public class ParseStatement extends CommonParse {
                     .build();
         }
         throw new UnsupportedOperationException("Node " + statement.getClass());
+    }
+
+    private LocalVariableCreation localVariableCreation(Context context, String index, NoVarDeclaration nvd, int i,
+                                                        List<LocalVariableCreation.Modifier> lvcModifiers,
+                                                        Source source, DetailedSources.Builder detailedSourcesBuilder,
+                                                        List<Comment> comments, String label,
+                                                        List<AnnotationExpression> annotations) {
+        LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
+
+        Node typeNode = nvd.get(i);
+        ParameterizedType baseType = parsers.parseType().parse(context, typeNode);
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(baseType, source(typeNode));
+        i++;
+        boolean first = true;
+        while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
+            Node vd0 = vd.get(0);
+            Identifier identifier;
+            ParameterizedType type;
+            if (vd0 instanceof VariableDeclaratorId vdi) {
+                identifier = (Identifier) vdi.get(0);
+                int arrays = (vdi.size() - 1) / 2;
+                type = baseType.copyWithArrays(arrays);
+                if (detailedSourcesBuilder != null) {
+                    detailedSourcesBuilder.put(type, source(typeNode));
+                }
+            } else {
+                identifier = (Identifier) vd0;
+                type = baseType;
+            }
+            String variableName = identifier.getSource();
+            LocalVariable lv = runtime.newLocalVariable(variableName, type, runtime.newEmptyExpression());
+            context.variableContext().add(lv);
+            if (vd.size() > 2) {
+                ForwardType forwardType = context.newForwardType(type);
+                Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
+                lv = runtime.newLocalVariable(variableName, type, expression);
+                // replace! See TestAssignment,2 for the cause of this silly construction
+                context.variableContext().add(lv);
+            }
+            if (detailedSourcesBuilder != null) {
+                detailedSourcesBuilder.put(lv, source(identifier));
+            }
+            if (first) {
+                builder.setLocalVariable(lv);
+                first = false;
+            } else {
+                builder.addOtherLocalVariable(lv);
+            }
+            i += 2;
+        }
+        lvcModifiers.forEach(builder::addModifier);
+        return builder
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addComments(comments).setLabel(label).addAnnotations(annotations).build();
+    }
+
+    private LocalVariableCreation localVariableCreationWithVar(Context context, String index, VarDeclaration varDeclaration,
+                                                               int i, List<LocalVariableCreation.Modifier> lvcModifiers,
+                                                               Source source, DetailedSources.Builder detailedSourcesBuilder,
+                                                               List<Comment> comments, String label,
+                                                               List<AnnotationExpression> annotations) {
+        LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
+        Identifier identifier = (Identifier) varDeclaration.get(i);
+        ForwardType forwardType = context.emptyForwardType();
+        Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(i + 2));
+        String variableName = identifier.getSource();
+        ParameterizedType type = expression.parameterizedType();
+        LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(identifier));
+        context.variableContext().add(lv);
+        lvcModifiers.forEach(builder::addModifier);
+        return builder.setLocalVariable(lv)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addComments(comments)
+                .setLabel(label)
+                .addAnnotations(annotations)
+                .build();
     }
 
     private static int countCatchBlocks(TryStatement tryStatement) {
