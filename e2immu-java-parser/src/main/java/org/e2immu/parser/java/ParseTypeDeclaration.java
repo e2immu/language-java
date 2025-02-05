@@ -86,17 +86,17 @@ public class ParseTypeDeclaration extends CommonParse {
             i++;
         }
         String simpleName;
-        if (td.get(i) instanceof Identifier identifier) {
-            simpleName = identifier.getSource();
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(simpleName, source(identifier));
-            i++;
-        } else throw new UnsupportedOperationException();
+        Identifier identifier = (Identifier) td.get(i);
+        simpleName = identifier.getSource();
+        i++;
 
         // during the "scan" phase, we have already created all the TypeInfo objects
         String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
         TypeInfo typeInfo = (TypeInfo) context.typeContext().get(fqn, true);
-
         assert typeInfo != null;
+
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo.simpleName(), source(identifier));
+
         Source source = source(typeInfo, "", td);
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
