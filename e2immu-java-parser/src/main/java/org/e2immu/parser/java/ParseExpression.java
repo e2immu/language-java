@@ -16,6 +16,7 @@ import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.LocalVariable;
+import org.e2immu.language.cst.api.variable.This;
 import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
@@ -64,7 +65,7 @@ public class ParseExpression extends CommonParse {
             return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
         }
         if (node instanceof LiteralExpression le) {
-            return parseLiteral(context, le);
+            return parseLiteral(context, comments, source, le);
         }
         if (node instanceof ConditionalAndExpression || node instanceof ConditionalOrExpression) {
             return parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
@@ -787,36 +788,36 @@ public class ParseExpression extends CommonParse {
 
     private static final long TWO32 = 0xFF_FF_FF_FFL;
 
-    private Expression parseLiteral(Context context, LiteralExpression le) {
+    private Expression parseLiteral(Context context, List<Comment> comments, Source source, LiteralExpression le) {
         Node child = le.children().get(0);
         if (child instanceof IntegerLiteral il) {
             long l = parseLong(il.getSource());
             if (l <= Integer.MAX_VALUE) {
-                return runtime.newInt((int) l);
+                return runtime.newInt(comments, source, (int) l);
             }
             if (l <= TWO32) {
                 long complement = ((~l) & TWO32);
                 int negative = (int) (-(complement + 1));
-                return runtime.newInt(negative);
+                return runtime.newInt(comments, source, negative);
             }
             throw new UnsupportedOperationException();
         }
         if (child instanceof LongLiteral ll) {
             long l = parseLong(ll.getSource());
-            return runtime.newLong(l);
+            return runtime.newLong(comments, source, l);
         }
         if (child instanceof FloatingPointLiteral fp) {
             String src = fp.getSource().toLowerCase().replace("_", "");
             if (src.endsWith("f") || src.endsWith("F")) {
-                return runtime.newFloat(Float.parseFloat(src.substring(0, src.length() - 1)));
+                return runtime.newFloat(comments, source, Float.parseFloat(src.substring(0, src.length() - 1)));
             }
             if (src.endsWith("d") || src.endsWith("D")) {
-                return runtime.newDouble(Double.parseDouble(src.substring(0, src.length() - 1)));
+                return runtime.newDouble(comments, source, Double.parseDouble(src.substring(0, src.length() - 1)));
             }
-            return runtime.newDouble(Double.parseDouble(src));
+            return runtime.newDouble(comments, source, Double.parseDouble(src));
         }
         if (child instanceof BooleanLiteral bl) {
-            return runtime.newBoolean("true".equals(bl.getSource()));
+            return runtime.newBoolean(comments, source, "true".equals(bl.getSource()));
         }
         if (child instanceof CharacterLiteral cl) {
             char c = cl.charAt(1);
@@ -837,21 +838,26 @@ public class ParseExpression extends CommonParse {
                     }
                 };
             }
-            return runtime.newChar(c);
+            return runtime.newChar(comments, source, c);
         }
         if (child instanceof StringLiteral sl) {
-            return runtime.newStringConstant(sl.getString());
+            return runtime.newStringConstant(comments, source, sl.getString());
         }
         if (child instanceof NullLiteral) {
-            return runtime.nullConstant();
+            return runtime.newNullConstant(comments, source);
         }
         if (child instanceof ThisLiteral) {
-            return runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
+            This thisVar = runtime.newThis(context.enclosingType().asParameterizedType());
+            return runtime.newVariableExpressionBuilder()
+                    .setSource(source).addComments(comments)
+                    .setVariable(thisVar).build();
         }
         if (!le.children().isEmpty() && le.get(0) instanceof KeyWord kw && SUPER.equals(kw.getType())) {
-            return runtime.newVariableExpression(runtime.newThis(
-                    context.enclosingType().parentClass().typeInfo().asParameterizedType(),
-                    null, true));
+            This thisVar = runtime.newThis(context.enclosingType().parentClass().typeInfo().asParameterizedType(),
+                    null, true);
+            return runtime.newVariableExpressionBuilder()
+                    .setSource(source).addComments(comments)
+                    .setVariable(thisVar).build();
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
     }
