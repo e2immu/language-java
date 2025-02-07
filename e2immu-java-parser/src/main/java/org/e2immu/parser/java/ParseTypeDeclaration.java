@@ -138,7 +138,12 @@ public class ParseTypeDeclaration extends CommonParse {
                 if (rhj instanceof Delimiter) break; // empty parameter list
                 if (rhj instanceof RecordComponent rc) {
                     recordFields.add(parseRecordField(newContext, typeInfo, rc));
-                } else throw new Summary.ParseException(newContext.info(), "Expected record component");
+                } else {
+                    throw new Summary.ParseException(newContext.info(), "Expected record component");
+                }
+            }
+            if (detailedSourcesBuilder != null) {
+                detailedSourcesBuilder.put(DetailedSources.END_OF_PARAMETER_LIST, source(rh.get(rh.size() - 1)));
             }
             i++;
         } else {

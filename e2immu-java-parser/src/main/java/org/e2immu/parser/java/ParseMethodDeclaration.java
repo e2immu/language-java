@@ -137,6 +137,10 @@ public class ParseMethodDeclaration extends CommonParse {
                     parseFormalParameter(newContext, builder, fp);
                 }
             }
+            if (detailedSourcesBuilder != null) {
+                Delimiter delimiter = (Delimiter) fps.get(fps.size() - 1);
+                detailedSourcesBuilder.put(DetailedSources.END_OF_PARAMETER_LIST, source(delimiter));
+            }
             i++;
         } else if (!compactConstructor) {
             throw new UnsupportedOperationException("Node " + md.get(i).getClass());
