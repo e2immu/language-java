@@ -19,9 +19,9 @@ public abstract class CommonJmodBaseTests {
 
     @BeforeAll
     public static void beforeClass() throws IOException {
-        Resources cp = new ResourcesImpl();
+        Resources cp = new ResourcesImpl(true);
         classPath = cp;
-        cp.addJmod(new URL("jar:file:" + System.getProperty("java.home") + "/jmods/java.base.jmod!/"));
+        cp.addJmod("home", new URL("jar:file:" + System.getProperty("java.home") + "/jmods/java.base.jmod!/"));
         CompiledTypesManagerImpl mgr = new CompiledTypesManagerImpl(classPath);
         compiledTypesManager = mgr;
         runtime = new RuntimeImpl();
