@@ -256,11 +256,12 @@ public class ParseMethodDeclaration extends CommonParse {
             throw new UnsupportedOperationException();
         }
         Source source = source(context.info(), "", fp);
-        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter, comments(fp),
-                detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()),
-                annotations);
-        ParameterInfo.Builder piBuilder = pi.builder();
-        piBuilder.addAnnotations(annotations).setVarArgs(varargs).setIsFinal(isFinal);
+        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
+        pi.builder().addComments(comments(fp))
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addAnnotations(annotations)
+                .setVarArgs(varargs)
+                .setIsFinal(isFinal);
         // do not commit yet!
         context.variableContext().add(pi);
     }
