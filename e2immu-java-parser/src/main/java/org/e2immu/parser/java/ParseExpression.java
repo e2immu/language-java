@@ -841,7 +841,13 @@ public class ParseExpression extends CommonParse {
             return runtime.newChar(comments, source, c);
         }
         if (child instanceof StringLiteral sl) {
-            return runtime.newStringConstant(comments, source, sl.getString());
+            String content;
+            if (Token.TokenType.TEXT_BLOCK_LITERAL.equals(sl.getType())) {
+                content = parseTextBlock(sl.getString());
+            } else {
+                content = sl.getString();
+            }
+            return runtime.newStringConstant(comments, source, content);
         }
         if (child instanceof NullLiteral) {
             return runtime.newNullConstant(comments, source);
@@ -860,6 +866,14 @@ public class ParseExpression extends CommonParse {
                     .setVariable(thisVar).build();
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
+    }
+
+    private String parseTextBlock(String string) {
+        String withoutQuotes = string.substring(2, string.length() - 2);
+        int lastNewline = withoutQuotes.lastIndexOf('\n');
+        int leadingSpaces = withoutQuotes.length() - (lastNewline+1);
+        String replace = "\n"+(" ".repeat(leadingSpaces));
+        return withoutQuotes.replace(replace, "\n").substring(1);
     }
 
     private static long parseLong(String s) {

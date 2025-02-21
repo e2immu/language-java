@@ -3,16 +3,21 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.expression.IntConstant;
 import org.e2immu.language.cst.api.expression.LongConstant;
+import org.e2immu.language.cst.api.expression.StringConstant;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestParseLiteral extends CommonTestParse {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestParseLiteral.class);
+
     @Language("java")
     String INPUT1 = """
             package a.b;
@@ -87,6 +92,35 @@ public class TestParseLiteral extends CommonTestParse {
             && eas.expression() instanceof Assignment a) {
             assertInstanceOf(LongConstant.class, a.value());
             assertEquals("ll&=4294967295L", a.toString());
+        } else fail();
+    }
+
+
+    String INPUT4 = "package a.b; public class X { public void parse() { String s = \"a \\\" and \\\" b\"; } }";
+
+    @Test
+    public void test4() {
+       LOGGER.debug(INPUT4);
+        TypeInfo typeInfo = parse(INPUT4);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof StringConstant sc) {
+                assertEquals("a \" and \" b", sc.constant());
+            } else fail();
+        } else fail();
+    }
+
+    String INPUT5 = "package a.b; public class X { public void parse() { String s = \"\"\"\n    abc\n       12\"3\"\n    \"\"\"; } }";
+
+    @Test
+    public void test5() {
+        LOGGER.debug(INPUT5);
+        TypeInfo typeInfo = parse(INPUT5);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof StringConstant sc) {
+                assertEquals("abc\n   12\"3\"\n", sc.constant());
+            } else fail();
         } else fail();
     }
 }
