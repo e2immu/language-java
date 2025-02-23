@@ -22,6 +22,7 @@ import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.parser.java.util.EscapeSequence;
 import org.e2immu.parser.java.util.TextBlockParser;
 import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
@@ -826,21 +827,7 @@ public class ParseExpression extends CommonParse {
         if (child instanceof CharacterLiteral cl) {
             char c = cl.charAt(1);
             if (c == '\\') {
-                char c2 = cl.charAt(2);
-                c = switch (c2) {
-                    case '0' -> '\0';
-                    case 'b' -> '\b';
-                    case 'r' -> '\r';
-                    case 't' -> '\t';
-                    case 'n' -> '\n';
-                    case 'f' -> '\f';
-                    case '\'' -> '\'';
-                    case '\\' -> '\\';
-                    case '"' -> '"';
-                    default -> {
-                        throw new UnsupportedOperationException();
-                    }
-                };
+                c = EscapeSequence.escapeSequence(cl.charAt(2));
             }
             return runtime.newChar(comments, source, c);
         }

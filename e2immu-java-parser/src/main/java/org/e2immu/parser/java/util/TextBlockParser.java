@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.output.element.TextBlockFormatting;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.ast.StringLiteral;
 
 import java.util.List;
@@ -14,13 +15,13 @@ import java.util.regex.Pattern;
 public record TextBlockParser(Runtime runtime) {
     private static final Pattern SLASH_NEWLINE = Pattern.compile("\\\\\n");
 
-    private static final Pattern START = Pattern.compile("^\"\"[\t ]*\n", Pattern.MULTILINE);
+    private static final Pattern START = Pattern.compile("^\"\"\"[\t ]*\n", Pattern.MULTILINE);
 
     private static String stripQuotes(String s) {
         Matcher m = START.matcher(s);
         if (!m.find()) throw new UnsupportedOperationException();
         // we leave the initial \n, and trailing
-        return s.substring(m.end() - 1, s.length() - 2);
+        return s.substring(m.end() - 1, s.length() - 3);
     }
 
     private static final Pattern BLANK = Pattern.compile("\n[\t ]+(?=\n)", Pattern.MULTILINE);
@@ -37,11 +38,15 @@ public record TextBlockParser(Runtime runtime) {
 
     private static String removeIndentation(String s, int indent) {
         String indentString = " ".repeat(indent);
-        Pattern slashNewline = Pattern.compile("\n" + indentString);
+        Pattern slashNewline = Pattern.compile("(\\\\)?\n" + indentString);
         Matcher m = slashNewline.matcher(s);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {
-            m.appendReplacement(sb, "\n");
+            if (m.group(1) == null) {
+                m.appendReplacement(sb, "\n");
+            } else {
+                m.appendReplacement(sb, "");
+            }
         }
         m.appendTail(sb);
         return sb.toString();
@@ -50,7 +55,7 @@ public record TextBlockParser(Runtime runtime) {
     private static final Pattern INDENT_PATTERN = Pattern.compile("\n([\t ]*)([^\n]*)", Pattern.MULTILINE);
 
     public Expression parseTextBlock(List<Comment> comments, Source source, StringLiteral sl) {
-        String string1 = stripQuotes(sl.getString());
+        String string1 = stripQuotes(sl.getSource());
         String string = replaceBlankLines(string1);
 
         TextBlockFormatting.Builder formatting = runtime.newTextBlockFormattingBuilder();
@@ -73,7 +78,8 @@ public record TextBlockParser(Runtime runtime) {
             if (!empty) formatting.setTrailingClosingQuotes(true);
         }
         String indentationRemoved = optOutStripping ? string : removeIndentation(string, indent);
-        String content = indentationRemoved.substring(1);
+        String beforeEscapeProcessing = indentationRemoved.substring(1);
+        String content = EscapeSequence.translateEscapeInTextBlock(beforeEscapeProcessing);
         return runtime.newTextBlock(comments, source, content, formatting.build());
     }
 }

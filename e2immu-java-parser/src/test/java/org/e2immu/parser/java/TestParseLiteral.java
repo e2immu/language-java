@@ -199,7 +199,36 @@ public class TestParseLiteral extends CommonTestParse {
 
 
     @Language("java")
-    String INPUT6B = """
+    String INPUT7 = """
+            package a.b;
+            public class X {
+                public void parse() {
+                    String s = \"""
+                        abc\\
+                        def
+                        123
+                        \""";
+                }
+            }
+            """;
+
+    @DisplayName("text block, backslash")
+    @Test
+    public void test7() {
+        assertTrue(INPUT7.contains("\\"));
+        TypeInfo typeInfo = parse(INPUT7);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
+                assertEquals("abcdef\n123\n", tb.constant());
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
+                        tb.textBlockFormatting().toString());
+            } else fail();
+        } else fail();
+    }
+
+    @Language("java")
+    String INPUT7B = """
             package a.b;
             public class X {
                 public void parse() {
@@ -215,13 +244,13 @@ public class TestParseLiteral extends CommonTestParse {
     @DisplayName("text block, trailing quotes with backslash")
     @Test
     public void test6B() {
-        assertTrue(INPUT6B.contains("\\"));
-        TypeInfo typeInfo = parse(INPUT6B);
+        assertTrue(INPUT7B.contains("\\"));
+        TypeInfo typeInfo = parse(INPUT7B);
         MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
         if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
             if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
                 assertEquals("abc\ndef\n   123", tb.constant());
-                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=true]",
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
                         tb.textBlockFormatting().toString());
             } else fail();
         } else fail();
