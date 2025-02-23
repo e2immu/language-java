@@ -1,14 +1,13 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.expression.Assignment;
-import org.e2immu.language.cst.api.expression.IntConstant;
-import org.e2immu.language.cst.api.expression.LongConstant;
-import org.e2immu.language.cst.api.expression.StringConstant;
+import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +99,7 @@ public class TestParseLiteral extends CommonTestParse {
 
     @Test
     public void test4() {
-       LOGGER.debug(INPUT4);
+        LOGGER.debug(INPUT4);
         TypeInfo typeInfo = parse(INPUT4);
         MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
         if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
@@ -110,16 +109,120 @@ public class TestParseLiteral extends CommonTestParse {
         } else fail();
     }
 
-    String INPUT5 = "package a.b; public class X { public void parse() { String s = \"\"\"\n    abc\n       12\"3\"\n    \"\"\"; } }";
+    @Language("java")
+    String INPUT5 = """
+            package a.b;
+            public class X {
+                public void parse() {
+                    String s = \"""
+                        abc
+                           12"3"
+                        \""";
+                }
+            }
+            """;
 
+    @DisplayName("text block, basics")
     @Test
     public void test5() {
         LOGGER.debug(INPUT5);
         TypeInfo typeInfo = parse(INPUT5);
         MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
         if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
-            if (lvc.localVariable().assignmentExpression() instanceof StringConstant sc) {
-                assertEquals("abc\n   12\"3\"\n", sc.constant());
+            if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
+                assertEquals("abc\n   12\"3\"\n", tb.constant());
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
+                        tb.textBlockFormatting().toString());
+            } else fail();
+        } else fail();
+    }
+
+
+    @Language("java")
+    String INPUT5B = """
+            package a.b;
+            public class X {
+                public void parse() {
+                    String s = \"""  
+                        abc
+                
+                        def
+                        
+                           123
+                        \""";
+                }
+            }
+            """;
+
+    @DisplayName("text block, extra spacing and blank lines")
+    @Test
+    public void test5B() {
+        TypeInfo typeInfo = parse(INPUT5B);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
+                assertEquals("abc\n\ndef\n\n   123\n", tb.constant());
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
+                        tb.textBlockFormatting().toString());
+            } else fail();
+        } else fail();
+    }
+
+
+    @Language("java")
+    String INPUT6 = """
+            package a.b;
+            public class X {
+                public void parse() {
+                    String s = \"""
+                        abc
+                        def
+                           123\""";
+                }
+            }
+            """;
+
+    @DisplayName("text block, trailing quotes")
+    @Test
+    public void test6() {
+        LOGGER.debug(INPUT6);
+        TypeInfo typeInfo = parse(INPUT6);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
+                assertEquals("abc\ndef\n   123", tb.constant());
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=true]",
+                        tb.textBlockFormatting().toString());
+            } else fail();
+        } else fail();
+    }
+
+
+    @Language("java")
+    String INPUT6B = """
+            package a.b;
+            public class X {
+                public void parse() {
+                    String s = \"""
+                        abc
+                        def
+                           123\\
+                        \""";
+                }
+            }
+            """;
+
+    @DisplayName("text block, trailing quotes with backslash")
+    @Test
+    public void test6B() {
+        assertTrue(INPUT6B.contains("\\"));
+        TypeInfo typeInfo = parse(INPUT6B);
+        MethodInfo parse = typeInfo.findUniqueMethod("parse", 0);
+        if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
+            if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
+                assertEquals("abc\ndef\n   123", tb.constant());
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=true]",
+                        tb.textBlockFormatting().toString());
             } else fail();
         } else fail();
     }

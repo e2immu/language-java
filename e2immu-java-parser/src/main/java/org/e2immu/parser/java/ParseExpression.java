@@ -9,6 +9,7 @@ import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.output.element.TextBlockFormatting;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.SwitchEntry;
 import org.e2immu.language.cst.api.type.NamedType;
@@ -21,6 +22,7 @@ import org.e2immu.language.cst.api.variable.Variable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.parser.java.util.TextBlockParser;
 import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -34,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.parsers.java.Token.TokenType.*;
 
@@ -841,12 +845,10 @@ public class ParseExpression extends CommonParse {
             return runtime.newChar(comments, source, c);
         }
         if (child instanceof StringLiteral sl) {
-            String content;
             if (Token.TokenType.TEXT_BLOCK_LITERAL.equals(sl.getType())) {
-                content = parseTextBlock(sl.getString());
-            } else {
-                content = sl.getString();
+                return new TextBlockParser(runtime).parseTextBlock(comments, source, sl);
             }
+            String content = sl.getString();
             return runtime.newStringConstant(comments, source, content);
         }
         if (child instanceof NullLiteral) {
@@ -866,14 +868,6 @@ public class ParseExpression extends CommonParse {
                     .setVariable(thisVar).build();
         }
         throw new UnsupportedOperationException("literal expression " + le.getClass());
-    }
-
-    private String parseTextBlock(String string) {
-        String withoutQuotes = string.substring(2, string.length() - 2);
-        int lastNewline = withoutQuotes.lastIndexOf('\n');
-        int leadingSpaces = withoutQuotes.length() - (lastNewline+1);
-        String replace = "\n"+(" ".repeat(leadingSpaces));
-        return withoutQuotes.replace(replace, "\n").substring(1);
     }
 
     private static long parseLong(String s) {
