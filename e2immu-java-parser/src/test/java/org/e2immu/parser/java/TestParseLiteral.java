@@ -18,7 +18,7 @@ public class TestParseLiteral extends CommonTestParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestParseLiteral.class);
 
     @Language("java")
-    String INPUT1 = """
+    public static final String INPUT1 = """
             package a.b;
             public class X {
                 public double parse() {
@@ -33,7 +33,7 @@ public class TestParseLiteral extends CommonTestParse {
     }
 
     @Language("java")
-    String INPUT2 = """
+    public static final String INPUT2 = """
             package a.b;
             public class X {
                 public double parse() {
@@ -72,7 +72,7 @@ public class TestParseLiteral extends CommonTestParse {
     }
 
     @Language("java")
-    String INPUT3 = """
+    public static final String INPUT3 = """
             package a.b;
             public class X {
                 public long parse(long l) {
@@ -95,7 +95,7 @@ public class TestParseLiteral extends CommonTestParse {
     }
 
 
-    String INPUT4 = "package a.b; public class X { public void parse() { String s = \"a \\\" and \\\" b\"; } }";
+    public static final String INPUT4 = "package a.b; public class X { public void parse() { String s = \"a \\\" and \\\" b\"; } }";
 
     @Test
     public void test4() {
@@ -110,7 +110,7 @@ public class TestParseLiteral extends CommonTestParse {
     }
 
     @Language("java")
-    String INPUT5 = """
+    public static final String INPUT5 = """
             package a.b;
             public class X {
                 public void parse() {
@@ -139,15 +139,15 @@ public class TestParseLiteral extends CommonTestParse {
 
 
     @Language("java")
-    String INPUT5B = """
+    public static final String INPUT5B = """
             package a.b;
             public class X {
                 public void parse() {
                     String s = \"""  
                         abc
-                
+            
                         def
-                        
+            
                            123
                         \""";
                 }
@@ -170,7 +170,7 @@ public class TestParseLiteral extends CommonTestParse {
 
 
     @Language("java")
-    String INPUT6 = """
+    public static final String INPUT6 = """
             package a.b;
             public class X {
                 public void parse() {
@@ -199,7 +199,7 @@ public class TestParseLiteral extends CommonTestParse {
 
 
     @Language("java")
-    String INPUT7 = """
+    public static final String INPUT7 = """
             package a.b;
             public class X {
                 public void parse() {
@@ -221,14 +221,14 @@ public class TestParseLiteral extends CommonTestParse {
         if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
             if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
                 assertEquals("abcdef\n123\n", tb.constant());
-                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[3], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
                         tb.textBlockFormatting().toString());
             } else fail();
         } else fail();
     }
 
     @Language("java")
-    String INPUT7B = """
+    public static final String INPUT7B = """
             package a.b;
             public class X {
                 public void parse() {
@@ -250,7 +250,7 @@ public class TestParseLiteral extends CommonTestParse {
         if (parse.methodBody().statements().get(0) instanceof LocalVariableCreation lvc) {
             if (lvc.localVariable().assignmentExpression() instanceof TextBlock tb) {
                 assertEquals("abc\ndef\n   123", tb.constant());
-                assertEquals("TextBlockFormattingImpl[lineBreaks=[], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
+                assertEquals("TextBlockFormattingImpl[lineBreaks=[14], optOutWhiteSpaceStripping=false, trailingClosingQuotes=false]",
                         tb.textBlockFormatting().toString());
             } else fail();
         } else fail();

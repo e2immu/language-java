@@ -36,7 +36,7 @@ public record TextBlockParser(Runtime runtime) {
         return sb.toString();
     }
 
-    private static String removeIndentation(String s, int indent) {
+    private static String removeIndentation(String s, int indent, TextBlockFormatting.Builder builder) {
         String indentString = " ".repeat(indent);
         Pattern slashNewline = Pattern.compile("(\\\\)?\n" + indentString);
         Matcher m = slashNewline.matcher(s);
@@ -46,6 +46,8 @@ public record TextBlockParser(Runtime runtime) {
                 m.appendReplacement(sb, "\n");
             } else {
                 m.appendReplacement(sb, "");
+                // NOTE: the -1 is because we must remove the initial \n at the end
+                builder.addLineBreak(sb.length() - 1);
             }
         }
         m.appendTail(sb);
@@ -77,7 +79,7 @@ public record TextBlockParser(Runtime runtime) {
             }
             if (!empty) formatting.setTrailingClosingQuotes(true);
         }
-        String indentationRemoved = optOutStripping ? string : removeIndentation(string, indent);
+        String indentationRemoved = optOutStripping ? string : removeIndentation(string, indent, formatting);
         String beforeEscapeProcessing = indentationRemoved.substring(1);
         String content = EscapeSequence.translateEscapeInTextBlock(beforeEscapeProcessing);
         return runtime.newTextBlock(comments, source, content, formatting.build());
