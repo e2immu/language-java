@@ -25,10 +25,13 @@ class EnumSynthetics {
         // name() returns String
 
         MethodInfo name = runtime.newMethod(typeInfo, "name", runtime.methodTypeMethod());
-        name.builder().setSynthetic(true)
+        name.builder()
+                .setSynthetic(true)
                 .setAccess(runtime.accessPublic())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .setReturnType(runtime.stringParameterizedType())
+                .setMethodBody(runtime.emptyBlock())
+                .setMissingData(runtime.methodMissingMethodBody())
                 .commitParameters()
                 .commit();
         builder.addMethod(name);
@@ -36,11 +39,14 @@ class EnumSynthetics {
         // values() returns E[]
 
         MethodInfo values = runtime.newMethod(typeInfo, "values", runtime.methodTypeStaticMethod());
-        values.builder().setSynthetic(true)
+        values.builder()
+                .setSynthetic(true)
                 .setAccess(runtime.accessPublic())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .addMethodModifier(runtime.methodModifierStatic())
                 .setReturnType(runtime.newParameterizedType(typeInfo, 1))
+                .setMethodBody(runtime.emptyBlock())
+                .setMissingData(runtime.methodMissingMethodBody())
                 .commitParameters()
                 .commit();
         builder.addMethod(values);
@@ -48,11 +54,14 @@ class EnumSynthetics {
         // valueOf(String) returns E
 
         MethodInfo valueOf = runtime.newMethod(typeInfo, "valueOf", runtime.methodTypeStaticMethod());
-        valueOf.builder().setSynthetic(true)
+        valueOf.builder()
+                .setSynthetic(true)
                 .setAccess(runtime.accessPublic())
                 .addMethodModifier(runtime.methodModifierStatic())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .setReturnType(runtime.newParameterizedType(typeInfo, 0))
+                .setMethodBody(runtime.emptyBlock())
+                .setMissingData(runtime.methodMissingMethodBody())
                 .addParameter("name", runtime.stringParameterizedType());
         valueOf.builder()
                 .commitParameters()
