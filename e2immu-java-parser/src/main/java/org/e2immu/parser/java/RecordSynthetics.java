@@ -21,18 +21,22 @@ class RecordSynthetics {
 
     MethodInfo createSyntheticConstructor(Source source, List<ParseTypeDeclaration.RecordField> recordFields) {
         MethodInfo cc = runtime.newConstructor(typeInfo, runtime.methodTypeSyntheticConstructor());
-        Block.Builder methodBody = runtime.newBlockBuilder();
+        Block.Builder methodBody = runtime.newBlockBuilder().setSource(source);
         Access publicAccess = runtime.accessPublic();
         int count = 0;
         for (ParseTypeDeclaration.RecordField rf : recordFields) {
             ParameterInfo pi = cc.builder().addParameter(rf.fieldInfo().name(), rf.fieldInfo().type());
             pi.builder().setSynthetic(true).setAccess(publicAccess).setVarArgs(rf.varargs()).commit();
-            Assignment assignment = runtime.newAssignmentBuilder()
-                    .setValue(runtime.newVariableExpression(pi))
-                    .setTarget(runtime.newVariableExpression(runtime.newFieldReference(rf.fieldInfo())))
-                    .build();
             Source statementSource = runtime.newParserSource(cc, "" + count, rf.source().beginLine(),
                     rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
+            Assignment assignment = runtime.newAssignmentBuilder()
+                    .setSource(statementSource)
+                    .setValue(runtime.newVariableExpressionBuilder().setVariable(pi).setSource(statementSource).build())
+                    .setTarget(runtime.newVariableExpressionBuilder()
+                            .setVariable(runtime.newFieldReference(rf.fieldInfo()))
+                            .setSource(statementSource)
+                            .build())
+                    .build();
             methodBody.addStatement(runtime.newExpressionAsStatementBuilder()
                     .setExpression(assignment).setSource(statementSource).build());
             ++count;
@@ -59,8 +63,10 @@ class RecordSynthetics {
         FieldReference fr = runtime.newFieldReference(rf.fieldInfo());
         Source source = runtime.newParserSource(methodInfo, "0", rf.source().beginLine(),
                 rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
-        ReturnStatement rs = runtime.newReturnBuilder().setExpression(runtime.newVariableExpression(fr)).setSource(source).build();
-        Block methodBody = runtime.newBlockBuilder().addStatement(rs).build();
+        ReturnStatement rs = runtime.newReturnBuilder()
+                .setExpression(runtime.newVariableExpressionBuilder().setVariable(fr).setSource(source).build())
+                .setSource(source).build();
+        Block methodBody = runtime.newBlockBuilder().setSource(source).addStatement(rs).build();
         MethodInfo.Builder builder = methodInfo.builder();
         builder.setReturnType(rf.fieldInfo().type())
                 .setAccess(runtime.accessPublic())

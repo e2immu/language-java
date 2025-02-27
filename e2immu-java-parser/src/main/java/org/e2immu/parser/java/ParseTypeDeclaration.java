@@ -353,6 +353,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
         fieldInfo.builder()
+                .setSource(source(rc))
                 .setInitializer(runtime.newEmptyExpression())
                 .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())

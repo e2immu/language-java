@@ -58,10 +58,15 @@ public class ParseFieldDeclaration extends CommonParse {
         boolean isStatic = fieldModifiers.stream().anyMatch(FieldModifier::isStatic);
         TypeInfo owner = context.enclosingType();
         org.e2immu.language.cst.api.expression.Expression scope;
+        Source source = source(fd);
         if (isStatic) {
-            scope = runtime.newTypeExpression(owner.asSimpleParameterizedType(), runtime.diamondNo());
+            scope = runtime.newTypeExpressionBuilder()
+                    .setSource(source)
+                    .setParameterizedType(owner.asSimpleParameterizedType())
+                    .setDiamond(runtime.diamondNo()).build();
         } else {
-            scope = runtime.newVariableExpression(runtime.newThis(owner.asParameterizedType()));
+            scope = runtime.newVariableExpressionBuilder().setVariable(runtime.newThis(owner.asParameterizedType()))
+                    .setSource(source).build();
         }
 
         ParameterizedType parameterizedType;

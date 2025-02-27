@@ -302,15 +302,17 @@ public class ParseExpression extends CommonParse {
                 String beforeDot = name.substring(0, lastDot);
                 Variable array = parseVariable(context, comments, source, beforeDot);
                 assert array != null;
+                VariableExpression scope = runtime.newVariableExpressionBuilder().setVariable(array).setSource(source).build();
                 return runtime.newArrayLengthBuilder()
                         .addComments(comments).setSource(source)
-                        .setExpression(runtime.newVariableExpression(array))
+                        .setExpression(scope)
                         .build();
             }
             NamedType namedType = context.typeContext().get(name, false);
             if (namedType instanceof TypeInfo typeInfo) {
                 ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
-                return runtime.newTypeExpression(pt, runtime.diamondNo());
+                return runtime.newTypeExpressionBuilder().setParameterizedType(pt).setDiamond(runtime.diamondNo())
+                        .setSource(source).build();
             } else if (namedType instanceof TypeParameter) {
                 throw new Summary.ParseException(context.info(), "?");
             }
@@ -324,7 +326,10 @@ public class ParseExpression extends CommonParse {
             return runtime.newVariableExpressionBuilder().setVariable(v).setSource(source).addComments(comments).build();
         }
         if (context.enclosingType() != null) {
-            Expression scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
+            Expression scope = runtime.newVariableExpressionBuilder()
+                    .setVariable(runtime.newThis(context.enclosingType().asParameterizedType()))
+                    .setSource(source)
+                    .build();
             Variable v2 = findField(context, scope, name, false);
             if (v2 != null) {
                 return runtime.newVariableExpressionBuilder().setVariable(v2).setSource(source).addComments(comments).build();
@@ -333,7 +338,8 @@ public class ParseExpression extends CommonParse {
         NamedType namedType = context.typeContext().get(name, false);
         if (namedType instanceof TypeInfo typeInfo) {
             ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
-            return runtime.newTypeExpression(parameterizedType, runtime.diamondShowAll());
+            return runtime.newTypeExpressionBuilder().setParameterizedType(parameterizedType)
+                    .setDiamond(runtime.diamondShowAll()).setSource(source).build();
         } else if (namedType instanceof TypeParameter) {
             throw new Summary.ParseException(context.info(), "should not be possible");
         }
@@ -537,7 +543,7 @@ public class ParseExpression extends CommonParse {
                 assignmentOperator = runtime.assignMinusOperatorInt();
                 binaryOperator = runtime.minusOperatorInt();
             } else throw new UnsupportedOperationException();
-            return runtime.newAssignmentBuilder().setValue(runtime.intOne()).setTarget(targetVE)
+            return runtime.newAssignmentBuilder().setValue(runtime.intOne(source)).setTarget(targetVE)
                     .setAssignmentOperator(assignmentOperator).setAssignmentOperatorIsPlus(isPlus)
                     .setBinaryOperator(binaryOperator)
                     .setPrefixPrimitiveOperator(pre)
@@ -608,7 +614,10 @@ public class ParseExpression extends CommonParse {
         Node n0 = dotName.get(0);
         if (n0 instanceof LiteralExpression le) {
             if ("this".equals(le.getAsString())) {
-                scope = runtime.newVariableExpression(runtime.newThis(context.enclosingType().asParameterizedType()));
+                scope = runtime.newVariableExpressionBuilder()
+                        .setSource(source)
+                        .setVariable(runtime.newThis(context.enclosingType().asParameterizedType()))
+                        .build();
                 fr = findField(context, scope, name, true);
             } else throw new UnsupportedOperationException("NYI");
         } else {
