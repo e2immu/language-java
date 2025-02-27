@@ -322,7 +322,7 @@ public class ParseStatement extends CommonParse {
 
             if (statement.get(i) instanceof Delimiter d && Token.TokenType.SEMICOLON.equals(d.getType())) {
                 // no condition
-                builder.setExpression(runtime.constantTrue());
+                builder.setExpression(runtime.newBoolean(List.of(), source(d), true));
                 i++;
             } else {
                 Expression condition = parsers.parseExpression().parse(newContext, index, context.emptyForwardType(), statement.get(i));
