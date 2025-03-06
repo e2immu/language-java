@@ -265,7 +265,8 @@ public class ParseExpression extends CommonParse {
                 } else if (ncs1 instanceof org.parsers.java.ast.Expression expression) {
                     String newIndex = index + "." + StringUtil.pad(count, n) + "0";
                     Expression pe = parse(newContext, newIndex, forwardType, expression);
-                    entryBuilder.setStatement(runtime.newExpressionAsStatement(pe));
+                    entryBuilder.setStatement(runtime.newExpressionAsStatementBuilder().setExpression(pe)
+                            .setSource(pe.source()).build());
                     commonType = commonType == null ? pe.parameterizedType()
                             : runtime.commonType(commonType, pe.parameterizedType());
                 } else throw new Summary.ParseException(newContext.info(), "Expect statement, got " + ncs1.getClass());
