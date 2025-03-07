@@ -159,6 +159,13 @@ public class ParseLambdaExpression extends CommonParse {
             ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, 0);
 
             ParameterInfo pi = miBuilder.addParameter(parameterName, type);
+
+            Source source = source(pi, null, lhs);
+            DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
+            pi.builder().setSource(detailedSourcesBuilder == null ? source
+                    : source.withDetailedSources(detailedSourcesBuilder.build()));
+
             outputVariants.add(runtime.lambdaOutputVariantEmpty());
             pi.builder().commit();
             newContext.variableContext().add(pi);

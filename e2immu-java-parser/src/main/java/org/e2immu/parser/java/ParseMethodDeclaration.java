@@ -256,23 +256,15 @@ public class ParseMethodDeclaration extends CommonParse {
             throw new UnsupportedOperationException();
         }
         Source source = source(context.info(), "", fp);
-        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter, comments(fp),
-                detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()),
-                annotations);
-        ParameterInfo.Builder piBuilder = pi.builder();
-        piBuilder.addAnnotations(annotations).setVarArgs(varargs).setIsFinal(isFinal);
+        ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
+        pi.builder().addComments(comments(fp))
+                .addAnnotations(annotations)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .setVarArgs(varargs)
+                .setIsFinal(isFinal);
+
         // do not commit yet!
         context.variableContext().add(pi);
-    }
-
-
-    private Access access(List<MethodModifier> methodModifiers) {
-        for (MethodModifier methodModifier : methodModifiers) {
-            if (methodModifier.isPublic()) return runtime.accessPublic();
-            if (methodModifier.isPrivate()) return runtime.accessPrivate();
-            if (methodModifier.isProtected()) return runtime.accessProtected();
-        }
-        return runtime.accessPackage();
     }
 
     private MethodModifier modifier(KeyWord keyWord) {
