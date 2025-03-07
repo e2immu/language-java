@@ -34,7 +34,7 @@ dependencies {
     implementation("org.e2immu:e2immu-inspection-api:some.version")
     implementation("org.e2immu:e2immu-external-support:some.version")
     implementation("org.slf4j:slf4j-api:2.0.7")
-    implementation("org.ow2.asm:asm:9.5")
+    implementation("org.ow2.asm:asm:9.7.1")
 
     testImplementation("org.e2immu:e2immu-cst-impl:some.version")
     testImplementation("org.e2immu:e2immu-inspection-resource:some.version")
