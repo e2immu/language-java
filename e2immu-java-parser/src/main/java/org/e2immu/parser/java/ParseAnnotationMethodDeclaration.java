@@ -39,7 +39,10 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
             name = identifier.getSource();
         } else throw new Summary.ParseException(context.info(), "Expect Identifier, got " + identifierNode.getClass());
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
-        MethodInfo.Builder builder = methodInfo.builder().setReturnType(returnType);
+        MethodInfo.Builder builder = methodInfo.builder()
+                .setMethodBody(runtime.emptyBlock())
+                .setAccess(runtime.accessPublic())
+                .setReturnType(returnType);
 
         builder.commitParameters();
 
