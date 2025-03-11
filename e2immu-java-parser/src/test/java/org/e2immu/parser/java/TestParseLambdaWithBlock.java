@@ -39,7 +39,7 @@ public class TestParseLambdaWithBlock extends CommonTestParse {
         assertEquals("Type java.util.function.BiConsumer<Integer,Integer>", mapper.returnType().toString());
         if (mapper.methodBody().statements().get(1) instanceof ReturnStatement rs
             && rs.expression() instanceof Lambda lambda) {
-            assertEquals("a.b.C.$1.accept(Integer,Integer)", lambda.methodInfo().fullyQualifiedName());
+            assertEquals("a.b.C.$0.accept(Integer,Integer)", lambda.methodInfo().fullyQualifiedName());
             assertEquals("java.util.function.BiConsumer",
                     lambda.abstractFunctionalTypeInfo().fullyQualifiedName());
             assertEquals("Type java.util.function.BiConsumer<Integer,Integer>",

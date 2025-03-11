@@ -222,7 +222,7 @@ public class ParseConstructorCall extends CommonParse {
                                           ClassOrInterfaceBody body,
                                           Diamond diamond) {
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(),
-                context.anonymousTypeCounters().newIndex(context.enclosingType()));
+                context.enclosingType().builder().getAndIncrementAnonymousTypes());
         TypeNature typeNature = runtime.typeNatureClass();
         TypeInfo.Builder builder = anonymousType.builder();
         builder.setSource(source)

@@ -36,7 +36,7 @@ public class TestParseAnonymousType extends CommonTestParse {
         MethodInfo methodInfo = typeInfo.findUniqueMethod("test", 1);
         if (methodInfo.methodBody().statements().get(0) instanceof LocalVariableCreation lvc
             && lvc.localVariable().assignmentExpression() instanceof ConstructorCall cc) {
-            assertEquals("a.b.C.$1", cc.anonymousClass().fullyQualifiedName());
+            assertEquals("a.b.C.$0", cc.anonymousClass().fullyQualifiedName());
             assertEquals("Type java.util.function.Function<Integer,String>", cc.parameterizedType().toString());
             assertEquals(cc.parameterizedType(), cc.anonymousClass().interfacesImplemented().get(0));
             MethodInfo apply = cc.anonymousClass().findUniqueMethod("apply", 1);

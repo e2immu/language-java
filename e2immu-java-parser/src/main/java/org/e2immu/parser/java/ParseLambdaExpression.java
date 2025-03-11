@@ -49,7 +49,7 @@ public class ParseLambdaExpression extends CommonParse {
 
         List<Lambda.OutputVariant> outputVariants = new ArrayList<>();
 
-        int typeIndex = context.anonymousTypeCounters().newIndex(context.enclosingType());
+        int typeIndex = context.enclosingType().builder().getAndIncrementAnonymousTypes();
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(), typeIndex);
         assert source != null;
         anonymousType.builder()
@@ -109,6 +109,7 @@ public class ParseLambdaExpression extends CommonParse {
                 .addMethod(methodInfo)
                 .addInterfaceImplemented(functionalType)
                 .setEnclosingMethod(context.enclosingMethod())
+                .setSingleAbstractMethod(methodInfo)
                 .commit();
 
         return builder

@@ -36,7 +36,7 @@ public class TestParseLambdaExpression extends CommonTestParse {
         if (mapper.methodBody().statements().get(1) instanceof ReturnStatement rs
             && rs.expression() instanceof Lambda lambda) {
             assertEquals("t->t+this.s+k+lv", lambda.toString());
-            assertEquals("a.b.C.$1.apply(a.b.C)", lambda.methodInfo().fullyQualifiedName());
+            assertEquals("a.b.C.$0.apply(a.b.C)", lambda.methodInfo().fullyQualifiedName());
             assertEquals("Type String", lambda.methodInfo().returnType().toString());
             assertEquals("Type String", lambda.concreteReturnType().toString());
             assertEquals(2, lambda.concreteFunctionalType().parameters().size());
