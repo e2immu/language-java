@@ -3,6 +3,7 @@ package org.e2immu.parser.java.erasure;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.Precedence;
+import org.e2immu.language.cst.api.info.InfoMap;
 import org.e2immu.language.cst.api.output.OutputBuilder;
 import org.e2immu.language.cst.api.output.Qualification;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -61,5 +62,10 @@ public class LambdaErasure extends ErasureExpressionImpl {
 
     public Set<MethodResolution.Count> counts() {
         return counts;
+    }
+
+    @Override
+    public Expression rewire(InfoMap infoMap) {
+        throw new UnsupportedOperationException();
     }
 }
