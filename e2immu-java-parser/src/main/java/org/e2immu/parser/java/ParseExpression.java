@@ -605,7 +605,7 @@ public class ParseExpression extends CommonParse {
         if (methodInfo == null) {
             return expression;
         }
-        return runtime.newUnaryOperator(methodInfo, expression, runtime.precedenceUnary());
+        return runtime.newUnaryOperator(comments(ue), source(ue), methodInfo, expression, runtime.precedenceUnary());
     }
 
     private Expression parseDotName(Context context, List<Comment> comments, Source source, String index, Node dotName) {
