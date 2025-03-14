@@ -93,7 +93,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         SourceFile source = typeInfo == null
                 ? compiledTypesManager.classPath().fqnToPath(fqn, ".class")
                 : compiledTypesManager.classPath().sourceFileOfType(typeInfo, ".class");
-        assert source != null : "Cannot find " + fqn;
+        if (source == null) throw new RuntimeException("Cannot find FQN " + fqn + "; typeInfo " + typeInfo);
         return inspectFromPath(typeInfo, source, typeParameterContext, loadMode);
     }
 
