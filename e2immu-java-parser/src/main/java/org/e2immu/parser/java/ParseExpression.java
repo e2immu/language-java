@@ -296,6 +296,8 @@ public class ParseExpression extends CommonParse {
     can be a type (scope of a method), or a variable
      */
     private Expression parseName(Context context, List<Comment> comments, Source source, String name) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+
         int lastDot = name.lastIndexOf('.');
         if (lastDot > 0) {
             String trimmedAfterDot = name.substring(lastDot + 1).trim();
@@ -305,15 +307,20 @@ public class ParseExpression extends CommonParse {
                 assert array != null;
                 VariableExpression scope = runtime.newVariableExpressionBuilder().setVariable(array).setSource(source).build();
                 return runtime.newArrayLengthBuilder()
-                        .addComments(comments).setSource(source)
+                        .addComments(comments)
+                        .setSource(source)
                         .setExpression(scope)
                         .build();
             }
             NamedType namedType = context.typeContext().get(name, false);
             if (namedType instanceof TypeInfo typeInfo) {
                 ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
-                return runtime.newTypeExpressionBuilder().setParameterizedType(pt).setDiamond(runtime.diamondNo())
-                        .setSource(source).build();
+                // TODO add details
+                return runtime.newTypeExpressionBuilder()
+                        .setParameterizedType(pt)
+                        .setDiamond(runtime.diamondNo())
+                        .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                        .build();
             } else if (namedType instanceof TypeParameter) {
                 throw new Summary.ParseException(context.info(), "?");
             }
@@ -338,9 +345,13 @@ public class ParseExpression extends CommonParse {
         } // else: see for example parsing of annotation '...importhelper.a.Resources', line 6
         NamedType namedType = context.typeContext().get(name, false);
         if (namedType instanceof TypeInfo typeInfo) {
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo, source);
             ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
-            return runtime.newTypeExpressionBuilder().setParameterizedType(parameterizedType)
-                    .setDiamond(runtime.diamondShowAll()).setSource(source).build();
+            return runtime.newTypeExpressionBuilder()
+                    .setParameterizedType(parameterizedType)
+                    .setDiamond(runtime.diamondShowAll())
+                    .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                    .build();
         } else if (namedType instanceof TypeParameter) {
             throw new Summary.ParseException(context.info(), "should not be possible");
         }

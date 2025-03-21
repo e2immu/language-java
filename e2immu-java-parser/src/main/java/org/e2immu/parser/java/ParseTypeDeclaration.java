@@ -53,7 +53,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
     }
 
-    record RecordField(List<Comment> comments, Source source, FieldInfo fieldInfo, boolean varargs) {
+    record RecordField(FieldInfo fieldInfo, boolean varargs) {
     }
 
     private TypeInfo internalParse(Context context,
@@ -352,18 +352,18 @@ public class ParseTypeDeclaration extends CommonParse {
             throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
+        Source fieldSource = source(rc);
         fieldInfo.builder()
-                .setSource(source(rc))
+                .addComments(comments(rc))
+                .setSource(detailedSourcesBuilder == null
+                        ? fieldSource: fieldSource.withDetailedSources(detailedSourcesBuilder.build()))
                 .setInitializer(runtime.newEmptyExpression())
                 .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())
                 .addAnnotations(annotations)
                 .computeAccess()
                 .commit();
-        Source source1 = source(fieldInfo, "", rc);
-        Source source = detailedSourcesBuilder == null ? source1 : source1.withDetailedSources(detailedSourcesBuilder.build());
-        List<Comment> comments = comments(rc);
-        return new RecordField(comments, source, fieldInfo, varargs);
+        return new RecordField(fieldInfo, varargs);
     }
 
     private MethodInfo createEmptyConstructor(TypeInfo typeInfo, boolean privateEmptyConstructor) {

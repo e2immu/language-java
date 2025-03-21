@@ -1,6 +1,8 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -13,6 +15,7 @@ import org.parsers.java.ast.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class ParseType extends CommonParse {
 
@@ -130,6 +133,7 @@ public class ParseType extends CommonParse {
         StringBuilder sb = new StringBuilder();
         int startNamedType = -1;
         int endNamedType = -1;
+        Stack<Source> details = detailedSourcesBuilder == null ? null : new Stack<>();
         while (i < ot.size()) {
             if (ot.get(i) instanceof Annotation) {
                 // annotations have been processed in CatchClause, we'll skip
@@ -139,6 +143,7 @@ public class ParseType extends CommonParse {
                     if (startNamedType == -1) startNamedType = i;
                     endNamedType = i;
                     sb.append(id.getSource());
+                    if (details != null) details.add(source(id));
                 } else {
                     throw new Summary.ParseException(context.info(), "Expected an identifier");
                 }
@@ -168,6 +173,14 @@ public class ParseType extends CommonParse {
                     detailedSourcesBuilder.put(withoutTypeParameters.typeInfo(), source(ot, startNamedType, endNamedType));
                 }
                 return withoutTypeParameters.withParameters(List.copyOf(typeArguments));
+            }
+        }
+        if (detailedSourcesBuilder != null) {
+            TypeInfo object = withoutTypeParameters.typeInfo();
+            while (true) {
+                detailedSourcesBuilder.put(object, details.pop());
+                if (details.isEmpty() || object.compilationUnitOrEnclosingType().isLeft()) break;
+                object = object.compilationUnitOrEnclosingType().getRight();
             }
         }
         return withoutTypeParameters;

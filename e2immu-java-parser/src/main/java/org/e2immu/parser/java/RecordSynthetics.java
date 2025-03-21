@@ -25,15 +25,17 @@ class RecordSynthetics {
         Access publicAccess = runtime.accessPublic();
         int count = 0;
         for (ParseTypeDeclaration.RecordField rf : recordFields) {
-            ParameterInfo pi = cc.builder().addParameter(rf.fieldInfo().name(), rf.fieldInfo().type());
+            FieldInfo fieldInfo = rf.fieldInfo();
+            ParameterInfo pi = cc.builder().addParameter(fieldInfo.name(), fieldInfo.type());
             pi.builder().setSynthetic(true).setAccess(publicAccess).setVarArgs(rf.varargs()).commit();
-            Source statementSource = runtime.newParserSource(cc, "" + count, rf.source().beginLine(),
-                    rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
+            Source fieldSource = fieldInfo.source();
+            Source statementSource = runtime.newParserSource(cc, "" + count, fieldSource.beginLine(),
+                    fieldSource.beginPos(), fieldSource.endLine(), fieldSource.endPos());
             Assignment assignment = runtime.newAssignmentBuilder()
                     .setSource(statementSource)
                     .setValue(runtime.newVariableExpressionBuilder().setVariable(pi).setSource(statementSource).build())
                     .setTarget(runtime.newVariableExpressionBuilder()
-                            .setVariable(runtime.newFieldReference(rf.fieldInfo()))
+                            .setVariable(runtime.newFieldReference(fieldInfo))
                             .setSource(statementSource)
                             .build())
                     .build();
@@ -58,17 +60,19 @@ class RecordSynthetics {
     }
 
     private MethodInfo createAccessor(ParseTypeDeclaration.RecordField rf) {
-        MethodInfo methodInfo = runtime.newMethod(rf.fieldInfo().owner(), rf.fieldInfo().name(),
+        FieldInfo fieldInfo = rf.fieldInfo();
+        MethodInfo methodInfo = runtime.newMethod(fieldInfo.owner(), fieldInfo.name(),
                 runtime.methodTypeMethod());
-        FieldReference fr = runtime.newFieldReference(rf.fieldInfo());
-        Source source = runtime.newParserSource(methodInfo, "0", rf.source().beginLine(),
-                rf.source().beginPos(), rf.source().endLine(), rf.source().endPos());
+        FieldReference fr = runtime.newFieldReference(fieldInfo);
+        Source fieldSource = fieldInfo.source();
+        Source source = runtime.newParserSource(methodInfo, "0", fieldSource.beginLine(),
+                fieldSource.beginPos(), fieldSource.endLine(), fieldSource.endPos());
         ReturnStatement rs = runtime.newReturnBuilder()
                 .setExpression(runtime.newVariableExpressionBuilder().setVariable(fr).setSource(source).build())
                 .setSource(source).build();
         Block methodBody = runtime.newBlockBuilder().setSource(source).addStatement(rs).build();
         MethodInfo.Builder builder = methodInfo.builder();
-        builder.setReturnType(rf.fieldInfo().type())
+        builder.setReturnType(fieldInfo.type())
                 .setAccess(runtime.accessPublic())
                 .addMethodModifier(runtime.methodModifierPublic())
                 .setSynthetic(true)
@@ -76,7 +80,7 @@ class RecordSynthetics {
                 .setMethodBody(methodBody)
                 .addOverrides(runtime.computeMethodOverrides().overrides(methodInfo))
                 .commit();
-        runtime.setGetSetField(methodInfo, rf.fieldInfo(), false, -1);
+        runtime.setGetSetField(methodInfo, fieldInfo, false, -1);
         return methodInfo;
     }
 }
