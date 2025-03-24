@@ -97,11 +97,9 @@ public class ParseTypeDeclaration extends CommonParse {
 
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo.simpleName(), source(identifier));
 
-        Source source = source(typeInfo, "", td);
         TypeInfo.Builder builder = typeInfo.builder();
         builder.addComments(comments);
         builder.computeAccess();
-        builder.setSource(source(typeInfo, null, td));
         builder.setEnclosingMethod(context.enclosingMethod());
 
         Context newContext = context.newSubType(typeInfo);
@@ -249,6 +247,14 @@ public class ParseTypeDeclaration extends CommonParse {
         and also no default constructor override.
         The latter condition is verified in the builder.ensureConstructor() method.
          */
+        Source source1 = builder.source();
+        assert source1 != null;
+        assert detailedSourcesBuilder == null || source1.detailedSources() != null;
+
+        Source source = detailedSourcesBuilder == null ? source1
+                : source1.mergeDetailedSources(detailedSourcesBuilder.build());
+        builder.setSource(source);
+
         if (typeNature.isRecord()) {
             RecordSynthetics rs = new RecordSynthetics(runtime, typeInfo);
             assert recordFields != null;
@@ -263,8 +269,6 @@ public class ParseTypeDeclaration extends CommonParse {
         if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {
             getSetUtil.createSyntheticFields(typeInfo);
         }
-
-        builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         return typeInfo;
     }
 
@@ -356,7 +360,7 @@ public class ParseTypeDeclaration extends CommonParse {
         fieldInfo.builder()
                 .addComments(comments(rc))
                 .setSource(detailedSourcesBuilder == null
-                        ? fieldSource: fieldSource.withDetailedSources(detailedSourcesBuilder.build()))
+                        ? fieldSource : fieldSource.withDetailedSources(detailedSourcesBuilder.build()))
                 .setInitializer(runtime.newEmptyExpression())
                 .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())

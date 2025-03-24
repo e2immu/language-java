@@ -122,11 +122,13 @@ public abstract class CommonParse {
     }
 
     protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent,
-                                                         TypeInfo typeInfoOrNull, Node body) {
+                                                         TypeInfo typeInfoOrNull,
+                                                         Node body,
+                                                         boolean addDetailedSources) {
         Map<String, TypeInfo> map = new HashMap<>();
         for (Node node : body) {
             if (node instanceof TypeDeclaration td && !(node instanceof EmptyDeclaration)) {
-                handleTypeDeclaration(parent, typeInfoOrNull, td, map);
+                handleTypeDeclaration(parent, typeInfoOrNull, td, map, addDetailedSources);
             }
         }
         return Map.copyOf(map);
@@ -138,43 +140,8 @@ public abstract class CommonParse {
     private void handleTypeDeclaration(Either<CompilationUnit, TypeInfo> parent,
                                        TypeInfo typeInfoOrNull,
                                        TypeDeclaration td,
-                                       Map<String, TypeInfo> map) {
-        Identifier identifier = null;
-        Node sub = null;
-        TypeNature typeNature = null;
-        List<TypeModifier> typeModifiers = new ArrayList<>();
-        for (Node child : td.children()) {
-            if (child instanceof Modifiers modifiers) {
-                for (Node child2 : modifiers) {
-                    if (child2 instanceof KeyWord keyWord) {
-                        TypeNature tn = getTypeNature(td, keyWord.getType());
-                        if (tn != null) {
-                            assert typeNature == null;
-                            typeNature = tn;
-                        }
-                        TypeModifier tm = getTypeModifier(keyWord.getType());
-                        if (tm != null) typeModifiers.add(tm);
-                    }
-                }
-            } else if (child instanceof KeyWord keyWord) {
-                TypeNature tn = getTypeNature(td, keyWord.getType());
-                if (tn != null) {
-                    assert typeNature == null;
-                    typeNature = tn;
-                }
-                TypeModifier tm = getTypeModifier(keyWord.getType());
-                if (tm != null) typeModifiers.add(tm);
-            } else if (child instanceof Identifier id) {
-                identifier = id;
-            } else if (child instanceof ClassOrInterfaceBody
-                       || child instanceof AnnotationTypeBody
-                       || child instanceof RecordBody
-                       || child instanceof EnumBody) {
-                sub = child;
-                break;
-            }
-        }
-        assert identifier != null;
+                                       Map<String, TypeInfo> map,
+                                       boolean addDetailedSources) {
         String typeName = td.firstChildOfType(Identifier.class).getSource();
         TypeInfo typeInfo;
         if (parent.isLeft()) {
@@ -189,11 +156,62 @@ public abstract class CommonParse {
             typeInfo = runtime.newTypeInfo(parentType, typeName);
             parentType.builder().addSubType(typeInfo);
         }
-        typeInfo.builder().setTypeNature(typeNature);
+
+        DetailedSources.Builder detailedSourcesBuilder = addDetailedSources ? runtime.newDetailedSourcesBuilder() : null;
+
+        Identifier identifier = null;
+        Node sub = null;
+        TypeNature typeNature = null;
+        List<TypeModifier> typeModifiers = new ArrayList<>();
+        for (Node child : td.children()) {
+            if (child instanceof Modifiers modifiers) {
+                for (Node child2 : modifiers) {
+                    if (child2 instanceof KeyWord keyWord) {
+                        TypeNature tn = getTypeNature(td, keyWord.getType());
+                        if (tn != null) {
+                            assert typeNature == null;
+                            typeNature = tn;
+                        }
+                        TypeModifier tm = getTypeModifier(keyWord.getType());
+                        if (tm != null) {
+                            typeModifiers.add(tm);
+                            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(tm, source(keyWord));
+                        }
+                    }
+                }
+            } else if (child instanceof KeyWord keyWord) {
+                TypeNature tn = getTypeNature(td, keyWord.getType());
+                if (tn != null) {
+                    assert typeNature == null;
+                    typeNature = tn;
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeNature, source(keyWord));
+                }
+                TypeModifier tm = getTypeModifier(keyWord.getType());
+                if (tm != null) {
+                    typeModifiers.add(tm);
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(tm, source(keyWord));
+                }
+            } else if (child instanceof Identifier id) {
+                identifier = id;
+            } else if (child instanceof ClassOrInterfaceBody
+                       || child instanceof AnnotationTypeBody
+                       || child instanceof RecordBody
+                       || child instanceof EnumBody) {
+                sub = child;
+                break;
+            }
+        }
+        assert identifier != null;
+
+        Source source = source(typeInfo, "", td);
+        typeInfo.builder()
+                .setTypeNature(typeNature)
+                .setSource(detailedSourcesBuilder == null ? source
+                        : source.withDetailedSources(detailedSourcesBuilder.build()));
         typeModifiers.forEach(typeInfo.builder()::addTypeModifier);
         map.put(typeInfo.fullyQualifiedName(), typeInfo);
         if (sub != null) {
-            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub));
+            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub, addDetailedSources));
         }
     }
 

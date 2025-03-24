@@ -32,9 +32,9 @@ public class ScanCompilationUnit extends CommonParse {
                              org.e2immu.language.cst.api.element.CompilationUnit compilationUnit) {
     }
 
-    public ScanResult scan(URI uri, CompilationUnit cu) {
+    public ScanResult scan(URI uri, CompilationUnit cu, boolean addDetailedSources) {
         try {
-            return internalScan(uri, cu);
+            return internalScan(uri, cu, addDetailedSources);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -45,18 +45,20 @@ public class ScanCompilationUnit extends CommonParse {
         }
     }
 
-    private ScanResult internalScan(URI uri, CompilationUnit cu) {
+    private ScanResult internalScan(URI uri, CompilationUnit cu, boolean addDetailedSources) {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
         String packageName;
+        Source s1 = source(cu);
         Source source;
         if (packageDeclaration == null) {
-            source = source(cu);
+            source = s1;
             packageName = "";
         } else {
             Name name = packageDeclaration.firstChildOfType(Name.class);
             packageName = Objects.requireNonNullElse(name.toString(), "");
-            source = source(cu).withDetailedSources(runtime.newDetailedSourcesBuilder()
-                    .put(packageName, source(name)).build());
+            source = addDetailedSources
+                    ? s1.withDetailedSources(runtime.newDetailedSourcesBuilder().put(packageName, source(name)).build())
+                    : s1;
         }
         org.e2immu.language.cst.api.element.CompilationUnit.Builder compilationUnitBuilder
                 = runtime.newCompilationUnitBuilder()
@@ -68,7 +70,9 @@ public class ScanCompilationUnit extends CommonParse {
             compilationUnitBuilder.addImportStatement(importStatement);
         }
         org.e2immu.language.cst.api.element.CompilationUnit compilationUnit = compilationUnitBuilder.build();
-        return new ScanResult(recursivelyFindTypes(Either.left(compilationUnit), null, cu), compilationUnit);
+        Map<String, TypeInfo> sourceTypes = recursivelyFindTypes(Either.left(compilationUnit), null, cu,
+                addDetailedSources);
+        return new ScanResult(sourceTypes, compilationUnit);
     }
 
 

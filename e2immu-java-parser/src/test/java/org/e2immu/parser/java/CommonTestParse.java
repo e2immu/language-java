@@ -289,7 +289,8 @@ public class CommonTestParse {
         ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(failFastSummary, runtime);
         CompilationUnit cu;
         try {
-            ScanCompilationUnit.ScanResult sr = scanCompilationUnit.scan(new URI("input"), parser.get().CompilationUnit());
+            ScanCompilationUnit.ScanResult sr = scanCompilationUnit.scan(new URI("input"),
+                    parser.get().CompilationUnit(), detailedSources);
             stm.putAll(sr.sourceTypes());
             cu = sr.compilationUnit();
         } catch (URISyntaxException e) {
