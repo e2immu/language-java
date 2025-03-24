@@ -1,6 +1,8 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.ImportStatement;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -45,11 +47,22 @@ public class ScanCompilationUnit extends CommonParse {
 
     private ScanResult internalScan(URI uri, CompilationUnit cu) {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
-        String packageName = packageDeclaration == null ? ""
-                : Objects.requireNonNullElse(packageDeclaration.getName(), "");
-
+        String packageName;
+        Source source;
+        if (packageDeclaration == null) {
+            source = source(cu);
+            packageName = "";
+        } else {
+            Name name = packageDeclaration.firstChildOfType(Name.class);
+            packageName = Objects.requireNonNullElse(name.toString(), "");
+            source = source(cu).withDetailedSources(runtime.newDetailedSourcesBuilder()
+                    .put(packageName, source(name)).build());
+        }
         org.e2immu.language.cst.api.element.CompilationUnit.Builder compilationUnitBuilder
-                = runtime.newCompilationUnitBuilder().setURI(uri).setPackageName(packageName);
+                = runtime.newCompilationUnitBuilder()
+                .setSource(source)
+                .setURI(uri)
+                .setPackageName(packageName);
         for (ImportDeclaration id : cu.childrenOfType(ImportDeclaration.class)) {
             ImportStatement importStatement = parseImportDeclaration(id);
             compilationUnitBuilder.addImportStatement(importStatement);
