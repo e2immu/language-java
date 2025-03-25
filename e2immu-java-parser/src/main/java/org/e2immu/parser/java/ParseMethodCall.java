@@ -30,7 +30,7 @@ public class ParseMethodCall extends CommonParse {
         Node name = mc.get(0);
         assert name instanceof Name || name instanceof DotName;
         String methodName = name.get(name.size() - 1).getSource();
-        Object unparsedObject = newNameObject(name);
+        Name unparsedObject = newNameObject(name);
 
         InvocationArguments ia = (InvocationArguments) mc.get(1);
         int i = 1;
@@ -53,10 +53,12 @@ public class ParseMethodCall extends CommonParse {
         }
         // now we should have a more correct forward type!
         return context.methodResolution().resolveMethod(context, comments, source, index, forwardType, methodName,
-                unparsedObject, unparsedArguments);
+                unparsedObject,
+                unparsedObject == null ? runtime.noSource() : source(unparsedObject),
+                unparsedArguments);
     }
 
-    private Object newNameObject(Node name) {
+    private Name newNameObject(Node name) {
         if (name.size() == 1) return null;
         Name n = new Name();
         for (int i = 0; i < name.size() - 2; i++) {

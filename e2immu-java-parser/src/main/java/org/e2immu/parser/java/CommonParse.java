@@ -76,6 +76,11 @@ public abstract class CommonParse {
                 node.getEndLine(), node.getEndColumn());
     }
 
+    public Source source(Node beginNode, Node endNodeIncl) {
+        return runtime.newParserSource(null, null, beginNode.getBeginLine(), beginNode.getBeginColumn(),
+                endNodeIncl.getEndLine(), endNodeIncl.getEndColumn());
+    }
+
     // meant for detailed sources
     public Source source(Node node, int start, int end) {
         Node s = node.get(start);

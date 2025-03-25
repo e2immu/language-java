@@ -122,8 +122,9 @@ public class ParseConstructorCall extends CommonParse {
                 unparsedArguments.add(ia.get(j));
                 j += 2;
             }
+            Source unparsedObjectSource = unparsedObject == null ? runtime.noSource() : source(unparsedObject);
             Expression constructorCall = newContext.methodResolution().resolveConstructor(newContext, comments, source,
-                    index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedArguments,
+                    index, formalType, expectedConcreteType, diamond, unparsedObject, unparsedObjectSource, unparsedArguments,
                     methodTypeArguments, !isAnonymousType);
             if (constructorCall == null && !isAnonymousType) {
                 return new ConstructorCallErasure(runtime, source, formalType);
@@ -271,7 +272,8 @@ public class ParseConstructorCall extends CommonParse {
         }
         ParameterizedType formalType = enumType.asSimpleParameterizedType();
         return context.methodResolution().resolveConstructor(context, List.of(), null,
-                index, formalType, formalType, runtime.diamondNo(), null, unparsedArguments, List.of(), true);
+                index, formalType, formalType, runtime.diamondNo(), null, null,
+                unparsedArguments, List.of(), true);
     }
 }
 

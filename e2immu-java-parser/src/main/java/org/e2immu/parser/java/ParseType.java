@@ -143,7 +143,10 @@ public class ParseType extends CommonParse {
                     if (startNamedType == -1) startNamedType = i;
                     endNamedType = i;
                     sb.append(id.getSource());
-                    if (details != null) details.add(source(id));
+                    if (details != null) {
+                        // source always starts at the beginning of the type, ends incrementally further
+                        details.add(source(ot, id));
+                    }
                 } else {
                     throw new Summary.ParseException(context.info(), "Expected an identifier");
                 }
