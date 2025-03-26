@@ -72,7 +72,12 @@ public class ParseType extends CommonParse {
                 int arrays = countArrays(pat);
                 ParameterizedType parameterizedType = primitiveType(tt);
                 assert parameterizedType != null;
-                return parameterizedType.copyWithArrays(arrays);
+                ParameterizedType withArrays = parameterizedType.copyWithArrays(arrays);
+                if (detailedSourcesBuilder != null) {
+                    detailedSourcesBuilder.putAssociatedObject(withArrays, parameterizedType);
+                    detailedSourcesBuilder.put(parameterizedType, source(n0));
+                }
+                return withArrays;
             }
             if (n0 instanceof PrimitiveType primitive && primitive.get(0) instanceof Primitive p) {
                 tt = p.getType();
@@ -93,9 +98,14 @@ public class ParseType extends CommonParse {
         int arrays = countArrays(nodes);
         if (arrays == 0) {
             return pt;
-        } else {
-            return pt.copyWithArrays(arrays);
         }
+
+        ParameterizedType withArrays = pt.copyWithArrays(arrays);
+        if (detailedSourcesBuilder != null) {
+            detailedSourcesBuilder.putAssociatedObject(withArrays, pt);
+            detailedSourcesBuilder.put(pt, source(n0));
+        }
+        return withArrays;
     }
 
     private ParameterizedType parseWildcardBounds(Context context, WildcardBounds bounds, DetailedSources.Builder detailedSourcesBuilder) {
