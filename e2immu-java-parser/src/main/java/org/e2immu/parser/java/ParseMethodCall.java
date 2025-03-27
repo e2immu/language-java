@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -29,7 +30,10 @@ public class ParseMethodCall extends CommonParse {
         List<Object> unparsedArguments = new ArrayList<>();
         Node name = mc.get(0);
         assert name instanceof Name || name instanceof DotName;
-        String methodName = name.get(name.size() - 1).getSource();
+        Node methodNameNode = name.get(name.size() - 1);
+        String methodName = methodNameNode.getSource();
+        Source sourceOfName = source(methodNameNode);
+
         Name unparsedObject = newNameObject(name);
 
         InvocationArguments ia = (InvocationArguments) mc.get(1);
@@ -52,7 +56,8 @@ public class ParseMethodCall extends CommonParse {
             return new MethodCallErasure(runtime, source, types, common, methodName);
         }
         // now we should have a more correct forward type!
-        return context.methodResolution().resolveMethod(context, comments, source, index, forwardType, methodName,
+        return context.methodResolution().resolveMethod(context, comments, source, sourceOfName,
+                index, forwardType, methodName,
                 unparsedObject,
                 unparsedObject == null ? runtime.noSource() : source(unparsedObject),
                 unparsedArguments);
