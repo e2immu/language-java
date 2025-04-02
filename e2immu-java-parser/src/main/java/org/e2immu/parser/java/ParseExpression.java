@@ -96,10 +96,11 @@ public class ParseExpression extends CommonParse {
             return parseIdentifier(context, comments, source, i);
         }
         if (node instanceof Name name) {
+            // FIXME check 2nd condition; really necessary?
             if (name.children().size() > 1 && name.children().stream().allMatch(n -> n instanceof Delimiter || n instanceof Identifier)) {
-                return parseName(context, comments, source, name, name.children().size());
+                return parseDottedName(context, comments, source, name, name.children().size() - 1);
             }
-            // recurse into first child
+            // recurse into first child; single identifier will end up in parseIdentifier
             return parse(context, index, forwardType, name.get(0));
         }
         if (node instanceof CastExpression castExpression) {
@@ -294,25 +295,33 @@ public class ParseExpression extends CommonParse {
     /*
     can be a type (scope of a method), or a variable
      */
-    private Expression parseName(Context context, List<Comment> comments, Source source, Name name, int end) {
+    private Expression parseDottedName(Context context, List<Comment> comments, Source source, Name name, int endIncl) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        assert end > 0;
-        String trimmedAfterDot = name.get(end).getSource();
+        assert endIncl > 0 && endIncl < name.children().size();
+        String trimmedAfterDot = name.get(endIncl).getSource();
         if ("length".equals(trimmedAfterDot)) {
-            Variable array = parseVariable(context, comments, source, name, end - 2);
+            Variable array = parseVariable(context, comments, source, name, endIncl - 2);
             assert array != null;
-            VariableExpression scope = runtime.newVariableExpressionBuilder().setVariable(array).setSource(source).build();
+            Source sourceUpToEnd = source(name, 0, endIncl);
+            if (detailedSourcesBuilder != null) {
+                detailedSourcesBuilder.put(array, sourceUpToEnd);
+            }
+            VariableExpression scope = runtime.newVariableExpressionBuilder()
+                    .setVariable(array)
+                    .setSource(detailedSourcesBuilder == null ? sourceUpToEnd : sourceUpToEnd
+                            .withDetailedSources(detailedSourcesBuilder.build()))
+                    .build();
             return runtime.newArrayLengthBuilder()
                     .addComments(comments)
                     .setSource(source)
                     .setExpression(scope)
                     .build();
         }
-        String nameUpToEnd = name.children().subList(0, end).stream().map(Node::getSource).collect(Collectors.joining());
+        String nameUpToEnd = name.children().subList(0, endIncl + 1).stream().map(Node::getSource).collect(Collectors.joining());
         NamedType namedType = context.typeContext().get(nameUpToEnd, false);
         if (namedType instanceof TypeInfo typeInfo) {
             ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
-            // TODO add details
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pt, source(name, 0, endIncl));
             return runtime.newTypeExpressionBuilder()
                     .setParameterizedType(pt)
                     .setDiamond(runtime.diamondNo())
@@ -323,9 +332,9 @@ public class ParseExpression extends CommonParse {
         }
         // since we don't have a type, we must have a variable
         // this will set the recursion going, from right to left
-        Variable variable = parseVariable(context, comments, source, name, end);
+        Variable variable = parseVariable(context, comments, source, name, endIncl);
         if (detailedSourcesBuilder != null && variable instanceof FieldReference fr) {
-            detailedSourcesBuilder.put(fr.fieldInfo(), source(name.get(end)));
+            detailedSourcesBuilder.put(fr.fieldInfo(), source(name.get(endIncl)));
         }
         return runtime.newVariableExpressionBuilder().setVariable(variable)
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
@@ -430,8 +439,13 @@ public class ParseExpression extends CommonParse {
         if (end == 0) {
             return context.variableContext().get(name.get(0).getSource(), true);
         }
-        String varName = name.get(end).getSource();
-        Expression expression = parseName(context, comments, source, name, end - 2);
+        String varName = name.subList(end, name.size()).stream().map(Node::getSource).collect(Collectors.joining());
+        Expression expression;
+        if (end == 2) {
+            expression = parseIdentifier(context, comments, source, (Identifier) name.get(0));
+        } else {
+            expression = parseDottedName(context, comments, source, name, end - 2);
+        }
         return findField(context, expression, varName, true);
     }
 
