@@ -57,17 +57,6 @@ public class ParseFieldDeclaration extends CommonParse {
         }
         boolean isStatic = fieldModifiers.stream().anyMatch(FieldModifier::isStatic);
         TypeInfo owner = context.enclosingType();
-        org.e2immu.language.cst.api.expression.Expression scope;
-        Source source = source(fd);
-        if (isStatic) {
-            scope = runtime.newTypeExpressionBuilder()
-                    .setSource(source)
-                    .setParameterizedType(owner.asSimpleParameterizedType())
-                    .setDiamond(runtime.diamondNo()).build();
-        } else {
-            scope = runtime.newVariableExpressionBuilder().setVariable(runtime.newThis(owner.asParameterizedType()))
-                    .setSource(source).build();
-        }
 
         ParameterizedType parameterizedType;
         Node typeNode;
@@ -80,7 +69,7 @@ public class ParseFieldDeclaration extends CommonParse {
         boolean first = true;
         while (i < fd.size() && fd.get(i) instanceof VariableDeclarator vd) {
             fields.add(makeField(context, fd, vd, typeNode, isStatic, parameterizedType, owner, detailedSourcesBuilder,
-                    fieldModifiers, annotations, scope, first));
+                    fieldModifiers, annotations, first));
             i += 2;
             first = false;
         }
@@ -97,7 +86,6 @@ public class ParseFieldDeclaration extends CommonParse {
                                 DetailedSources.Builder detailedSourcesBuilderMaster,
                                 List<FieldModifier> fieldModifiers,
                                 List<AnnotationExpression> annotations,
-                                org.e2immu.language.cst.api.expression.Expression scope,
                                 boolean first) {
         ParameterizedType type;
         Node vd0 = vd.get(0);
@@ -134,7 +122,7 @@ public class ParseFieldDeclaration extends CommonParse {
         } // else: comment is only on the first field in the sequence, see e.g. TestFieldComments in java-parser
         builder.addComments(comments(vd)).addAnnotations(annotations);
 
-        FieldReference fieldReference = runtime.newFieldReference(fieldInfo, scope, fieldInfo.type());
+        FieldReference fieldReference = runtime.newFieldReference(fieldInfo);
         context.variableContext().add(fieldReference);
         if (expression != null) {
             ForwardType fwd = context.newForwardType(fieldInfo.type());

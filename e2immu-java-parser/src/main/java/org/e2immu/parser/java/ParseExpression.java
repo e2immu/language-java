@@ -355,14 +355,12 @@ public class ParseExpression extends CommonParse {
                     .addComments(comments).build();
         }
         if (context.enclosingType() != null) {
-            Expression scope = runtime.newVariableExpressionBuilder()
-                    .setVariable(runtime.newThis(context.enclosingType().asParameterizedType()))
-                    .setSource(source)
-                    .build();
-            FieldReference fr = findField(context, scope, name, false);
+            FieldReference fr = findField(context, null, name, false);
             if (fr != null) {
                 if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(fr.fieldInfo(), source);
-                return runtime.newVariableExpressionBuilder().setVariable(fr).setSource(source).addComments(comments).build();
+                return runtime.newVariableExpressionBuilder().setVariable(fr)
+                        .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                        .addComments(comments).build();
             }
         } // else: see for example parsing of annotation '...importhelper.a.Resources', line 6
         NamedType namedType = context.typeContext().get(name, false);
@@ -380,8 +378,13 @@ public class ParseExpression extends CommonParse {
         throw new Summary.ParseException(context.info(), "unknown name '" + name + "'");
     }
 
-    private FieldReference findField(Context context, Expression expression, String name, boolean complain) {
-        ParameterizedType pt = expression.parameterizedType();
+    private FieldReference findField(Context context, Expression scope, String name, boolean complain) {
+        ParameterizedType pt;
+        if (scope != null) {
+            pt = scope.parameterizedType();
+        } else {
+            pt = context.enclosingType().asParameterizedType();
+        }
         TypeInfo typeInfo = pt.bestTypeInfo();
         FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
@@ -410,7 +413,7 @@ public class ParseExpression extends CommonParse {
         }
         ParameterizedType concreteType = map == null || map.isEmpty() ? fieldInfo.type()
                 : fieldInfo.type().applyTranslation(runtime, map);
-        return runtime.newFieldReference(fieldInfo, expression, concreteType);
+        return runtime.newFieldReference(fieldInfo, scope, concreteType);
     }
 
     private FieldInfo findRecursively(TypeInfo typeInfo, String name) {
@@ -439,13 +442,13 @@ public class ParseExpression extends CommonParse {
             return context.variableContext().get(name.get(0).getSource(), true);
         }
         String varName = name.get(end).getSource();
-        Expression expression;
+        Expression scope;
         if (end == 2) {
-            expression = parseIdentifier(context, comments, source, (Identifier) name.get(0));
+            scope = parseIdentifier(context, comments, source, (Identifier) name.get(0));
         } else {
-            expression = parseDottedName(context, comments, source, name, end - 2);
+            scope = parseDottedName(context, comments, source, name, end - 2);
         }
-        return findField(context, expression, varName, true);
+        return findField(context, scope, varName, true);
     }
 
     private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,
