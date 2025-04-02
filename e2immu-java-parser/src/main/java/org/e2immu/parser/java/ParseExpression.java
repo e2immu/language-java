@@ -96,10 +96,10 @@ public class ParseExpression extends CommonParse {
             return parseIdentifier(context, comments, source, i);
         }
         if (node instanceof Name name) {
-            // FIXME check 2nd condition; really necessary?
-            if (name.children().size() > 1 && name.children().stream().allMatch(n -> n instanceof Delimiter || n instanceof Identifier)) {
+            if (name.children().size() >= 3) {
                 return parseDottedName(context, comments, source, name, name.children().size() - 1);
             }
+            // see TestMethodCall7.test6 for an example where we arrive here with "Collections.", size 2
             // recurse into first child; single identifier will end up in parseIdentifier
             return parse(context, index, forwardType, name.get(0));
         }
@@ -300,7 +300,7 @@ public class ParseExpression extends CommonParse {
         assert endIncl > 0 && endIncl < name.children().size();
         String trimmedAfterDot = name.get(endIncl).getSource();
         if ("length".equals(trimmedAfterDot)) {
-            Variable array = parseVariable(context, comments, source, name, endIncl - 2);
+            Variable array = parseDottedVariable(context, comments, source, name, endIncl - 2);
             assert array != null;
             Source sourceUpToEnd = source(name, 0, endIncl);
             if (detailedSourcesBuilder != null) {
@@ -332,7 +332,7 @@ public class ParseExpression extends CommonParse {
         }
         // since we don't have a type, we must have a variable
         // this will set the recursion going, from right to left
-        Variable variable = parseVariable(context, comments, source, name, endIncl);
+        Variable variable = parseDottedVariable(context, comments, source, name, endIncl);
         if (detailedSourcesBuilder != null && variable instanceof FieldReference fr) {
             detailedSourcesBuilder.put(fr.fieldInfo(), source(name.get(endIncl)));
         }
@@ -434,12 +434,11 @@ public class ParseExpression extends CommonParse {
         return null;
     }
 
-    // result must be a variable
-    private Variable parseVariable(Context context, List<Comment> comments, Source source, Name name, int end) {
+    private Variable parseDottedVariable(Context context, List<Comment> comments, Source source, Name name, int end) {
         if (end == 0) {
             return context.variableContext().get(name.get(0).getSource(), true);
         }
-        String varName = name.subList(end, name.size()).stream().map(Node::getSource).collect(Collectors.joining());
+        String varName = name.get(end).getSource();
         Expression expression;
         if (end == 2) {
             expression = parseIdentifier(context, comments, source, (Identifier) name.get(0));
