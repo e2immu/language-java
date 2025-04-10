@@ -437,7 +437,7 @@ public class ParseTypeDeclaration extends CommonParse {
                     boolean staticInitializer = Token.TokenType.STATIC.equals(i.get(0).getType());
                     if (staticInitializer) {
                         if (i.get(1) instanceof CodeBlock cb) {
-                            Source cbSource = source(typeInfo, "", cb);
+                            Source cbSource = source(cb);
                             String name = "<static_" + (countStaticInializers++) + ">";
                             MethodInfo staticMethod = runtime.newMethod(typeInfo, name,
                                     runtime.methodTypeStaticBlock());

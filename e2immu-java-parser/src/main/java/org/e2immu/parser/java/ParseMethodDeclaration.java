@@ -3,7 +3,9 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
-import org.e2immu.language.cst.api.info.*;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.MethodModifier;
+import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -184,7 +186,7 @@ public class ParseMethodDeclaration extends CommonParse {
         methodModifiers.forEach(builder::addMethodModifier);
         builder.computeAccess();
         builder.addComments(comments(md));
-        Source source = source(methodInfo, null, md);
+        Source source = source(md);
         builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         builder.addAnnotations(annotations);
         return methodInfo;
@@ -255,7 +257,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } else {
             throw new UnsupportedOperationException();
         }
-        Source source = source(context.info(), "", fp);
+        Source source = source(fp);
         ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
         pi.builder().addComments(comments(fp))
                 .addAnnotations(annotations)

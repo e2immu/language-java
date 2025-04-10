@@ -32,7 +32,6 @@ public class TestParseAnnotationDeclaration extends CommonTestParse {
         assertEquals("value", methodInfo.name());
         assertEquals("a.b.Annot.value()", methodInfo.fullyQualifiedName());
         if (methodInfo.source() instanceof SourceImpl source) {
-            assertSame(methodInfo, source.info());
             assertEquals(3, source.beginLine());
             assertEquals(3, source.endLine());
         }

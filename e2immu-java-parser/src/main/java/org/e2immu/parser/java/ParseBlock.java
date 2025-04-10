@@ -24,7 +24,7 @@ public class ParseBlock extends CommonParse {
 
     public Block parse(Context context, String index, String label, CodeBlock codeBlock,
                        boolean asSeparateStatement, int startCount) {
-        Source source = source(context.info(), index, codeBlock);
+        Source source = source(index, codeBlock);
         List<Comment> comments = comments(codeBlock);
         Block.Builder builder = runtime.newBlockBuilder();
         int count = startCount;

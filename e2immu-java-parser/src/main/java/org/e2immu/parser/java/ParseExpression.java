@@ -58,7 +58,7 @@ public class ParseExpression extends CommonParse {
     }
 
     private Expression internalParse(Context context, String index, ForwardType forwardType, Node node) {
-        Source source = source(context.info(), index, node);
+        Source source = source(index, node);
         List<Comment> comments = comments(node);
 
         if (node instanceof DotName dotName) {
@@ -736,7 +736,7 @@ public class ParseExpression extends CommonParse {
                     .setLhs(accumulated).setRhs(rhs)
                     .setParameterizedType(pt)
                     .setPrecedence(runtime.precedenceAdditive())
-                    .setSource(source(context.info(), index, ae))
+                    .setSource(source(index, ae))
                     .addComments(comments(ae))
                     .build();
             i += 2;
@@ -789,7 +789,7 @@ public class ParseExpression extends CommonParse {
                     .setLhs(accumulated).setRhs(rhs)
                     .setParameterizedType(pt)
                     .setPrecedence(precedence)
-                    .setSource(source(context.info(), index, me))
+                    .setSource(source(index, me))
                     .addComments(comments(me))
                     .build();
             i += 2;
@@ -819,7 +819,7 @@ public class ParseExpression extends CommonParse {
                 .setLhs(lhs).setRhs(rhs)
                 .setParameterizedType(runtime.booleanParameterizedType())
                 .setPrecedence(runtime.precedenceRelational())
-                .setSource(source(context.info(), index, re))
+                .setSource(source(index, re))
                 .addComments(comments(re))
                 .build();
     }
@@ -841,7 +841,7 @@ public class ParseExpression extends CommonParse {
                 .setLhs(lhs).setRhs(rhs)
                 .setParameterizedType(runtime.booleanParameterizedType())
                 .setPrecedence(runtime.precedenceEquality())
-                .setSource(source(context.info(), index, eq))
+                .setSource(source(index, eq))
                 .addComments(comments(eq))
                 .build();
     }

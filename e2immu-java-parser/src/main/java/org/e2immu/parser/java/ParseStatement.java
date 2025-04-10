@@ -18,7 +18,6 @@ import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
-import org.parsers.java.ast.*;
 import org.parsers.java.ast.AssertStatement;
 import org.parsers.java.ast.BreakStatement;
 import org.parsers.java.ast.ContinueStatement;
@@ -31,9 +30,9 @@ import org.parsers.java.ast.ThrowStatement;
 import org.parsers.java.ast.TryStatement;
 import org.parsers.java.ast.WhileStatement;
 import org.parsers.java.ast.YieldStatement;
+import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +69,7 @@ public class ParseStatement extends CommonParse {
             statement = statementIn;
         }
         List<Comment> comments = comments(statement);
-        Source source = source(context.enclosingMethod(), index, statement);
+        Source source = source(index, statement);
         List<AnnotationExpression> annotations = new ArrayList<>();
         List<LocalVariableCreation.Modifier> lvcModifiers = new ArrayList<>();
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
@@ -198,7 +197,7 @@ public class ParseStatement extends CommonParse {
                                 resourceNode);
                         if (e instanceof VariableExpression ve) {
                             resource = runtime.newExpressionAsStatementBuilder()
-                                    .setSource(source(context.info(), newIndex, resourceNode))
+                                    .setSource(source(newIndex, resourceNode))
                                     .setExpression(ve)
                                     .build();
                         } else throw new UnsupportedOperationException();
@@ -275,7 +274,7 @@ public class ParseStatement extends CommonParse {
                     String newIndex = index + "." + StringUtil.pad(blockCount, n);
                     Block cbb = parsers.parseBlock().parse(catchContext, newIndex, null, cb);
                     blockCount++;
-                    Source source1 = source(context.info(), newIndex, catchBlock);
+                    Source source1 = source(newIndex, catchBlock);
                     Source source2 = detailedSourcesBuilderCb == null
                             ? source1 : source1.withDetailedSources(detailedSourcesBuilderCb.build());
                     builder.addCatchClause(ccBuilder.setBlock(cbb).setSource(source2).build());

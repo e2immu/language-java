@@ -40,7 +40,6 @@ public class TestParse101 extends CommonTestParse {
             assertEquals("// some comment\n", slc.print(null).toString());
         } else fail();
         if (typeInfo.source() instanceof SourceImpl source) {
-            assertSame(typeInfo, source.info());
             assertEquals(3, source.beginLine());
             assertEquals(7, source.endLine());
         }
@@ -50,7 +49,6 @@ public class TestParse101 extends CommonTestParse {
         assertEquals("main", methodInfo.name());
         assertEquals("a.b.C.main(String[])", methodInfo.fullyQualifiedName());
         if (methodInfo.source() instanceof SourceImpl source) {
-            assertSame(methodInfo, source.info());
             assertEquals(4, source.beginLine());
             assertEquals(6, source.endLine());
         }

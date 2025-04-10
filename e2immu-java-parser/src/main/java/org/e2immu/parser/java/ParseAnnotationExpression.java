@@ -1,7 +1,5 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.element.Comment;
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -9,8 +7,6 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.ast.*;
-
-import java.util.List;
 
 public class ParseAnnotationExpression extends CommonParse {
 
@@ -49,6 +45,6 @@ public class ParseAnnotationExpression extends CommonParse {
         } else if (!(a instanceof MarkerAnnotation)) {
             throw new UnsupportedOperationException("NYI");
         }
-        return builder.addComments(comments(a)).setSource(source(context.info(), null, a)).build();
+        return builder.addComments(comments(a)).setSource(source(a)).build();
     }
 }

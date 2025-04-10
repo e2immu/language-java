@@ -84,7 +84,7 @@ public class ParseLambdaExpression extends CommonParse {
             // simple function or supplier
             Expression expression = parsers.parseExpression().parse(newContext, "0", newForward, e);
             concreteReturnType = expression.parameterizedType();
-            Source expressionSource = source(context.info(), "0", e);
+            Source expressionSource = source("0", e);
             Statement returnStatement = runtime.newReturnBuilder()
                     .setSource(expressionSource)
                     .setExpression(expression)
@@ -161,7 +161,7 @@ public class ParseLambdaExpression extends CommonParse {
 
             ParameterInfo pi = miBuilder.addParameter(parameterName, type);
 
-            Source source = source(pi, null, lhs);
+            Source source = source(lhs);
             DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
             pi.builder().setSource(detailedSourcesBuilder == null ? source
@@ -191,7 +191,7 @@ public class ParseLambdaExpression extends CommonParse {
                     ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type.ensureBoxed(runtime));
                     outputVariants.add(outputVariant);
 
-                    Source source = source(pi, null, lp);
+                    Source source = source(lp);
                     if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
                     pi.builder().setSource(detailedSourcesBuilder == null ? source
                             : source.withDetailedSources(detailedSourcesBuilder.build()));

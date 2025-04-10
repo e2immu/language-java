@@ -134,7 +134,7 @@ public class ParseHelperImpl implements ParseHelper {
         org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
         ConstructorDeclaration cd = (ConstructorDeclaration) unparsedEci.getParent();
         List<Comment> comments = parsers.parseStatement().comments(cd);
-        Source source = parsers.parseStatement().source(context.enclosingMethod(), "0", cd);
+        Source source = parsers.parseStatement().source("0", cd);
         boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.get(0).getType());
         List<Expression> parameterExpressions = parseArguments(context, unparsedEci.get(1));
         MethodInfo eciMethod = context.enclosingType().findConstructor(parameterExpressions.size());
@@ -154,7 +154,7 @@ public class ParseHelperImpl implements ParseHelper {
         List<Expression> expressions = new ArrayList<>();
         for (int k = 1; k < node.size(); k += 2) {
             Node nodeK = node.get(k);
-            if(nodeK instanceof Delimiter) break;
+            if (nodeK instanceof Delimiter) break;
             Expression e = parsers.parseExpression().parse(context, "0", context.emptyForwardType(), nodeK);
             expressions.add(e);
         }

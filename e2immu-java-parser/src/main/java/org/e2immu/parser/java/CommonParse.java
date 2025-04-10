@@ -65,19 +65,19 @@ public abstract class CommonParse {
     this implementation gives an "imperfect" parent... See e.g. parseBlock: we cannot pass on the parent during
     parsing, because we still have the builder at that point in time.
      */
-    public Source source(Info info, String index, Node node) {
-        return runtime.newParserSource(info, index, node.getBeginLine(), node.getBeginColumn(), node.getEndLine(),
+    public Source source(String index, Node node) {
+        return runtime.newParserSource(index, node.getBeginLine(), node.getBeginColumn(), node.getEndLine(),
                 node.getEndColumn());
     }
 
     // meant for detailed sources
     public Source source(Node node) {
-        return runtime.newParserSource(null, null, node.getBeginLine(), node.getBeginColumn(),
+        return runtime.newParserSource("", node.getBeginLine(), node.getBeginColumn(),
                 node.getEndLine(), node.getEndColumn());
     }
 
     public Source source(Node beginNode, Node endNodeIncl) {
-        return runtime.newParserSource(null, null, beginNode.getBeginLine(), beginNode.getBeginColumn(),
+        return runtime.newParserSource("", beginNode.getBeginLine(), beginNode.getBeginColumn(),
                 endNodeIncl.getEndLine(), endNodeIncl.getEndColumn());
     }
 
@@ -85,10 +85,9 @@ public abstract class CommonParse {
     public Source source(Node node, int start, int end) {
         Node s = node.get(start);
         Node e = node.get(end);
-        return runtime.newParserSource(null, null, s.getBeginLine(), s.getBeginColumn(),
+        return runtime.newParserSource("", s.getBeginLine(), s.getBeginColumn(),
                 e.getEndLine(), e.getEndColumn());
     }
-
 
     // code copied from ParseTypeDeclaration
     protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex,
@@ -208,7 +207,7 @@ public abstract class CommonParse {
         }
         assert identifier != null;
 
-        Source source = source(typeInfo, "", td);
+        Source source = source(td);
         typeInfo.builder()
                 .setTypeNature(typeNature)
                 .setSource(detailedSourcesBuilder == null ? source

@@ -3,8 +3,6 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
-import org.e2immu.language.cst.api.expression.VariableExpression;
-import org.e2immu.language.cst.api.info.Access;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.FieldModifier;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -115,7 +113,7 @@ public class ParseFieldDeclaration extends CommonParse {
         FieldInfo.Builder builder = fieldInfo.builder();
         fieldModifiers.forEach(builder::addFieldModifier);
         builder.computeAccess();
-        Source source = source(fieldInfo, null, vd);
+        Source source = source(vd);
         builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         if (first) {
             builder.addComments(comments(fd));

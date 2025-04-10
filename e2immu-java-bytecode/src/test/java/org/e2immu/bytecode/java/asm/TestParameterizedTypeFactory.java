@@ -46,7 +46,6 @@ public class TestParameterizedTypeFactory extends CommonJmodBaseTests {
         assertNotNull(string);
         assertNotNull(string.source());
         assertEquals("predefined://java/lang", string.compilationUnit().uri().toString());
-        assertSame(string.compilationUnit(), string.source().compilationUnit());
     }
 
     @Test
