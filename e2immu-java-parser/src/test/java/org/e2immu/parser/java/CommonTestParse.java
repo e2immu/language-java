@@ -161,6 +161,8 @@ public class CommonTestParse {
         printStream.builder().setParentClass(runtime.objectParameterizedType());
         printStream.builder().commit();
 
+        system.builder().setParentClass(runtime.objectParameterizedType());
+
         FieldInfo out = runtime.newFieldInfo("out", true, printStream.asSimpleParameterizedType(), system);
         system.builder().addField(out);
         system.builder().commit();

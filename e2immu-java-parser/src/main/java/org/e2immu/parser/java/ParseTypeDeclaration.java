@@ -269,7 +269,10 @@ public class ParseTypeDeclaration extends CommonParse {
                 builder.addConstructor(cc);
             }
             // finally, add synthetic methods if needed
-            rs.createAccessors(recordFields).forEach(builder::addMethod);
+            rs.createAccessors(recordFields).forEach(accessor -> {
+                builder.addMethod(accessor);
+                context.resolver().addRecordAccessor(accessor);
+            });
         }
 
         if (typeNature.isInterface() || typeNature.isClass() && builder.isAbstract()) {

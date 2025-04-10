@@ -77,9 +77,8 @@ class RecordSynthetics {
                 .addMethodModifier(runtime.methodModifierPublic())
                 .setSynthetic(true)
                 .commitParameters()
-                .setMethodBody(methodBody)
-                .addOverrides(runtime.computeMethodOverrides().overrides(methodInfo))
-                .commit();
+                .setMethodBody(methodBody);
+        // NOT YET COMMITTING! we cannot yet compute the overrides
         runtime.setGetSetField(methodInfo, fieldInfo, false, -1);
         return methodInfo;
     }
