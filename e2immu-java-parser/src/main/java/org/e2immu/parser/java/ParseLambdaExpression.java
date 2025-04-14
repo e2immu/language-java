@@ -81,15 +81,23 @@ public class ParseLambdaExpression extends CommonParse {
         Block methodBody;
         Node le1 = le.get(1);
         if (le1 instanceof org.parsers.java.ast.Expression e) {
-            // simple function or supplier
+            // simple function, supplier, or consumer (void)
             Expression expression = parsers.parseExpression().parse(newContext, "0", newForward, e);
             concreteReturnType = expression.parameterizedType();
             Source expressionSource = source("0", e);
-            Statement returnStatement = runtime.newReturnBuilder()
-                    .setSource(expressionSource)
-                    .setExpression(expression)
-                    .build();
-            methodBody = runtime.newBlockBuilder().addStatement(returnStatement).build();
+            Statement statement;
+            if (concreteReturnType.isVoid()) {
+                statement = runtime.newExpressionAsStatementBuilder()
+                        .setSource(expressionSource)
+                        .setExpression(expression)
+                        .build();
+            } else {
+                statement = runtime.newReturnBuilder()
+                        .setSource(expressionSource)
+                        .setExpression(expression)
+                        .build();
+            }
+            methodBody = runtime.newBlockBuilder().addStatement(statement).build();
         } else if (le1 instanceof CodeBlock codeBlock) {
             methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
