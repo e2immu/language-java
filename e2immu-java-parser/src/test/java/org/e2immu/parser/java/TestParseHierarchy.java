@@ -1,17 +1,6 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.expression.ArrayLength;
-import org.e2immu.language.cst.api.expression.BinaryOperator;
-import org.e2immu.language.cst.api.expression.IntConstant;
-import org.e2immu.language.cst.api.expression.VariableExpression;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.cst.api.statement.Block;
-import org.e2immu.language.cst.api.statement.LocalVariableCreation;
-import org.e2immu.language.cst.api.statement.ReturnStatement;
-import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -27,9 +16,10 @@ public class TestParseHierarchy extends CommonTestParse {
               interface J extends I { }
               class A implements I { }
               class B extends A implements I, J { }
-              interface K<T> { }
+              class K<T> { }
               class D extends K<Integer> { }
               class E<S> extends K<S> { }
+              class S extends E<String> { }
             }
             """;
 
@@ -51,10 +41,15 @@ public class TestParseHierarchy extends CommonTestParse {
 
         TypeInfo K = typeInfo.findSubType("K");
         TypeInfo D = typeInfo.findSubType("D");
-        assertEquals("Type a.b.C.K<Integer>", D.parentClass().toString());
+        assertTrue(D.isDescendantOf(K));
+        assertFalse(K.isDescendantOf(D));
+        assertEquals("Type K<Integer>", D.parentClass().toString());
         assertSame(K, D.parentClass().typeInfo());
         TypeInfo E = typeInfo.findSubType("E");
         assertEquals(1, E.typeParameters().size());
         assertSame(E.typeParameters().get(0), E.parentClass().parameters().get(0).typeParameter());
+        TypeInfo S = typeInfo.findSubType("S");
+        assertTrue(S.isDescendantOf(K));
+        assertFalse(E.isDescendantOf(S));
     }
 }
