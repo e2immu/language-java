@@ -93,16 +93,16 @@ public class TestParseLambdaExpression extends CommonTestParse {
     public void test3() {
         TypeInfo typeInfo = parse(INPUT_3);
         MethodInfo m1 = typeInfo.findUniqueMethod("biConsumer1", 1);
-        Lambda l1 = (Lambda) m1.methodBody().statements().getFirst().expression();
+        Lambda l1 = (Lambda) m1.methodBody().statements().get(0).expression();
         assertEquals(1, l1.methodBody().statements().size());
-        Statement s1 = l1.methodBody().statements().getFirst();
+        Statement s1 = l1.methodBody().statements().get(0);
         if (s1 instanceof ExpressionAsStatement eas) {
             assertInstanceOf(MethodCall.class, eas.expression());
         } else fail();
         MethodInfo m2 = typeInfo.findUniqueMethod("biConsumer2", 1);
-        Lambda l2 = (Lambda) m2.methodBody().statements().getFirst().expression();
+        Lambda l2 = (Lambda) m2.methodBody().statements().get(0).expression();
         assertEquals(1, l2.methodBody().statements().size());
-        Statement s2 = l2.methodBody().statements().getFirst();
+        Statement s2 = l2.methodBody().statements().get(0);
         if (s2 instanceof ExpressionAsStatement eas) {
             assertInstanceOf(MethodCall.class, eas.expression());
         } else fail();
