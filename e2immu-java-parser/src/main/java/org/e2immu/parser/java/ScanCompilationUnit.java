@@ -1,8 +1,9 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.FingerPrint;
 import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.element.SourceSet;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -13,7 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 /*
 First round, we only prepare a type map.
@@ -32,9 +34,13 @@ public class ScanCompilationUnit extends CommonParse {
                              org.e2immu.language.cst.api.element.CompilationUnit compilationUnit) {
     }
 
-    public ScanResult scan(URI uri, CompilationUnit cu, boolean addDetailedSources) {
+    public ScanResult scan(URI uri,
+                           SourceSet sourceSet,
+                           FingerPrint fingerPrint,
+                           CompilationUnit cu,
+                           boolean addDetailedSources) {
         try {
-            return internalScan(uri, cu, addDetailedSources);
+            return internalScan(uri, sourceSet, fingerPrint, cu, addDetailedSources);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -45,7 +51,11 @@ public class ScanCompilationUnit extends CommonParse {
         }
     }
 
-    private ScanResult internalScan(URI uri, CompilationUnit cu, boolean addDetailedSources) {
+    private ScanResult internalScan(URI uri,
+                                    SourceSet sourceSet,
+                                    FingerPrint fingerPrint,
+                                    CompilationUnit cu,
+                                    boolean addDetailedSources) {
         PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
         String packageName;
         Source s1 = source(cu);
@@ -64,7 +74,9 @@ public class ScanCompilationUnit extends CommonParse {
                 = runtime.newCompilationUnitBuilder()
                 .setSource(source)
                 .setURI(uri)
-                .setPackageName(packageName);
+                .setPackageName(packageName)
+                .setSourceSet(sourceSet)
+                .setFingerPrint(fingerPrint);
         for (ImportDeclaration id : cu.childrenOfType(ImportDeclaration.class)) {
             ImportStatement importStatement = parseImportDeclaration(id);
             compilationUnitBuilder.addImportStatement(importStatement);
