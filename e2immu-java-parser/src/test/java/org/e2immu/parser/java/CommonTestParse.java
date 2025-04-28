@@ -8,10 +8,11 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
-import org.e2immu.language.inspection.api.parser.*;
-import org.e2immu.language.inspection.api.resource.*;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.Resolver;
+import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.resource.CompiledTypesManager;
 import org.e2immu.language.inspection.impl.parser.*;
-import org.e2immu.language.inspection.impl.parser.ResolverImpl;
 import org.parsers.java.JavaParser;
 
 import java.net.URI;
@@ -292,7 +293,7 @@ public class CommonTestParse {
         CompilationUnit cu;
         try {
             ScanCompilationUnit.ScanResult sr = scanCompilationUnit.scan(new URI("input"),
-                    parser.get().CompilationUnit(), detailedSources);
+                    null, null, parser.get().CompilationUnit(), detailedSources);
             stm.putAll(sr.sourceTypes());
             cu = sr.compilationUnit();
         } catch (URISyntaxException e) {

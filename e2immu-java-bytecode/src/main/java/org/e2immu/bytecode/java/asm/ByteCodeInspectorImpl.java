@@ -178,7 +178,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         if (dollar >= 0) {
             String simpleName = path.substring(dollar + 1);
             String newPathWithoutSubType = SourceFile.ensureDotClass(path.substring(0, dollar));
-            SourceFile newSource = new SourceFile(newPathWithoutSubType, source.uri());
+            SourceFile newSource = source.withPath(newPathWithoutSubType);
             TypeInfo parent = inspectFromPath(null, newSource, typeParameterContext, loadMode);
             typeInfo = runtime.newTypeInfo(parent, simpleName);
         } else {

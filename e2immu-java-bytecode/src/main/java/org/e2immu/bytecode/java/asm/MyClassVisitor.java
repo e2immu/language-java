@@ -28,7 +28,8 @@ import org.objectweb.asm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.objectweb.asm.Opcodes.ASM9;
 
@@ -332,7 +333,7 @@ public class MyClassVisitor extends ClassVisitor {
                             : currentType.compilationUnitOrEnclosingType().getRight();
                     TypeInfo subType = runtime.newTypeInfo(enclosing, innerName);
                     checkTypeFlags(access, subType.builder());
-                    SourceFile newPath = new SourceFile(name + ".class", pathAndURI.uri());
+                    SourceFile newPath = pathAndURI.withPath(name + ".class");
                     TypeParameterContext newTypeParameterContext = typeParameterContext.newContext();
                     localTypeMap.inspectFromPath(subType, newPath, newTypeParameterContext, LocalTypeMap.LoadMode.NOW);
                     if (stepDown) {
