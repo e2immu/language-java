@@ -29,7 +29,7 @@ public abstract class CommonJmodBaseTests {
         CompiledTypesManagerImpl mgr = new CompiledTypesManagerImpl(classPath);
         compiledTypesManager = mgr;
         runtime = new RuntimeImpl();
-        byteCodeInspector = new ByteCodeInspectorImpl(runtime, compiledTypesManager);
+        byteCodeInspector = new ByteCodeInspectorImpl(runtime, compiledTypesManager, true);
         mgr.setByteCodeInspector(byteCodeInspector);
     }
 

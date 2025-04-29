@@ -15,14 +15,21 @@
 package org.e2immu.bytecode.java.asm;
 
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.FingerPrint;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.language.inspection.api.resource.*;
+import org.e2immu.language.inspection.api.resource.ByteCodeInspector;
+import org.e2immu.language.inspection.api.resource.CompiledTypesManager;
+import org.e2immu.language.inspection.api.resource.MD5FingerPrint;
+import org.e2immu.language.inspection.api.resource.SourceFile;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 /*
@@ -45,14 +52,25 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
     private final Map<String, TypeData> localTypeMap = new LinkedHashMap<>();
     private final Runtime runtime;
     private final CompiledTypesManager compiledTypesManager;
+    private final MessageDigest md;
 
     public ByteCodeInspectorImpl(Runtime runtime,
-                                 CompiledTypesManager compiledTypesManager) {
+                                 CompiledTypesManager compiledTypesManager,
+                                 boolean computeFingerPrints) {
         this.runtime = runtime;
         this.compiledTypesManager = compiledTypesManager;
         for (TypeInfo ti : runtime.predefinedObjects()) {
             localTypeMap.put(ti.fullyQualifiedName(),
                     new TypeData(ti, Status.IN_QUEUE, new TypeParameterContext()));
+        }
+        if (computeFingerPrints) {
+            try {
+                md = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            md = null;
         }
     }
 
@@ -187,7 +205,10 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             String simpleName = fqn.substring(lastDot + 1);
             CompilationUnit cu = runtime.newCompilationUnitBuilder()
                     .setURI(source.uri())
-                    .setPackageName(packageName).build();
+                    .setPackageName(packageName)
+                    .setSourceSet(source.sourceSet())
+                    .setFingerPrint(source.fingerPrint())
+                    .build();
             typeInfo = runtime.newTypeInfo(cu, simpleName);
         }
         return typeInfo;
@@ -204,7 +225,11 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             if (classBytes == null) {
                 return null;
             }
-
+            // NOTE: the fingerprint null check is there for java.lang.String and the boxed types.
+            if (typeInfo.isPrimaryType() && typeInfo.compilationUnit().fingerPrintOrNull() == null) {
+                FingerPrint fingerPrint = makeFingerPrint(classBytes);
+                typeInfo.compilationUnit().setFingerPrint(fingerPrint);
+            }
             ClassReader classReader = new ClassReader(classBytes);
             LOGGER.debug("Constructed class reader for {} with {} bytes", fqn, classBytes.length);
 
@@ -219,6 +244,13 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             LOGGER.error("Path = {}", path);
             LOGGER.error("FQN  = {}", fqn);
             throw re;
+        }
+    }
+
+    private FingerPrint makeFingerPrint(byte[] classBytes) {
+        if (md == null) return MD5FingerPrint.NO_FINGERPRINT;
+        synchronized (md) {
+            return MD5FingerPrint.compute(md, classBytes);
         }
     }
 }
