@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 
 public abstract class CommonJmodBaseTests {
     protected static Runtime runtime;
@@ -21,7 +22,7 @@ public abstract class CommonJmodBaseTests {
 
     @BeforeAll
     public static void beforeClass() throws IOException, URISyntaxException {
-        Resources cp = new ResourcesImpl();
+        Resources cp = new ResourcesImpl(Path.of("."));
         classPath = cp;
         URL url = new URL("jar:file:" + System.getProperty("java.home") + "/jmods/java.base.jmod!/");
         SourceFile sourceFile = new SourceFile(url.getPath(), url.toURI(), null, null);
