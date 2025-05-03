@@ -3,8 +3,8 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
-import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.expression.*;
+import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
@@ -26,10 +26,10 @@ import org.e2immu.parser.java.util.TextBlockParser;
 import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
+import org.parsers.java.ast.*;
 import org.parsers.java.ast.ArrayInitializer;
 import org.parsers.java.ast.MethodCall;
 import org.parsers.java.ast.MethodReference;
-import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +51,8 @@ public class ParseExpression extends CommonParse {
         try {
             return internalParse(context, index, forwardType, node);
         } catch (Throwable t) {
-            LOGGER.error("Caught exception parsing expression at line {}, pos {}", node.getBeginLine(),
-                    node.getBeginColumn(), t);
+            LOGGER.error("Caught exception parsing expression at line {}, pos {}. Current info {}", node.getBeginLine(),
+                    node.getBeginColumn(), context.info());
             throw t;
         }
     }
