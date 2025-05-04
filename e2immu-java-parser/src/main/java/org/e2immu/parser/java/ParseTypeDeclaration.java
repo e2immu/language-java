@@ -4,7 +4,6 @@ import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
-import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
@@ -65,15 +64,15 @@ public class ParseTypeDeclaration extends CommonParse {
         int i = 0;
         // in the annotations, we can refer to our own static fields, so we wait a little to parse them
         // See TestAnnotations,3
-        List<Annotation> annotationsToParse = new ArrayList<>();
+        List<Annotation> annotations = new ArrayList<>();
         while (true) {
             Node tdi = td.get(i);
             if (tdi instanceof Annotation a) {
-                annotationsToParse.add(a);
+                annotations.add(a);
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        annotationsToParse.add(a);
+                        annotations.add(a);
                     }
                 }
             } else if (tdi instanceof Delimiter) {
@@ -242,10 +241,8 @@ public class ParseTypeDeclaration extends CommonParse {
 
         newContext.resolver().add(builder);
 
-        // now that we know the fields, we can safely parse the annotation expressions
-        for (Annotation annotation : annotationsToParse) {
-            builder.addAnnotation(parsers.parseAnnotationExpression().parse(context, annotation));
-        }
+        // now that we know the type builder, we can parse the annotations
+        parseAnnotations(context, builder, annotations);
 
         /*
         Ensure a constructor when the type is a record and there are no compact constructors.
@@ -323,19 +320,15 @@ public class ParseTypeDeclaration extends CommonParse {
         int i = 0;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
-        List<AnnotationExpression> annotations = new ArrayList<>();
+        List<Annotation> annotations = new ArrayList<>();
         while (true) {
             Node tdi = rc.get(i);
             if (tdi instanceof Annotation a) {
-                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
-                annotations.add(ae);
-                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
+                annotations.add(a);
             } else if (tdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
-                        annotations.add(ae);
-                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
+                        annotations.add(a);
                     }
                 }
             } else break;
@@ -373,9 +366,14 @@ public class ParseTypeDeclaration extends CommonParse {
                 .setInitializer(runtime.newEmptyExpression())
                 .addFieldModifier(runtime.fieldModifierPrivate())
                 .addFieldModifier(runtime.fieldModifierFinal())
-                .addAnnotations(annotations)
-                .computeAccess()
-                .commit();
+                .computeAccess();
+
+        // now that we know the type builder, we can parse the annotations
+        parseAnnotations(context, fieldInfo.builder(), annotations);
+
+        // not yet commiting! annotations may not have been parsed yet
+        context.resolver().addRecordField(fieldInfo);
+
         return new RecordField(fieldInfo, varargs);
     }
 

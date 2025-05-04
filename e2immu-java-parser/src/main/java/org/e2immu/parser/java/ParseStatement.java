@@ -81,7 +81,7 @@ public class ParseStatement extends CommonParse {
             if (si instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                        AnnotationExpression ae = parsers.parseAnnotationExpression().parseDirectly(context, a);
                         annotations.add(ae);
                         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
                     }
@@ -98,7 +98,7 @@ public class ParseStatement extends CommonParse {
                 lvcModifiers.add(m);
                 if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(si));
             } else if (si instanceof Annotation a) {
-                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                AnnotationExpression ae = parsers.parseAnnotationExpression().parseDirectly(context, a);
                 annotations.add(ae);
                 if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
             } else break;
@@ -235,7 +235,7 @@ public class ParseStatement extends CommonParse {
                     if (cbj instanceof Type type) {
                         for (Node child : type.children()) {
                             if (child instanceof Annotation a) {
-                                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
+                                AnnotationExpression ae = parsers.parseAnnotationExpression().parseDirectly(context, a);
                                 ccBuilder.addAnnotation(ae);
                                 if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(ae, source(a));
                             }

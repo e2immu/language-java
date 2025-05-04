@@ -156,7 +156,7 @@ public class ParseExpression extends CommonParse {
             }
         }
         if (node instanceof NormalAnnotation na) {
-            return parsers.parseAnnotationExpression().parse(context, na);
+            return parsers.parseAnnotationExpression().parseDirectly(context, na);
         }
         if (node instanceof DotThis || node instanceof DotSuper) {
             return parseDotThisDotSuper(context, node, source);

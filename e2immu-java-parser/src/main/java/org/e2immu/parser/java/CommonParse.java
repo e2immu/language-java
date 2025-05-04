@@ -90,8 +90,8 @@ public abstract class CommonParse {
     }
 
     // code copied from ParseTypeDeclaration
-    protected TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex,
-                                               boolean complain, DetailedSources.Builder detailedSourcesBuilder) {
+    private TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex,
+                                             DetailedSources.Builder detailedSourcesBuilder) {
         String name;
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
@@ -99,7 +99,8 @@ public abstract class CommonParse {
             name = node.getSource();
         } else if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             while (tp.get(i) instanceof Annotation a) {
-                annotations.add(parsers.parseAnnotationExpression().parse(context, a));
+                // FIXME for now, we're not delaying the evaluation of annotations here to the resolution phase
+                annotations.add(parsers.parseAnnotationExpression().parseDirectly(context, a));
                 i++;
             }
             if (tp.get(i) instanceof Identifier id) {
@@ -113,10 +114,9 @@ public abstract class CommonParse {
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (tp.get(i) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), complain,
+                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false,
                         detailedSourcesBuilder);
                 if (typeBound == null) {
-                    assert !complain;
                     return null;
                 }
                 builder.addTypeBound(typeBound);
@@ -257,7 +257,7 @@ public abstract class CommonParse {
             for (Node unparsedTypeParameter : typeParametersToParse) {
                 if (typeParameters[tpIndex] == null) {
                     TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner,
-                            tpIndex, false, detailedSourcesBuilder);
+                            tpIndex, detailedSourcesBuilder);
                     if (typeParameter != null) {
                         // paresTypeParameter has added it to the contextWithTP
                         typeParameters[tpIndex] = typeParameter;
@@ -275,4 +275,12 @@ public abstract class CommonParse {
         return typeParameters;
     }
 
+
+    protected void parseAnnotations(Context context, Info.Builder<?> builder, List<Annotation> annotations) {
+        int annotationIndex = 0;
+        for (Annotation annotation : annotations) {
+            builder.addAnnotation(parsers.parseAnnotationExpression().parse(context, builder, annotation,
+                    annotationIndex++));
+        }
+    }
 }

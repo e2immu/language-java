@@ -2,7 +2,6 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
-import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.FieldModifier;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -26,20 +25,16 @@ public class ParseFieldDeclaration extends CommonParse {
     public List<FieldInfo> parse(Context context, FieldDeclaration fd) {
         int i = 0;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        List<AnnotationExpression> annotations = new ArrayList<>();
+        List<Annotation> annotations = new ArrayList<>();
         List<FieldModifier> fieldModifiers = new ArrayList<>();
         Node fdi;
         while (!((fdi = fd.get(i)) instanceof Type)) {
             if (fdi instanceof Annotation a) {
-                AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
-                annotations.add(ae);
-                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
+                annotations.add(a);
             } else if (fdi instanceof Modifiers modifiers) {
                 for (Node node : modifiers.children()) {
                     if (node instanceof Annotation a) {
-                        AnnotationExpression ae = parsers.parseAnnotationExpression().parse(context, a);
-                        annotations.add(ae);
-                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(ae, source(a));
+                        annotations.add(a);
                     } else if (node instanceof KeyWord keyWord) {
                         FieldModifier m = modifier(keyWord);
                         fieldModifiers.add(m);
@@ -83,7 +78,7 @@ public class ParseFieldDeclaration extends CommonParse {
                                 TypeInfo owner,
                                 DetailedSources.Builder detailedSourcesBuilderMaster,
                                 List<FieldModifier> fieldModifiers,
-                                List<AnnotationExpression> annotations,
+                                List<Annotation> annotations,
                                 boolean first) {
         ParameterizedType type;
         Node vd0 = vd.get(0);
@@ -118,7 +113,10 @@ public class ParseFieldDeclaration extends CommonParse {
         if (first) {
             builder.addComments(comments(fd));
         } // else: comment is only on the first field in the sequence, see e.g. TestFieldComments in java-parser
-        builder.addComments(comments(vd)).addAnnotations(annotations);
+        builder.addComments(comments(vd));
+
+        // now that there is a builder, we can parse the annotations
+        parseAnnotations(context, builder, annotations);
 
         FieldReference fieldReference = runtime.newFieldReference(fieldInfo);
         context.variableContext().add(fieldReference);

@@ -3,6 +3,7 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -31,6 +32,40 @@ public class ParseHelperImpl implements ParseHelper {
     public ParseHelperImpl(Runtime runtime, Parsers parsers) {
         this.parsers = parsers;
         this.runtime = runtime;
+    }
+
+    @Override
+    public List<AnnotationExpression.KV> parseAnnotationExpression(Object annotation, Context context) {
+        List<AnnotationExpression.KV> kvs = new ArrayList<>();
+        if (annotation instanceof SingleMemberAnnotation sma) {
+            Expression expression = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
+                    sma.get(3));
+            kvs.add(runtime.newAnnotationExpressionKeyValuePair("value", expression));
+        } else if (annotation instanceof NormalAnnotation na) {
+            // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
+            if (na.get(3) instanceof MemberValuePair mvp) {
+                String key = mvp.get(0).getSource();
+                Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
+                        mvp.get(2));
+                kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
+            } else if (na.get(3) instanceof MemberValuePairs pairs) {
+                for (int j = 0; j < pairs.size(); j += 2) {
+                    if (pairs.get(j) instanceof MemberValuePair mvp) {
+                        String key = mvp.get(0).getSource();
+                        Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
+                                mvp.get(2));
+                        kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
+                    } else {
+                        throw new Summary.ParseException(context.info(), "Expected mvp");
+                    }
+                }
+            } else {
+                throw new Summary.ParseException(context.info(), "Expected mvp");
+            }
+        } else {
+            throw new UnsupportedOperationException("NYI");
+        }
+        return kvs;
     }
 
     @Override

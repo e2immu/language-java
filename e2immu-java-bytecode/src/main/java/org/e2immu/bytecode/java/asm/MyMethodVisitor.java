@@ -53,6 +53,11 @@ public class MyMethodVisitor extends MethodVisitor {
         }
 
         @Override
+        public ParameterInfo.Builder setAnnotationExpression(int index, AnnotationExpression annotationExpression) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public ParamBuilder setSource(Source source) {
             throw new UnsupportedOperationException();
         }
