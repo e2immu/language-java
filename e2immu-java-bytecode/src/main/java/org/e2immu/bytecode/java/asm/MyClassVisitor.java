@@ -221,6 +221,9 @@ public class MyClassVisitor extends ClassVisitor {
         Expression expression;
         if (value != null) {
             expression = ExpressionFactory.from(runtime, localTypeMap, value);
+            if (expression.isEmpty()) {
+                LOGGER.warn("Ignoring unparsed field initializer of type {}, for field {}", value.getClass(), fieldInfo);
+            }
         } else {
             expression = runtime.newEmptyExpression();
         }

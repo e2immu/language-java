@@ -15,47 +15,80 @@
 package org.e2immu.bytecode.java;
 
 import org.e2immu.bytecode.java.asm.LocalTypeMap;
+import org.e2immu.language.cst.api.expression.ArrayInitializer;
 import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.expression.TypeExpression;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.objectweb.asm.Type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class ExpressionFactory {
 
     public static Expression from(Runtime runtime, LocalTypeMap localTypeMap, Object value) {
-        if (value == null) return runtime.nullConstant();
-        if (value instanceof String s) return runtime.newStringConstant(s);
-        if (value instanceof Integer i) return runtime.newInt(i);
-        if (value instanceof Short s) return runtime.newShort(s);
-        if (value instanceof Long l) return runtime.newLong(l);
-        if (value instanceof Byte b) return runtime.newByte(b);
-        if (value instanceof Double d) return runtime.newDouble(d);
-        if (value instanceof Float f) return runtime.newFloat(f);
-        if (value instanceof Character c) return runtime.newChar(c);
-        if (value instanceof Boolean b) return runtime.newBoolean(b);
-        if (value instanceof Type t) {
-            ParameterizedType parameterizedType =
-                    switch (t.getClassName()) {
-                        case "boolean" -> runtime.booleanParameterizedType();
-                        case "byte" -> runtime.byteParameterizedType();
-                        case "char" -> runtime.charParameterizedType();
-                        case "double" -> runtime.doubleParameterizedType();
-                        case "float" -> runtime.floatParameterizedType();
-                        case "int" -> runtime.intParameterizedType();
-                        case "long" -> runtime.longParameterizedType();
-                        case "short" -> runtime.shortParameterizedType();
-                        case "void" -> runtime.voidParameterizedType();
-                        default -> {
-                            TypeInfo ti = localTypeMap.getOrCreate(t.getClassName(), LocalTypeMap.LoadMode.TRIGGER);
-                            if (ti == null) {
-                                throw new UnsupportedOperationException("Cannot load type " + t.getClassName());
-                            }
-                            yield ti.asParameterizedType();
+        return switch (value) {
+            case null -> runtime.nullConstant();
+            case String s -> runtime.newStringConstant(s);
+            case int[] intArray -> parseArray(runtime, runtime.intParameterizedType(), Arrays.stream(intArray)
+                    .mapToObj(i -> from(runtime, localTypeMap, i)).toList());
+            case Integer i -> runtime.newInt(i);
+            case Short s -> runtime.newShort(s);
+            case long[] longArray -> parseArray(runtime, runtime.longParameterizedType(), Arrays.stream(longArray)
+                    .mapToObj(i -> from(runtime, localTypeMap, i)).toList());
+            case Long l -> runtime.newLong(l);
+            case Byte b -> runtime.newByte(b);
+            case double[] doubleArray ->
+                    parseArray(runtime, runtime.doubleParameterizedType(), Arrays.stream(doubleArray)
+                            .mapToObj(i -> from(runtime, localTypeMap, i)).toList());
+            case Double d -> runtime.newDouble(d);
+            case Float f -> runtime.newFloat(f);
+            case char[] chars -> parseCharArray(runtime, chars);
+            case Character c -> runtime.newChar(c);
+            case Boolean b -> runtime.newBoolean(b);
+            case Object[] objectArray ->
+                    parseArray(runtime, runtime.objectParameterizedType(), Arrays.stream(objectArray)
+                            .map(i -> from(runtime, localTypeMap, i)).toList());
+            case Type t -> parseTypeExpression(runtime, localTypeMap, t);
+            default -> runtime.newEmptyExpression(); // will trigger a warning
+        };
+    }
+
+    private static Expression parseArray(Runtime runtime, ParameterizedType commonType, List<Expression> components) {
+        return runtime.newArrayInitializerBuilder().setCommonType(commonType).setExpressions(components).build();
+    }
+
+    private static Expression parseCharArray(Runtime runtime, char[] chars) {
+        ArrayInitializer.Builder builder = runtime.newArrayInitializerBuilder()
+                .setCommonType(runtime.charParameterizedType());
+        List<Expression> expressions = new ArrayList<>(chars.length);
+        for (char c : chars) expressions.add(runtime.newChar(c));
+        return builder.setExpressions(expressions).build();
+    }
+
+    private static TypeExpression parseTypeExpression(Runtime runtime, LocalTypeMap localTypeMap, Type t) {
+        ParameterizedType parameterizedType =
+                switch (t.getClassName()) {
+                    case "boolean" -> runtime.booleanParameterizedType();
+                    case "byte" -> runtime.byteParameterizedType();
+                    case "char" -> runtime.charParameterizedType();
+                    case "double" -> runtime.doubleParameterizedType();
+                    case "float" -> runtime.floatParameterizedType();
+                    case "int" -> runtime.intParameterizedType();
+                    case "long" -> runtime.longParameterizedType();
+                    case "short" -> runtime.shortParameterizedType();
+                    case "void" -> runtime.voidParameterizedType();
+                    default -> {
+                        TypeInfo ti = localTypeMap.getOrCreate(t.getClassName(), LocalTypeMap.LoadMode.TRIGGER);
+                        if (ti == null) {
+                            throw new UnsupportedOperationException("Cannot load type " + t.getClassName());
                         }
-                    };
-            return runtime.newTypeExpression(parameterizedType, runtime.diamondShowAll());
-        }
-        throw new UnsupportedOperationException("Value " + value + " is of " + value.getClass());
+                        yield ti.asParameterizedType();
+                    }
+                };
+        return runtime.newTypeExpression(parameterizedType, runtime.diamondShowAll());
     }
 }

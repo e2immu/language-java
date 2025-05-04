@@ -21,7 +21,6 @@ import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.objectweb.asm.AnnotationVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +49,7 @@ public class MyAnnotationVisitor<T extends Info.Builder<? extends Info.Builder<T
         this.inspectionBuilder = Objects.requireNonNull(inspectionBuilder);
         LOGGER.debug("My annotation visitor: {}", descriptor);
 
-        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime,  typeParameterContext, localTypeMap,
+        ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeParameterContext, localTypeMap,
                 LocalTypeMap.LoadMode.TRIGGER, descriptor);
         if (from == null) {
             expressionBuilder = null;
@@ -71,7 +70,11 @@ public class MyAnnotationVisitor<T extends Info.Builder<? extends Info.Builder<T
         if (expressionBuilder != null) {
             LOGGER.debug("Assignment: {} to {}", name, value);
             Expression expression = ExpressionFactory.from(runtime, localTypeMap, value);
-            expressionBuilder.addKeyValuePair(name, expression);
+            if (!expression.isEmpty()) {
+                expressionBuilder.addKeyValuePair(name, expression);
+            } else {
+                LOGGER.warn("Ignoring unparsed annotation expression of type {}", value.getClass());
+            }
         }// else: jdk/ annotation
     }
 
