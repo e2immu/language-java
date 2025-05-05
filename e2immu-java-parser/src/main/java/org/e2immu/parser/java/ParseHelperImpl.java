@@ -185,7 +185,7 @@ public class ParseHelperImpl implements ParseHelper {
                 parent = typeInfo.parentClass();
             }
         } else {
-            eciMethod = context.enclosingType().findConstructor(parameterExpressions.size());
+            eciMethod = findCompatibleConstructor(context.enclosingType(), parameterExpressions);
         }
         if (eciMethod == null) {
             throw new UnsupportedOperationException("Cannot find compatible constructor in explicit constructor invocation of  "
