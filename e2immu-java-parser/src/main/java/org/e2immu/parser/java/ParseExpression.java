@@ -345,12 +345,22 @@ public class ParseExpression extends CommonParse {
         String name = identifier.getSource();
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
-        Variable v = context.variableContext().get(name, false);
-        if (v != null) {
-            if (detailedSourcesBuilder != null && v instanceof FieldReference fr) {
+        Variable v1 = context.variableContext().get(name, false);
+        Variable v2;
+        if (v1 != null) {
+            v2 = v1;
+        } else {
+            v2 = context.typeContext().findStaticFieldImport(name);
+            if (v2 != null) {
+                // for further reference, so that we don't have to go through the search procedure again
+                context.variableContext().add((FieldReference) v2);
+            }
+        }
+        if (v2 != null) {
+            if (detailedSourcesBuilder != null && v1 instanceof FieldReference fr) {
                 detailedSourcesBuilder.put(fr.fieldInfo(), source);
             }
-            return runtime.newVariableExpressionBuilder().setVariable(v)
+            return runtime.newVariableExpressionBuilder().setVariable(v2)
                     .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                     .addComments(comments).build();
         }
