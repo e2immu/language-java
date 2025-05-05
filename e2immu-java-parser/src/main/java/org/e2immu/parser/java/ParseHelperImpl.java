@@ -6,10 +6,12 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
+import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.ParseHelper;
@@ -172,7 +174,23 @@ public class ParseHelperImpl implements ParseHelper {
         Source source = parsers.parseStatement().source("0", cd);
         boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.get(0).getType());
         List<Expression> parameterExpressions = parseArguments(context, unparsedEci.get(1));
-        MethodInfo eciMethod = context.enclosingType().findConstructor(parameterExpressions.size());
+        MethodInfo eciMethod;
+        if (isSuper) {
+            ParameterizedType parent = context.enclosingType().parentClass();
+            eciMethod = null;
+            while (parent != null) {
+                TypeInfo typeInfo = parent.typeInfo();
+                eciMethod = findCompatibleConstructor(typeInfo, parameterExpressions);
+                if (eciMethod != null) break;
+                parent = typeInfo.parentClass();
+            }
+        } else {
+            eciMethod = context.enclosingType().findConstructor(parameterExpressions.size());
+        }
+        if (eciMethod == null) {
+            throw new UnsupportedOperationException("Cannot find compatible constructor in explicit constructor invocation of  "
+                                                    + context.enclosingMethod());
+        }
         eci = runtime.newExplicitConstructorInvocationBuilder()
                 .addComments(comments)
                 .setSource(source)
@@ -181,6 +199,36 @@ public class ParseHelperImpl implements ParseHelper {
                 .setParameterExpressions(parameterExpressions)
                 .build();
         return eci;
+    }
+
+    private MethodInfo findCompatibleConstructor(TypeInfo typeInfo, List<Expression> parameterExpressions) {
+        return typeInfo.constructors().stream()
+                .filter(c -> compatible(c.parameters(), parameterExpressions))
+                .findFirst().orElse(null);
+    }
+
+    private boolean compatible(List<ParameterInfo> formal, List<Expression> arguments) {
+        int f = formal.size();
+        int a = arguments.size();
+        if (f == a || f > 0 && formal.getLast().isVarArgs() && a >= f - 1) {
+            int i = 0;
+            for (Expression expression : arguments) {
+                ParameterInfo pi = formal.get(Math.min(i, formal.size() - 1));
+                // isAssignable from at erased level, because we did not have the forward type yet when evaluating
+                // the expressions.
+                ParameterizedType erasedFormal = pi.parameterizedType().erased();
+                ParameterizedType erasedArgument = expression.parameterizedType().erased();
+                if (!erasedFormal.isAssignableFrom(runtime, erasedArgument)) {
+                    if (!pi.isVarArgs() || !erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime,
+                            expression.parameterizedType())) {
+                        return false;
+                    }
+                }
+                i++;
+            }
+            return true;
+        }
+        return false;
     }
 
     // arguments of ECI
