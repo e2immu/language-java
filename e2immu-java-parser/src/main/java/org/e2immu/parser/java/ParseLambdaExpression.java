@@ -303,6 +303,7 @@ public class ParseLambdaExpression extends CommonParse {
                     if (ni.size() > 6 && ni.get(6) instanceof CodeBlock cb3) {
                         return recursiveComputeIsVoid(cb3);
                     }
+                    return IsVoid.YES;
                 }
                 if (ni instanceof TryStatement) {
                     CodeBlock cbt = ni.firstChildOfType(CodeBlock.class);
