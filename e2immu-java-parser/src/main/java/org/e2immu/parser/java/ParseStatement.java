@@ -10,6 +10,7 @@ import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.*;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
@@ -18,6 +19,7 @@ import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
+import org.parsers.java.ast.*;
 import org.parsers.java.ast.AssertStatement;
 import org.parsers.java.ast.BreakStatement;
 import org.parsers.java.ast.ContinueStatement;
@@ -30,12 +32,12 @@ import org.parsers.java.ast.ThrowStatement;
 import org.parsers.java.ast.TryStatement;
 import org.parsers.java.ast.WhileStatement;
 import org.parsers.java.ast.YieldStatement;
-import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class ParseStatement extends CommonParse {
@@ -146,8 +148,12 @@ public class ParseStatement extends CommonParse {
                     context.newForwardType(iterable.asSimpleParameterizedType());
             Expression expression = parsers.parseExpression().parse(context, index, forwardType, enhancedFor.get(i + 4));
             Context newContext = context.newVariableContext("forEach");
-            if (enhancedFor.get(i + 2) instanceof NoVarDeclaration nvd) {
+            Node varDeclaration = enhancedFor.get(i + 2);
+            if (varDeclaration instanceof NoVarDeclaration nvd) {
                 loopVariableCreation = (LocalVariableCreation) parse(newContext, index, nvd);
+            } else if (varDeclaration instanceof VarDeclaration vd) {
+                ParameterizedType elementType = computeForwardType(context, iterable, expression.parameterizedType());
+                loopVariableCreation = forEachElementWithVar(context, vd, elementType);
             } else throw new UnsupportedOperationException();
             Node n6 = enhancedFor.get(i + 6);
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, n6);
@@ -459,6 +465,16 @@ public class ParseStatement extends CommonParse {
         throw new UnsupportedOperationException("Node " + statement.getClass());
     }
 
+    private ParameterizedType computeForwardType(Context context, TypeInfo iterable, ParameterizedType concreteIterableType) {
+        if (iterable == null) {
+            throw new UnsupportedOperationException("Cannot deduce var type in enhanced for without Iterable in the classpath");
+        }
+        ParameterizedType formal = iterable.asParameterizedType();
+        Map<NamedType, ParameterizedType> map = context.genericsHelper().translateMap(formal, concreteIterableType,
+                true);
+        return map.values().stream().findFirst().orElseThrow();
+    }
+
     private LocalVariableCreation localVariableCreation(Context context, String index, NoVarDeclaration nvd, int i,
                                                         List<LocalVariableCreation.Modifier> lvcModifiers,
                                                         Source source, DetailedSources.Builder detailedSourcesBuilder,
@@ -510,6 +526,22 @@ public class ParseStatement extends CommonParse {
         return builder
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .addComments(comments).setLabel(label).addAnnotations(annotations).build();
+    }
+
+    private LocalVariableCreation forEachElementWithVar(Context context, VarDeclaration varDeclaration,
+                                                        ParameterizedType elementType) {
+        LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
+        Identifier identifier = (Identifier) varDeclaration.get(1);
+        String variableName = identifier.getSource();
+        LocalVariable lv = runtime.newLocalVariable(variableName, elementType, runtime.newEmptyExpression());
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        Source source = source(varDeclaration);
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(identifier));
+        context.variableContext().add(lv);
+        return builder.setLocalVariable(lv)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .addComments(comments(varDeclaration))
+                .build();
     }
 
     private LocalVariableCreation localVariableCreationWithVar(Context context, String index, VarDeclaration varDeclaration,
