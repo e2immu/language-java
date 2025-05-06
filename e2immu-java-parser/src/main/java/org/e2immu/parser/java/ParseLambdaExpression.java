@@ -63,7 +63,8 @@ public class ParseLambdaExpression extends CommonParse {
         MethodInfo.Builder miBuilder = methodInfo.builder();
 
         parseParameters(context, forwardType, le, miBuilder, outputVariants, context, singleAbstractMethod);
-        Context newContext = context.newLambdaContext(methodInfo);
+        // a lambda does not start a new type context, simply a new variable context. See e.g. TestOverload1, 5.
+        Context newContext = context.newVariableContext("lambda"); //.newLambdaContext(methodInfo);
         methodInfo.parameters().forEach(newContext.variableContext()::add);
         ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
 
