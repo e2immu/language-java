@@ -64,7 +64,7 @@ public class ParseStatement extends CommonParse {
         String label;
         Statement statement;
         if (statementIn instanceof LabeledStatement ls) {
-            label = ls.get(0).get(0).getSource();
+            label = ls.get(0).getFirst().getSource();
             statement = (Statement) ls.get(1);
         } else {
             label = null;
@@ -109,7 +109,7 @@ public class ParseStatement extends CommonParse {
 
         if (statement instanceof ExpressionStatement es) {
             StatementExpression se = (StatementExpression) es.children().get(i);
-            Expression e = parsers.parseExpression().parse(context, index, context.emptyForwardType(), se.get(0));
+            Expression e = parsers.parseExpression().parse(context, index, context.emptyForwardType(), se.getFirst());
             return runtime.newExpressionAsStatementBuilder().setExpression(e).setSource(source).setLabel(label)
                     .addComments(comments).addAnnotations(annotations).build();
         }
@@ -262,10 +262,10 @@ public class ParseStatement extends CommonParse {
                     ParameterizedType commonType;
                     if (exceptionTypes.isEmpty()) throw new UnsupportedOperationException();
                     else if (exceptionTypes.size() == 1) {
-                        commonType = exceptionTypes.get(0);
+                        commonType = exceptionTypes.getFirst();
                     } else {
                         commonType = exceptionTypes.stream().skip(1)
-                                .reduce(exceptionTypes.get(0), runtime::commonType);
+                                .reduce(exceptionTypes.getFirst(), runtime::commonType);
                     }
                     LocalVariable cv = runtime.newLocalVariable(variableName, commonType);
                     if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(cv, source(identifier));
@@ -316,7 +316,7 @@ public class ParseStatement extends CommonParse {
                 do {
                     if (statement.get(i) instanceof StatementExpression se) {
                         Expression initializer = parsers.parseExpression().parse(newContext, index,
-                                newContext.emptyForwardType(), se.get(0));
+                                newContext.emptyForwardType(), se.getFirst());
                         builder.addInitializer(initializer);
                     } else throw new UnsupportedOperationException();
                     i += 2;
@@ -341,7 +341,7 @@ public class ParseStatement extends CommonParse {
             } else {
                 while (statement.get(i) instanceof StatementExpression se) {
                     Expression updater = parsers.parseExpression().parse(newContext, index, newContext.emptyForwardType(),
-                            se.get(0));
+                            se.getFirst());
                     builder.addUpdater(updater);
                     i += 2;
                     if (statement.get(i - 1) instanceof Delimiter d && Token.TokenType.RPAREN.equals(d.getType())) {
@@ -487,11 +487,11 @@ public class ParseStatement extends CommonParse {
         i++;
         boolean first = true;
         while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
-            Node vd0 = vd.get(0);
+            Node vd0 = vd.getFirst();
             Identifier identifier;
             ParameterizedType type;
             if (vd0 instanceof VariableDeclaratorId vdi) {
-                identifier = (Identifier) vdi.get(0);
+                identifier = (Identifier) vdi.getFirst();
                 int arrays = (vdi.size() - 1) / 2;
                 type = baseType.copyWithArrays(arrays);
                 if (detailedSourcesBuilder != null) {
@@ -591,9 +591,9 @@ public class ParseStatement extends CommonParse {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
-                    if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
+                    if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
                         conditions.add(runtime.newEmptyExpression());
-                    } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
+                    } else if (!Token.TokenType.CASE.equals(nsl.getFirst().getType())) {
                         throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
                     }
                     int j = 1;
@@ -631,18 +631,25 @@ public class ParseStatement extends CommonParse {
         Block.Builder builder = runtime.newBlockBuilder();
         List<SwitchStatementOldStyle.SwitchLabel> switchLabels = new ArrayList<>();
         Context newContext = context.newVariableContext("switch-old-style");
+
+        TypeInfo selectorTypeInfo = selector.parameterizedType().bestTypeInfo();
+        if (selectorTypeInfo.typeNature().isEnum()) {
+            selectorTypeInfo.fields().stream().filter(Info::isSynthetic)
+                    .forEach(f -> newContext.variableContext().add(runtime.newFieldReference(f)));
+        }
+
         int pos = 0;
 
         for (int i = start + 5; i < statement.size(); i++) {
             if (statement.get(i) instanceof ClassicCaseStatement ccs) {
-                if (ccs.get(0) instanceof ClassicSwitchLabel csl) {
-                    if (Token.TokenType._DEFAULT.equals(csl.get(0).getType())) {
+                if (ccs.getFirst() instanceof ClassicSwitchLabel csl) {
+                    if (Token.TokenType._DEFAULT.equals(csl.getFirst().getType())) {
                         SwitchStatementOldStyle.SwitchLabel sld
                                 = runtime.newSwitchLabelOldStyle(runtime.newEmptyExpression(), pos, null,
                                 runtime.newEmptyExpression());
                         switchLabels.add(sld);
                     } else {
-                        assert Token.TokenType.CASE.equals(csl.get(0).getType());
+                        assert Token.TokenType.CASE.equals(csl.getFirst().getType());
                         for (int k = 1; k < csl.size(); k += 2) {
                             String newIndex = index + ".0." + StringUtil.pad(pos, n);
                             Expression literal = parsers.parseExpression().parse(newContext, newIndex,

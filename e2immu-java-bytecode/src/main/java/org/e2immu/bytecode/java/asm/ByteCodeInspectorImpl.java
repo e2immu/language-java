@@ -111,7 +111,10 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         SourceFile source = typeInfo == null
                 ? compiledTypesManager.classPath().fqnToPath(fqn, ".class")
                 : compiledTypesManager.classPath().sourceFileOfType(typeInfo, ".class");
-        if (source == null) throw new RuntimeException("Cannot find FQN " + fqn + "; typeInfo " + typeInfo);
+        if (source == null) {
+            // we'll fail in other locations, but sometimes, we'll let it pass
+            return null;
+        }
         return inspectFromPath(typeInfo, source, typeParameterContext, loadMode);
     }
 
@@ -163,7 +166,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             assert typeInfoOrNull == null || typeInfoOrNull == typeInfo;
             if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
                 // may trigger recursion
-                getOrCreate(typeInfo.primaryType().fullyQualifiedName(), loadMode);
+                getOrCreate(typeInfo.compilationUnitOrEnclosingType().getRight().fullyQualifiedName(), loadMode);
             }
         }
         // because both the above if and else clause can trigger recursion, we must check again
@@ -243,6 +246,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         } catch (RuntimeException re) {
             LOGGER.error("Path = {}", path);
             LOGGER.error("FQN  = {}", fqn);
+            LOGGER.error("Number of compiled types = {}", compiledTypesManager.typesLoaded().size());
             throw re;
         }
     }

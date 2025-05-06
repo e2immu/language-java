@@ -9,6 +9,7 @@ public class EscapeSequence {
             case 't' -> '\t';
             case 'n' -> '\n';
             case 'f' -> '\f';
+            case 's' -> ' '; // does not seem to be official?
             case '\'' -> '\'';
             case '\\' -> '\\';
             case '"' -> '"';
