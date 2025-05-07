@@ -106,8 +106,8 @@ record ParseGenerics(Runtime runtime,
             ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext, localTypeMap,
                     loadMode, signature.substring(end + 1));
             if (result == null) return null; // unable to load type
-            if (result.parameterizedType.typeInfo() != null
-                && !result.parameterizedType.typeInfo().isJavaLangObject()) {
+            if (result.parameterizedType.typeInfo() == null
+                || !result.parameterizedType.typeInfo().isJavaLangObject()) {
                 typeBounds.add(result.parameterizedType);
             }
 
