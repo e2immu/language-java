@@ -140,7 +140,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 }
             }
             if (detailedSourcesBuilder != null) {
-                detailedSourcesBuilder.put(DetailedSources.END_OF_PARAMETER_LIST, source(rh.get(rh.size() - 1)));
+                detailedSourcesBuilder.put(DetailedSources.END_OF_PARAMETER_LIST, source(rh.getLast()));
             }
             i++;
         } else {
@@ -149,6 +149,9 @@ public class ParseTypeDeclaration extends CommonParse {
 
         builder.setParentClass(runtime.objectParameterizedType());
         if (td.get(i) instanceof ExtendsList extendsList) {
+            if (detailedSourcesBuilder != null) {
+                detailedSourcesBuilder.put(DetailedSources.EXTENDS, source(extendsList.get(0)));
+            }
             for (int j = 1; j < extendsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j), detailedSourcesBuilder);
                 if (typeNature.isInterface()) {
@@ -192,9 +195,9 @@ public class ParseTypeDeclaration extends CommonParse {
                 ParameterizedType type = typeInfo.asSimpleParameterizedType();
                 for (Node child : body.children()) {
                     if (child instanceof EnumConstant ec) {
-                        String name = ec.get(0).getSource();
+                        String name = ec.getFirst().getSource();
                         DetailedSources.Builder dsbuilder = context.newDetailedSourcesBuilder();
-                        Source nameSource = source(ec.get(0));
+                        Source nameSource = source(ec.getFirst());
                         if (dsbuilder != null) dsbuilder.put(name, nameSource);
                         FieldInfo fieldInfo = runtime.newFieldInfo(name, true, type, typeInfo);
                         Source source = source(ec);
