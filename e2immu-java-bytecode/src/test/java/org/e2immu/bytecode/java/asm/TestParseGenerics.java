@@ -188,9 +188,20 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         TypeParameterContext methodContext = new TypeParameterContext();
         int pos = parseGenerics.parseMethodGenerics(signature, mi, mib, runtime, methodContext) + 1;
         assertEquals(2, mib.typeParameters().size());
-       // assertEquals(2, methodContext.size());
-       // assertEquals("C=TP#0 in CommandLine", methodContext.getMap().get("C").toString());
-       // assertEquals("T=TP#1 in CommandLine", methodContext.getMap().get("T").toString());
+        // assertEquals(2, methodContext.size());
+        // assertEquals("C=TP#0 in CommandLine", methodContext.getMap().get("C").toString());
+        // assertEquals("T=TP#1 in CommandLine", methodContext.getMap().get("T").toString());
 
+    }
+
+    @Test
+    public void testParse() {
+        TypeParameterContext typeContext = new TypeParameterContext();
+        ParseParameterTypes ppt = new ParseParameterTypes(runtime, byteCodeInspector, LocalTypeMap.LoadMode.NOW);
+        ParseParameterTypes.Result r = ppt.parseParameterTypesOfMethod(typeContext,
+                "(Ljava/lang/CharSequence;[Ljava/lang/CharSequence;)Ljava/lang/String;");
+        assertNotNull(r);
+        assertEquals(2, r.parameterTypes().size());
+        assertEquals("Type String", r.returnType().toString());
     }
 }

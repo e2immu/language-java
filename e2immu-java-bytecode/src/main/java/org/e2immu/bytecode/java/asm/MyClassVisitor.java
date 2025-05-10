@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.objectweb.asm.Opcodes.ASM9;
 
@@ -280,12 +279,14 @@ public class MyClassVisitor extends ClassVisitor {
         }
 
         ParseParameterTypes ppt = new ParseParameterTypes(runtime, localTypeMap, LocalTypeMap.LoadMode.QUEUE);
-        List<ParameterizedType> types = ppt.parseParameterTypesOfMethod(methodContext, signatureOrDescription);
-        if (types == null) {
+        ParseParameterTypes.Result r = ppt.parseParameterTypesOfMethod(methodContext, signatureOrDescription);
+        if (r == null) {
             return null; // jdk
         }
-        methodInspectionBuilder.setReturnType(types.getLast());
-        if (exceptions != null) {
+        methodInspectionBuilder.setReturnType(r.returnType());
+        if (!r.exceptionTypes().isEmpty()) {
+            r.exceptionTypes().forEach(methodInspectionBuilder::addExceptionType);
+        } else if (exceptions != null) {
             for (String exception : exceptions) {
                 // java/io/IOException
                 String fqnName = localTypeMap.pathToFqn(exception);
@@ -294,7 +295,7 @@ public class MyClassVisitor extends ClassVisitor {
             }
         }
         return new MyMethodVisitor(runtime, typeParameterContext, localTypeMap, currentType, methodInfo,
-                types, lastParameterIsVarargs);
+                r.parameterTypes(), lastParameterIsVarargs);
     }
 
     private MethodInfo.MethodType extractMethodType(int access) {

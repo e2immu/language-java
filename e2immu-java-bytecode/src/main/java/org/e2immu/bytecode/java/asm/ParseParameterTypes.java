@@ -26,59 +26,53 @@ record ParseParameterTypes(Runtime runtime,
     public static final char CARET_THROWS = '^';
     public static final char CLOSE_BRACKET = ')';
 
-    private static class IterativeParsing<R> {
+    record Result(List<ParameterizedType> parameterTypes, ParameterizedType returnType,
+                  List<ParameterizedType> exceptionTypes) {
+    }
+
+    Result parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature) {
+        List<ParameterizedType> parameterTypes = new ArrayList<>();
+        List<ParameterizedType> exceptionTypes = new ArrayList<>();
+        ParameterizedType returnType = null;
+
         int startPos;
-        int endPos;
-        R result;
-        boolean more;
-    }
-
-    List<ParameterizedType> parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature) {
+        boolean doParameters;
         if (signature.startsWith("()")) {
-            ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext,
-                    findType, loadMode, signature.substring(2));
-            if (from == null) return null;
-            return List.of(from.parameterizedType);
-        }
-        List<ParameterizedType> methodTypes = new ArrayList<>();
-
-        IterativeParsing<ParameterizedType> iterativeParsing = new IterativeParsing<>();
-        iterativeParsing.startPos = 1;
-        do {
-            iterativeParsing = iterativelyParseMethodTypes(typeContext, signature, iterativeParsing);
-            if (iterativeParsing == null) return null;
-            methodTypes.add(iterativeParsing.result);
-        } while (iterativeParsing.more);
-        return methodTypes;
-    }
-
-    private IterativeParsing<ParameterizedType> iterativelyParseMethodTypes(TypeParameterContext typeContext,
-                                                                            String signature,
-                                                                            IterativeParsing<ParameterizedType> iterativeParsing) {
-        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,
-                findType, loadMode, signature.substring(iterativeParsing.startPos));
-        if (result == null) return null;
-        int end = iterativeParsing.startPos + result.nextPos;
-        IterativeParsing<ParameterizedType> next = new IterativeParsing<>();
-        next.result = result.parameterizedType;
-        if (end >= signature.length()) {
-            next.more = false;
-            next.endPos = end;
+            startPos = 2;
+            doParameters = false;
         } else {
-            char atEnd = signature.charAt(end);
-            if (atEnd == CARET_THROWS) {
-                throw new UnsupportedOperationException("Found caret");
-               // next.more = false;
-              //  next.endPos = end;
+            startPos = 1;
+            doParameters = true;
+        }
+        boolean doExceptionTypes = false;
+        while (true) {
+            String startOfType = signature.substring(startPos);
+            ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,
+                    findType, loadMode, startOfType);
+            if (result == null) return null;
+            int end = startPos + result.nextPos;
+
+            if (doParameters) parameterTypes.add(result.parameterizedType);
+            else if(doExceptionTypes) exceptionTypes.add(result.parameterizedType);
+            else returnType = result.parameterizedType;
+
+            if (end >= signature.length()) {
+                break;
             } else {
-                next.more = true;
-                if (atEnd == CLOSE_BRACKET) {
-                    next.startPos = end + 1;
+                char atEnd = signature.charAt(end);
+                if (atEnd == CARET_THROWS) {
+                    doExceptionTypes = true;
+                    startPos = end + 1;
                 } else {
-                    next.startPos = end;
+                    if (atEnd == CLOSE_BRACKET) {
+                        doParameters = false;
+                        startPos = end + 1;
+                    } else {
+                        startPos = end;
+                    }
                 }
             }
         }
-        return next;
+        return new Result(parameterTypes, returnType, exceptionTypes);
     }
 }

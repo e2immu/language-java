@@ -143,7 +143,7 @@ public class MyMethodVisitor extends MethodVisitor {
         this.methodInfo = methodInfo;
         this.typeInfo = typeInfo;
         this.types = types;
-        numberOfParameters = types.size() - 1;
+        numberOfParameters = types.size();
         parameterInspectionBuilders = new ParamBuilder[numberOfParameters];
         for (int i = 0; i < numberOfParameters; i++) {
             parameterInspectionBuilders[i] = new ParamBuilder(i);
