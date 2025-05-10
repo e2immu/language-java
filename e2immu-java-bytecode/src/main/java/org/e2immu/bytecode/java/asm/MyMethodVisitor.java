@@ -26,7 +26,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ASM9;
@@ -195,7 +198,13 @@ public class MyMethodVisitor extends MethodVisitor {
         for (int i = 0; i < numberOfParameters; i++) {
             ParamBuilder pib = parameterInspectionBuilders[i];
             ParameterizedType type = types.get(i);
-            String name = pib.name == null ? factory.next(type) : pib.name;
+            String name;
+            if (pib.name == null) {
+                name = factory.next(type);
+            } else {
+                name = pib.name;
+                factory.register(name);
+            }
             ParameterInfo pi = methodInfo.builder().addParameter(name, type);
             assert pi.index() == pib.index;
             if (pib.isVarArgs || lastParameterIsVarargs && i == last) {

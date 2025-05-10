@@ -53,6 +53,10 @@ public class ParameterNameFactory {
         }
     }
 
+    void register(String name) {
+        this.names.add(name);
+    }
+
     private static String firstLetterLowerCase(String s) {
         return Character.toLowerCase(s.charAt(0)) + (s.length() > 1 ? s.substring(1) : "");
     }

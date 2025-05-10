@@ -25,7 +25,6 @@ import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
 import org.junit.jupiter.api.Test;
 
-import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,12 +77,10 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         ParameterizedType typeBoundK = K.typeBounds().getFirst();
         assertNull(typeBoundK.wildcard());
 
-        Set<TypeParameter> visited = new HashSet<>();
-        visited.add(K);
         assertEquals("Enum<K>", ParameterizedTypePrinter.print(
                 QualificationImpl.FULLY_QUALIFIED_NAMES, typeBoundK, false, DiamondEnum.SHOW_ALL,
-                false, visited).toString());
-        assertSame(K, typeBoundK.parameters().get(0).typeParameter());
+                false, false).toString());
+        assertSame(K, typeBoundK.parameters().getFirst().typeParameter());
 
         ParameterizedType pt = typeInfo.asParameterizedType();
         assertEquals("java.util.EnumMap<K extends Enum<K>,V>",
@@ -112,7 +109,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         assertEquals("Type " + fqn, pt.toString());
 
         TypeParameter splitter = typeInfo.typeParameters().get(2);
-        ParameterizedType typeBoundSplitter = splitter.typeBounds().get(0);
+        ParameterizedType typeBoundSplitter = splitter.typeBounds().getFirst();
         assertNull(typeBoundSplitter.wildcard());
 
         assertSame(splitter, typeBoundSplitter.parameters().get(2).typeParameter());
@@ -140,7 +137,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     }
 
     @Test
-    public void testGenericsAbstractClassLoaderValue() throws URISyntaxException {
+    public void testGenericsAbstractClassLoaderValue() {
         TypeParameterContext context = new TypeParameterContext();
         TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().
                 setPackageName("jdk.internal.loader")
@@ -188,13 +185,8 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, typeContext, mi,
                 byteCodeInspector, LocalTypeMap.LoadMode.NOW,  runtime::newTypeParameter,
                 mib::addTypeParameter, signature);
-        TypeParameterContext methodContext = new TypeParameterContext();
-        int pos = parseGenerics.goReturnEndPos() + 1;
+        parseGenerics.goReturnEndPos();
         assertEquals(2, mib.typeParameters().size());
-        // assertEquals(2, methodContext.size());
-        // assertEquals("C=TP#0 in CommandLine", methodContext.getMap().get("C").toString());
-        // assertEquals("T=TP#1 in CommandLine", methodContext.getMap().get("T").toString());
-
     }
 
     @Test
