@@ -130,9 +130,9 @@ public class MyClassVisitor extends ClassVisitor {
             try {
                 int pos = 0;
                 if (signature.charAt(0) == '<') {
-                    ParseGenerics parseGenerics = new ParseGenerics(runtime, typeParameterContext, currentType, localTypeMap,
-                            LocalTypeMap.LoadMode.NOW);
-                    pos = parseGenerics.parseTypeGenerics(signature) + 1;
+                    ParseGenerics2 parseGenerics = new ParseGenerics2(runtime, typeParameterContext, currentType, localTypeMap,
+                            LocalTypeMap.LoadMode.NOW, signature);
+                    pos = parseGenerics.goReturnEndPos() + 1;
                 }
                 {
                     String substring = signature.substring(pos);

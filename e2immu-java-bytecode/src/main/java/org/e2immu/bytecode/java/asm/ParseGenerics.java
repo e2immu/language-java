@@ -33,17 +33,17 @@ record ParseGenerics(Runtime runtime,
     public static final char COLON = ':';
     public static final char GT_END_TYPE_PARAMS = '>';
 
-    private static class IterativeParsing<R> {
+    private static class IterativeParsing {
         int startPos;
         int endPos;
-        R result;
+        TypeParameter result;
         boolean more;
         String name;
         boolean typeNotFoundError;
     }
 
     int parseTypeGenerics(String signature) {
-        IterativeParsing<TypeParameter> iterativeParsing = new IterativeParsing<>();
+        IterativeParsing iterativeParsing = new IterativeParsing();
         int infiniteLoopProtection = 0;
         while (true) {
             iterativeParsing.startPos = 1;
@@ -67,7 +67,7 @@ record ParseGenerics(Runtime runtime,
                 }
             } while (iterativeParsing.more);
             if (!iterativeParsing.typeNotFoundError) break;
-            iterativeParsing = new IterativeParsing<>();
+            iterativeParsing = new IterativeParsing();
             infiniteLoopProtection++;
             if (infiniteLoopProtection > 100) {
                 throw new UnsupportedOperationException("In infinite loop");
@@ -76,8 +76,8 @@ record ParseGenerics(Runtime runtime,
         return iterativeParsing.endPos;
     }
 
-    private IterativeParsing<TypeParameter> iterativelyParseGenerics(String signature,
-                                                                     IterativeParsing<TypeParameter> iterativeParsing,
+    private IterativeParsing iterativelyParseGenerics(String signature,
+                                                                     IterativeParsing iterativeParsing,
                                                                      Function<String, TypeParameter> createTypeParameterAndAddToContext,
                                                                      Runtime runtime,
                                                                      LocalTypeMap localTypeMap,
@@ -93,7 +93,7 @@ record ParseGenerics(Runtime runtime,
         TypeParameter typeParameter = createTypeParameterAndAddToContext.apply(name);
         List<ParameterizedType> typeBounds = new ArrayList<>();
 
-        IterativeParsing<TypeParameter> next = new IterativeParsing<>();
+        IterativeParsing next = new IterativeParsing();
         next.name = name;
 
         while (atEnd == COLON) {
@@ -141,7 +141,7 @@ record ParseGenerics(Runtime runtime,
                             MethodInfo.Builder methodInspectionBuilder,
                             Runtime runtime,
                             TypeParameterContext methodContext) {
-        IterativeParsing<TypeParameter> iterativeParsing = new IterativeParsing<>();
+        IterativeParsing iterativeParsing = new IterativeParsing();
         while (true) {
             iterativeParsing.startPos = 1;
             AtomicInteger index = new AtomicInteger();
@@ -161,7 +161,7 @@ record ParseGenerics(Runtime runtime,
                 }
             } while (iterativeParsing.more);
             if (!iterativeParsing.typeNotFoundError) break;
-            iterativeParsing = new IterativeParsing<>();
+            iterativeParsing = new IterativeParsing();
         }
         return iterativeParsing.endPos;
     }
