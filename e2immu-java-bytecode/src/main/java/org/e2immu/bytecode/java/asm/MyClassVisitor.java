@@ -130,8 +130,8 @@ public class MyClassVisitor extends ClassVisitor {
             try {
                 int pos = 0;
                 if (signature.charAt(0) == '<') {
-                    ParseGenerics2 parseGenerics = new ParseGenerics2(runtime, typeParameterContext, currentType, localTypeMap,
-                            LocalTypeMap.LoadMode.NOW, signature);
+                    ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, typeParameterContext, currentType, localTypeMap,
+                            LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter, currentTypeBuilder::addOrSetTypeParameter, signature);
                     pos = parseGenerics.goReturnEndPos() + 1;
                 }
                 {
@@ -263,13 +263,13 @@ public class MyClassVisitor extends ClassVisitor {
         boolean lastParameterIsVarargs = (access & Opcodes.ACC_VARARGS) != 0;
 
         TypeParameterContext methodContext = typeParameterContext.newContext();
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, methodContext, currentType, localTypeMap,
-                LocalTypeMap.LoadMode.QUEUE);
 
         String signatureOrDescription = signature != null ? signature : descriptor;
         if (signatureOrDescription.startsWith("<")) {
-            int end = parseGenerics.parseMethodGenerics(signatureOrDescription, methodInfo, methodInspectionBuilder,
-                    runtime, methodContext);
+            ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, methodContext, methodInfo,
+                    localTypeMap, LocalTypeMap.LoadMode.QUEUE, runtime::newTypeParameter,
+                    methodInspectionBuilder::addTypeParameter, signatureOrDescription);
+            int end = parseGenerics.goReturnEndPos();
             if (end < 0) {
                 // error state
                 errorStateForType(signatureOrDescription);

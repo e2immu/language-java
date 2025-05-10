@@ -66,15 +66,16 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         TypeInfo typeInfo = runtime.newTypeInfo(cu, "EnumMap");
 
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, new TypeParameterContext(), typeInfo,
-                byteCodeInspector, LocalTypeMap.LoadMode.NOW);
+        ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, new TypeParameterContext(), typeInfo,
+                byteCodeInspector, LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter,
+                typeInfo.builder()::addOrSetTypeParameter, signature);
         int expected = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>".length();
-        int pos = parseGenerics.parseTypeGenerics(signature) + 1;
+        int pos = parseGenerics.goReturnEndPos() + 1;
         assertEquals(expected, pos);
 
-        TypeParameter K = typeInfo.typeParameters().get(0);
+        TypeParameter K = typeInfo.typeParameters().getFirst();
         assertEquals(1, K.typeBounds().size());
-        ParameterizedType typeBoundK = K.typeBounds().get(0);
+        ParameterizedType typeBoundK = K.typeBounds().getFirst();
         assertNull(typeBoundK.wildcard());
 
         Set<TypeParameter> visited = new HashSet<>();
@@ -149,12 +150,13 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
         compiledTypesManager.add(typeInfo);
 
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, context, typeInfo, byteCodeInspector,
-                LocalTypeMap.LoadMode.NOW);
         String signature = "<K:Ljava/lang/Object;>Ljdk/internal/loader/AbstractClassLoaderValue<Ljdk/internal/loader/AbstractClassLoaderValue<TCLV;TV;>.Sub<TK;>;TV;>;";
+        ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, context, typeInfo, byteCodeInspector,
+                LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter,
+                typeInfo.builder()::addOrSetTypeParameter, signature);
 
         int expected = "<K:Ljava/lang/Object;>".length();
-        int pos = parseGenerics.parseTypeGenerics(signature) + 1;
+        int pos = parseGenerics.goReturnEndPos() + 1;
         assertEquals(expected, pos);
     }
 
@@ -183,10 +185,11 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         MethodInfo.Builder mib = mi.builder();
         String signature = "<C::Ljava/util/concurrent/Callable<TT;>;T:Ljava/lang/Object;>(TC;[Ljava/lang/String;)TT;";
         TypeParameterContext typeContext = new TypeParameterContext();
-        ParseGenerics parseGenerics = new ParseGenerics(runtime, typeContext, typeInfo,
-                byteCodeInspector, LocalTypeMap.LoadMode.NOW);
+        ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, typeContext, mi,
+                byteCodeInspector, LocalTypeMap.LoadMode.NOW,  runtime::newTypeParameter,
+                mib::addTypeParameter, signature);
         TypeParameterContext methodContext = new TypeParameterContext();
-        int pos = parseGenerics.parseMethodGenerics(signature, mi, mib, runtime, methodContext) + 1;
+        int pos = parseGenerics.goReturnEndPos() + 1;
         assertEquals(2, mib.typeParameters().size());
         // assertEquals(2, methodContext.size());
         // assertEquals("C=TP#0 in CommandLine", methodContext.getMap().get("C").toString());
