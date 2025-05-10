@@ -23,8 +23,6 @@ import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.output.QualificationImpl;
 import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
-import org.e2immu.language.cst.impl.type.TypeParameterImpl;
-import org.e2immu.support.Either;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -164,14 +162,35 @@ public class TestParseGenerics extends CommonJmodBaseTests {
     public void testEnumSet() {
         TypeInfo enumSet = compiledTypesManager.getOrLoad(EnumSet.class);
         MethodInfo constructor = enumSet.findConstructor(2);
-        ParameterizedType p0Type = constructor.parameters().get(0).parameterizedType();
+        ParameterizedType p0Type = constructor.parameters().getFirst().parameterizedType();
         assertEquals("Type Class<E extends Enum<E>>", p0Type.toString());
-        ParameterizedType tp0 = p0Type.parameters().get(0);
+        ParameterizedType tp0 = p0Type.parameters().getFirst();
         assertEquals("Type param E extends Enum<E>", tp0.toString());
         assertEquals("E=TP#0 in EnumSet", tp0.typeParameter().toString());
-        assertSame(enumSet.typeParameters().get(0), tp0.typeParameter());
+        assertSame(enumSet.typeParameters().getFirst(), tp0.typeParameter());
 
         TypeInfo enumSetProxy = enumSet.findSubType("SerializationProxy");
-        assertEquals("E=TP#0 in SerializationProxy", enumSetProxy.typeParameters().get(0).toString());
+        assertEquals("E=TP#0 in SerializationProxy", enumSetProxy.typeParameters().getFirst().toString());
+    }
+
+
+    // example from "call" method in picocli's CommandLine class
+    @Test
+    public void testExtendsIterative() {
+        CompilationUnit cu = runtime.newCompilationUnitBuilder().setPackageName("java.util").build();
+        TypeInfo typeInfo = runtime.newTypeInfo(cu, "CommandLine");
+        MethodInfo mi = runtime.newMethod(typeInfo, "call", runtime.methodTypeStaticMethod());
+        MethodInfo.Builder mib = mi.builder();
+        String signature = "<C::Ljava/util/concurrent/Callable<TT;>;T:Ljava/lang/Object;>(TC;[Ljava/lang/String;)TT;";
+        TypeParameterContext typeContext = new TypeParameterContext();
+        ParseGenerics parseGenerics = new ParseGenerics(runtime, typeContext, typeInfo,
+                byteCodeInspector, LocalTypeMap.LoadMode.NOW);
+        TypeParameterContext methodContext = new TypeParameterContext();
+        int pos = parseGenerics.parseMethodGenerics(signature, mi, mib, runtime, methodContext) + 1;
+        assertEquals(2, mib.typeParameters().size());
+       // assertEquals(2, methodContext.size());
+       // assertEquals("C=TP#0 in CommandLine", methodContext.getMap().get("C").toString());
+       // assertEquals("T=TP#1 in CommandLine", methodContext.getMap().get("T").toString());
+
     }
 }

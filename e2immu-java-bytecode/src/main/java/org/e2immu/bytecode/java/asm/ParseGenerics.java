@@ -32,8 +32,6 @@ record ParseGenerics(Runtime runtime,
                      LocalTypeMap.LoadMode loadMode) {
     public static final char COLON = ':';
     public static final char GT_END_TYPE_PARAMS = '>';
-    public static final char CARET_THROWS = '^';
-    public static final char CLOSE_BRACKET = ')';
 
     private static class IterativeParsing<R> {
         int startPos;
@@ -166,54 +164,5 @@ record ParseGenerics(Runtime runtime,
             iterativeParsing = new IterativeParsing<>();
         }
         return iterativeParsing.endPos;
-    }
-
-    List<ParameterizedType> parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature) {
-        if (signature.startsWith("()")) {
-            ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeContext,
-                    findType, loadMode, signature.substring(2));
-            if (from == null) return null;
-            return List.of(from.parameterizedType);
-        }
-        List<ParameterizedType> methodTypes = new ArrayList<>();
-
-        IterativeParsing<ParameterizedType> iterativeParsing = new IterativeParsing<>();
-        iterativeParsing.startPos = 1;
-        do {
-            iterativeParsing = iterativelyParseMethodTypes(typeContext, signature, iterativeParsing);
-            if (iterativeParsing == null) return null;
-            methodTypes.add(iterativeParsing.result);
-        } while (iterativeParsing.more);
-        return methodTypes;
-    }
-
-    private IterativeParsing<ParameterizedType> iterativelyParseMethodTypes(TypeParameterContext typeContext,
-                                                                            String signature,
-                                                                            IterativeParsing<ParameterizedType> iterativeParsing) {
-        ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,
-                findType, loadMode, signature.substring(iterativeParsing.startPos));
-        if (result == null) return null;
-        int end = iterativeParsing.startPos + result.nextPos;
-        IterativeParsing<ParameterizedType> next = new IterativeParsing<>();
-        next.result = result.parameterizedType;
-        if (end >= signature.length()) {
-            next.more = false;
-            next.endPos = end;
-        } else {
-            char atEnd = signature.charAt(end);
-            if (atEnd == CARET_THROWS) {
-                // FIXME: this marks the "throws" block, which we're NOT parsing at the moment!!
-                next.more = false;
-                next.endPos = end;
-            } else {
-                next.more = true;
-                if (atEnd == CLOSE_BRACKET) {
-                    next.startPos = end + 1;
-                } else {
-                    next.startPos = end;
-                }
-            }
-        }
-        return next;
     }
 }

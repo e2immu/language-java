@@ -278,11 +278,13 @@ public class MyClassVisitor extends ClassVisitor {
             }
             signatureOrDescription = signatureOrDescription.substring(end + 1); // 1 to get rid of >
         }
-        List<ParameterizedType> types = parseGenerics.parseParameterTypesOfMethod(methodContext, signatureOrDescription);
+
+        ParseParameterTypes ppt = new ParseParameterTypes(runtime, localTypeMap, LocalTypeMap.LoadMode.QUEUE);
+        List<ParameterizedType> types = ppt.parseParameterTypesOfMethod(methodContext, signatureOrDescription);
         if (types == null) {
             return null; // jdk
         }
-        methodInspectionBuilder.setReturnType(types.get(types.size() - 1));
+        methodInspectionBuilder.setReturnType(types.getLast());
         if (exceptions != null) {
             for (String exception : exceptions) {
                 // java/io/IOException
