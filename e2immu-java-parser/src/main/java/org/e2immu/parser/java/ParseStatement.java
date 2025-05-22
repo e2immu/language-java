@@ -64,7 +64,7 @@ public class ParseStatement extends CommonParse {
         String label;
         Statement statement;
         if (statementIn instanceof LabeledStatement ls) {
-            label = ls.get(0).getFirst().getSource();
+            label = ls.getFirst().getFirst().getSource();
             statement = (Statement) ls.get(1);
         } else {
             label = null;
@@ -589,7 +589,7 @@ public class ParseStatement extends CommonParse {
         for (Node child : statement) {
             if (child instanceof NewCaseStatement ncs) {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
-                if (ncs.get(0) instanceof NewSwitchLabel nsl) {
+                if (ncs.getFirst() instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
                     if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
                         conditions.add(runtime.newEmptyExpression());

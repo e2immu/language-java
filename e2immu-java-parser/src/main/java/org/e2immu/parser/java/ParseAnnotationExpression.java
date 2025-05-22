@@ -55,7 +55,7 @@ public class ParseAnnotationExpression extends CommonParse {
         if (a instanceof NormalAnnotation na) {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
             if (na.get(3) instanceof MemberValuePair mvp) {
-                String key = mvp.get(0).getSource();
+                String key = mvp.getFirst().getSource();
                 if (mvp.get(2) instanceof LiteralExpression literalExpression) {
                     Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
                             literalExpression);
@@ -97,14 +97,14 @@ public class ParseAnnotationExpression extends CommonParse {
         } else if (a instanceof NormalAnnotation na) {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
             if (na.get(3) instanceof MemberValuePair mvp) {
-                String key = mvp.get(0).getSource();
+                String key = mvp.getFirst().getSource();
                 Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
                         mvp.get(2));
                 builder.addKeyValuePair(key, value);
             } else if (na.get(3) instanceof MemberValuePairs pairs) {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
-                        String key = mvp.get(0).getSource();
+                        String key = mvp.getFirst().getSource();
                         Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
                                 mvp.get(2));
                         builder.addKeyValuePair(key, value);

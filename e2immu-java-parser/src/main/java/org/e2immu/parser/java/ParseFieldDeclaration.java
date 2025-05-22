@@ -81,13 +81,13 @@ public class ParseFieldDeclaration extends CommonParse {
                                 List<Annotation> annotations,
                                 boolean first) {
         ParameterizedType type;
-        Node vd0 = vd.get(0);
+        Node vd0 = vd.getFirst();
         Identifier identifier;
         DetailedSources.Builder detailedSourcesBuilder = detailedSourcesBuilderMaster == null ? null :
                 detailedSourcesBuilderMaster.copy();
 
         if (vd0 instanceof VariableDeclaratorId vdi) {
-            identifier = (Identifier) vdi.get(0);
+            identifier = (Identifier) vdi.getFirst();
             int arrays = (vdi.size() - 1) / 2;
             type = parameterizedType.copyWithArrays(arrays);
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(type, source(typeNode));

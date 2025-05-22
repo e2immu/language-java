@@ -41,7 +41,7 @@ public class ParseConstructorCall extends CommonParse {
         Node unparsedObject;
         Context newContext;
         if (aeIn instanceof DotNew dn) {
-            unparsedObject = dn.get(0);
+            unparsedObject = dn.getFirst();
             assert Token.TokenType.DOT.equals(dn.get(1).getType());
             ae = (AllocationExpression) dn.get(2);
             Expression object = parsers.parseExpression().parse(context, index, context.emptyForwardType(), unparsedObject);
@@ -58,7 +58,7 @@ public class ParseConstructorCall extends CommonParse {
             unparsedObject = null;
             newContext = context;
         }
-        assert ae.get(0) instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
+        assert ae.getFirst() instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
         int i = 1;
         List<ParameterizedType> methodTypeArguments;
         // new <String>Parameterized(...) == generics on the constructor, see TestConstructor,2

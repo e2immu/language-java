@@ -46,14 +46,14 @@ public class ParseHelperImpl implements ParseHelper {
         } else if (annotation instanceof NormalAnnotation na) {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
             if (na.get(3) instanceof MemberValuePair mvp) {
-                String key = mvp.get(0).getSource();
+                String key = mvp.getFirst().getSource();
                 Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
                         mvp.get(2));
                 kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
             } else if (na.get(3) instanceof MemberValuePairs pairs) {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
-                        String key = mvp.get(0).getSource();
+                        String key = mvp.getFirst().getSource();
                         Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
                                 mvp.get(2));
                         kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
@@ -172,7 +172,7 @@ public class ParseHelperImpl implements ParseHelper {
         ConstructorDeclaration cd = (ConstructorDeclaration) unparsedEci.getParent();
         List<Comment> comments = parsers.parseStatement().comments(cd);
         Source source = parsers.parseStatement().source("0", cd);
-        boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.get(0).getType());
+        boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.getFirst().getType());
         List<Expression> parameterExpressions = parseArguments(context, unparsedEci.get(1));
         MethodInfo eciMethod;
         if (isSuper) {

@@ -150,7 +150,7 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setParentClass(runtime.objectParameterizedType());
         if (td.get(i) instanceof ExtendsList extendsList) {
             if (detailedSourcesBuilder != null) {
-                detailedSourcesBuilder.put(DetailedSources.EXTENDS, source(extendsList.get(0)));
+                detailedSourcesBuilder.put(DetailedSources.EXTENDS, source(extendsList.getFirst()));
             }
             for (int j = 1; j < extendsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, extendsList.get(j), detailedSourcesBuilder);
@@ -435,7 +435,7 @@ public class ParseTypeDeclaration extends CommonParse {
                         builder.addConstructor(constructor);
                     } // else error
                 } else if (child instanceof Initializer i) {
-                    boolean staticInitializer = Token.TokenType.STATIC.equals(i.get(0).getType());
+                    boolean staticInitializer = Token.TokenType.STATIC.equals(i.getFirst().getType());
                     if (staticInitializer) {
                         if (i.get(1) instanceof CodeBlock cb) {
                             Source cbSource = source(cb);
@@ -452,7 +452,7 @@ public class ParseTypeDeclaration extends CommonParse {
                         } else {
                             throw new Summary.ParseException(newContext.info(), "Unknown node in static initializer");
                         }
-                    } else if (i.get(0) instanceof CodeBlock cb) {
+                    } else if (i.getFirst() instanceof CodeBlock cb) {
                         Context initializerContext = newContext.newSubType(typeInfo);
                         MethodInfo constructor = runtime.newConstructor(typeInfo);
                         constructor.builder()

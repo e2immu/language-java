@@ -31,7 +31,7 @@ public class ParseMethodReference extends CommonParse {
                             org.parsers.java.ast.MethodReference mr) {
         Expression scope;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        Node n0 = mr.get(0);
+        Node n0 = mr.getFirst();
         if (n0 instanceof Type) {
             // BEWARE! even if n0 represents a variable, we may end up in this branch
             ParameterizedType pt = parsers.parseType().parse(context, n0, false, detailedSourcesBuilder);

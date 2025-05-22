@@ -101,7 +101,7 @@ public class ParseExpression extends CommonParse {
             }
             // see TestMethodCall7.test6 for an example where we arrive here with "Collections.", size 2
             // recurse into first child; single identifier will end up in parseIdentifier
-            return parse(context, index, forwardType, name.get(0));
+            return parse(context, index, forwardType, name.getFirst());
         }
         if (node instanceof CastExpression castExpression) {
             return parseCast(context, index, comments, source, castExpression);
@@ -140,7 +140,7 @@ public class ParseExpression extends CommonParse {
             return arrayInitializer(context, index, forwardType, comments, source, node);
         }
         if (node instanceof org.parsers.java.ast.SwitchExpression) {
-            return parseSwitchExpression(context, index, forwardType, comments, source, node.get(0));
+            return parseSwitchExpression(context, index, forwardType, comments, source, node.getFirst());
         }
         if (node instanceof InstanceOfExpression ioe) {
             return parseInstanceOf(context, index, forwardType, comments, source, ioe);
@@ -151,7 +151,7 @@ public class ParseExpression extends CommonParse {
                 return parseDotName(context, comments, source, index, node);
             }
             // ditto, see TestParseMethodReference
-            if (ot.size() == 1 && ot.get(0) instanceof Identifier i) {
+            if (ot.size() == 1 && ot.getFirst() instanceof Identifier i) {
                 return parseIdentifier(context, comments, source, i);
             }
         }

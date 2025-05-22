@@ -159,10 +159,10 @@ public class ParseLambdaExpression extends CommonParse {
                                  List<Lambda.OutputVariant> outputVariants,
                                  Context newContext,
                                  MethodTypeParameterMap sam) {
-        if (!(le.get(0) instanceof LambdaLHS lhs)) {
+        if (!(le.getFirst() instanceof LambdaLHS lhs)) {
             throw new Summary.ParseException(context.info(), "Expected lambda lhs");
         }
-        Node lhs0 = lhs.get(0);
+        Node lhs0 = lhs.getFirst();
         if (lhs0 instanceof Identifier identifier) {
             // single variable, no type given. we must extract it from the forward type, which must be a functional interface
             String parameterName = identifier.getSource();
