@@ -58,10 +58,7 @@ public class TestParseTypeParameter extends CommonTestParse {
         assertNull(typeBound.wildcard());
         assertNull(typeBound.typeParameter());
         assertEquals("java.lang.Class", typeBound.typeInfo().fullyQualifiedName());
-        assertEquals("U extends Class<?>", pt.fullyQualifiedName());
-
-        assertEquals(1, pt.typeParameter().annotations().size());
-        assertEquals("@SuppressWarnings(\"?\")", pt.typeParameter().annotations().get(0).toString());
+        assertEquals("@SuppressWarnings(\"?\") U extends Class<?>", pt.fullyQualifiedName());
     }
 
     @Language("java")
@@ -163,7 +160,6 @@ public class TestParseTypeParameter extends CommonTestParse {
     @Language("java")
     public static final String INPUT5 = """
             package a.b;
-            import java.util.Hashtable;
             class X {
               class Class$<@SuppressWarnings("?") T> {
             
