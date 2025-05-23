@@ -67,50 +67,50 @@ public class TestParseTypeParameter extends CommonTestParse {
     @Language("java")
     private static final String INPUT3 = """
             package org.e2immu.analyser.resolver.testexample;
-
+            
             public class TypeParameter_3 {
                 enum Visibility {
                     NONE;
                 }
-
+            
                 interface SerializationConfig {
                     VisibilityChecker<?> getDefaultVisibilityChecker();
                 }
-
+            
                 // from com.fasterxml.jackson.databind.introspect
                 interface VisibilityChecker<T extends VisibilityChecker<T>> {
                     T withGetterVisibility(Visibility v);
-
+            
                     T withSetterVisibility(Visibility v);
                 }
-
+            
                 static class ObjectMapper {
                     public void setVisibilityChecker(VisibilityChecker<?> vc) {
-
+            
                     }
-
+            
                     public SerializationConfig getSerializationConfig() {
                         return null;
                     }
-
+            
                 }
-
+            
                 private final ObjectMapper mapper = new ObjectMapper();
-
+            
                 // CRASH
                 public void method1() {
                      mapper.setVisibilityChecker(mapper.getSerializationConfig().getDefaultVisibilityChecker().
                              withGetterVisibility(Visibility.NONE).
                              withSetterVisibility(Visibility.NONE));
                  }
-
+            
                 // NO METHOD FOUND
                 public void method2() {
                     VisibilityChecker<?> o = mapper.getSerializationConfig().getDefaultVisibilityChecker().
                             withGetterVisibility(Visibility.NONE);
                     mapper.setVisibilityChecker(o.withSetterVisibility(Visibility.NONE));
                 }
-
+            
                 public void method3() {
                     VisibilityChecker<?> o = mapper.getSerializationConfig().getDefaultVisibilityChecker().
                             withGetterVisibility(Visibility.NONE);
@@ -157,6 +157,26 @@ public class TestParseTypeParameter extends CommonTestParse {
         assertEquals("""
                 public static <K,V> Hashtable<K,V> copy(Hashtable<K,V> map){}\
                 """, copyNewBody.print(runtime.qualificationQualifyFromPrimaryType()).toString());
+    }
+
+
+    @Language("java")
+    public static final String INPUT5 = """
+            package a.b;
+            import java.util.Hashtable;
+            class X {
+              class Class$<@SuppressWarnings("?") T> {
+            
+              }
+            }
+            """;
+
+    @Test
+    public void test5() {
+        TypeInfo typeInfo = parse(INPUT5);
+        TypeInfo clazz = typeInfo.findSubType("Class$");
+        TypeParameter tp = clazz.typeParameters().getFirst();
+        assertEquals(1, tp.annotations().size());
     }
 
 }

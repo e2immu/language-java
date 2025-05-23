@@ -113,14 +113,16 @@ public abstract class CommonParse {
         // do type bounds
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            if (tp.get(i) instanceof TypeBound tb) {
-                ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false,
-                        detailedSourcesBuilder);
-                if (typeBound == null) {
-                    return null;
-                }
-                builder.addTypeBound(typeBound);
-            } else throw new UnsupportedOperationException();
+            if (i < tp.size()) {
+                if (tp.get(i) instanceof TypeBound tb) {
+                    ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false,
+                            detailedSourcesBuilder);
+                    if (typeBound == null) {
+                        return null;
+                    }
+                    builder.addTypeBound(typeBound);
+                } else throw new UnsupportedOperationException();
+            }
         }
         return builder.commit();
     }
