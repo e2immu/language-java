@@ -108,7 +108,8 @@ public abstract class CommonParse {
                 i++;
             } else throw new Summary.ParseException(context.info(), "Expected Identifier");
         } else throw new Summary.ParseException(context.info(), "Expected Identifier or TypeParameter");
-        TypeParameter typeParameter = runtime.newTypeParameter(typeParameterIndex, name, owner, List.copyOf(annotations));
+        TypeParameter typeParameter = runtime.newTypeParameter(comments(node), source(node), List.copyOf(annotations),
+                typeParameterIndex, name, owner);
         context.typeContext().addToContext(typeParameter);
         // do type bounds
         TypeParameter.Builder builder = typeParameter.builder();
