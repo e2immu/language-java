@@ -98,7 +98,7 @@ public class ParseLambdaExpression extends CommonParse {
                         .setExpression(expression)
                         .build();
             }
-            methodBody = runtime.newBlockBuilder().addStatement(statement).build();
+            methodBody = runtime.newBlockBuilder().addStatement(statement).setSource(source(e)).build();
         } else if (le1 instanceof CodeBlock codeBlock) {
             methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
