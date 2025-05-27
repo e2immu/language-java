@@ -135,7 +135,7 @@ public class ParseHelperImpl implements ParseHelper {
      */
     private Element parseStatements(Context context, ForwardType forwardType, Object expression, boolean haveEci) {
         int start = haveEci ? 1 : 0;
-        if (expression instanceof ExpressionStatement est) {
+        if (expression instanceof org.parsers.java.ast.Statement est) {
             return parseStatements(context, est, start);
         }
         if (expression != null) {

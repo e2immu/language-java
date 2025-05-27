@@ -171,10 +171,8 @@ public class ParseMethodDeclaration extends CommonParse {
         Node cdi = i >= md.size() ? null : md.get(i);
         if (compactConstructor) {
             toResolve = md; // because the statements simply follow the identifier
-        } else if (cdi instanceof ExpressionStatement || cdi instanceof StatementExpression) {
-            toResolve = cdi;
-        } else if (cdi instanceof CodeBlock codeBlock) {
-            toResolve = codeBlock;
+        } else if (cdi instanceof Statement statement) {
+            toResolve = statement;
         } else {
             toResolve = null;
         }

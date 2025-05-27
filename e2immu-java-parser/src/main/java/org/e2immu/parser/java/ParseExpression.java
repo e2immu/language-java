@@ -199,7 +199,7 @@ public class ParseExpression extends CommonParse {
             testType = parsers.parseType().parse(context, nvd.get(0), detailedSourcesBuilder);
             String lvName = nvd.get(1).getSource();
             patternVariable = runtime.newLocalVariable(lvName, testType);
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(patternVariable, source(nvd));
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(patternVariable, source(nvd.get(1)));
             context.variableContext().add(patternVariable);
         } else {
             testType = parsers.parseType().parse(context, ioe.get(2), detailedSourcesBuilder);
