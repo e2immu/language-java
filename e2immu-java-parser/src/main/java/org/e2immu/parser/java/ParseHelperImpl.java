@@ -37,7 +37,7 @@ public class ParseHelperImpl implements ParseHelper {
     }
 
     @Override
-    public List<AnnotationExpression.KV> parseAnnotationExpression(Object annotation, Context context) {
+    public List<AnnotationExpression.KV> parseAnnotationExpression(TypeInfo annotationType, Object annotation, Context context) {
         List<AnnotationExpression.KV> kvs = new ArrayList<>();
         if (annotation instanceof SingleMemberAnnotation sma) {
             Expression expression = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
@@ -54,8 +54,9 @@ public class ParseHelperImpl implements ParseHelper {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
                         String key = mvp.getFirst().getSource();
-                        Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
-                                mvp.get(2));
+                        ParameterizedType returnType = findReturnType(annotationType, key);
+                        Expression value = parsers.parseExpression().parse(context, "",
+                                context.newForwardType(returnType), mvp.get(2));
                         kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
                     } else {
                         throw new Summary.ParseException(context.info(), "Expected mvp");
@@ -68,6 +69,12 @@ public class ParseHelperImpl implements ParseHelper {
             throw new UnsupportedOperationException("NYI");
         }
         return kvs;
+    }
+
+    // key ~ method in annotations
+    private ParameterizedType findReturnType(TypeInfo annotationType, String key) {
+        MethodInfo methodInfo = annotationType.findUniqueMethod(key, 0);
+        return methodInfo.returnType();
     }
 
     @Override

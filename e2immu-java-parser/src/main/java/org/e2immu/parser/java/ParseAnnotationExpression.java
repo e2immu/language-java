@@ -27,7 +27,7 @@ public class ParseAnnotationExpression extends CommonParse {
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo)
                 .addComments(comments(a)).setSource(source(a));
         if (!(a instanceof MarkerAnnotation) && !onlyLiterals(context, a, builder)) {
-            context.resolver().addAnnotationTodo(infoBuilder, builder, index, a, context);
+            context.resolver().addAnnotationTodo(infoBuilder, typeInfo, builder, index, a, context);
         }
         /*
         Unless the annotation is a MarkerAnnotation (without key-value pairs), or it contains only literals,
