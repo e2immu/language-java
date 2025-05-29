@@ -144,24 +144,24 @@ public abstract class CommonParse {
     /*
     We extract type nature and type modifiers here, because we'll need them in sibling subtype declarations.
      */
-    private void handleTypeDeclaration(Either<CompilationUnit, TypeInfo> parent,
+    private void handleTypeDeclaration(Either<CompilationUnit, TypeInfo> enclosing,
                                        TypeInfo typeInfoOrNull,
                                        TypeDeclaration td,
                                        Map<String, TypeInfo> map,
                                        boolean addDetailedSources) {
         String typeName = td.firstChildOfType(Identifier.class).getSource();
         TypeInfo typeInfo;
-        if (parent.isLeft()) {
+        if (enclosing.isLeft()) {
             if (typeInfoOrNull != null) {
                 typeInfo = typeInfoOrNull;
                 assert typeInfo.simpleName().equals(typeName);
             } else {
-                typeInfo = runtime.newTypeInfo(parent.getLeft(), typeName);
+                typeInfo = runtime.newTypeInfo(enclosing.getLeft(), typeName);
             }
         } else {
-            TypeInfo parentType = parent.getRight();
-            typeInfo = runtime.newTypeInfo(parentType, typeName);
-            parentType.builder().addSubType(typeInfo);
+            TypeInfo enclosingType = enclosing.getRight();
+            typeInfo = runtime.newTypeInfo(enclosingType, typeName);
+            enclosingType.builder().addSubType(typeInfo);
         }
 
         DetailedSources.Builder detailedSourcesBuilder = addDetailedSources ? runtime.newDetailedSourcesBuilder() : null;
