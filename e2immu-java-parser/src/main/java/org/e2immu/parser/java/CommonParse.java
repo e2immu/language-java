@@ -39,10 +39,10 @@ public abstract class CommonParse {
             return tn.precedingUnparsedTokens().stream()
                     .map(t -> {
                         if (t instanceof SingleLineComment slc) {
-                            return runtime.newSingleLineComment(slc.getSource());
+                            return runtime.newSingleLineComment(source(slc), slc.getSource());
                         }
                         if (t instanceof MultiLineComment multiLineComment) {
-                            return runtime.newMultilineComment(multiLineComment.getSource());
+                            return runtime.newMultilineComment(source(multiLineComment), multiLineComment.getSource());
                         }
                         return null;
                     })

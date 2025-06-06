@@ -13,6 +13,7 @@ group = "org.e2immu"
 
 
 repositories {
+    mavenLocal()
     maven {
         url = uri(project.findProperty("codeartifactUri") as String)
         credentials {
