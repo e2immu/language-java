@@ -255,6 +255,6 @@ public class ParseHelperImpl implements ParseHelper {
 
     @Override
     public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info.Builder<?> infoBuilder, JavaDoc.Tag tag) {
-        throw new UnsupportedOperationException("NYI");
+        return tag; // FIXME!
     }
 }

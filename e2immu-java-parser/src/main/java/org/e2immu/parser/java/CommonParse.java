@@ -47,7 +47,7 @@ public abstract class CommonParse {
                         }
                         if (t instanceof MultiLineComment multiLineComment) {
                             if (multiLineComment.getSource().startsWith("/**")) {
-                                return parseJavaDoc(multiLineComment, context, infoBuilder);
+                                return parseJavaDoc(multiLineComment, source(multiLineComment), context, infoBuilder);
                             }
                             return runtime.newMultilineComment(source(multiLineComment), multiLineComment.getSource());
                         }
@@ -59,9 +59,11 @@ public abstract class CommonParse {
         return List.of();
     }
 
-    private Comment parseJavaDoc(MultiLineComment multiLineComment, Context context, Info.Builder<?> infoBuilder) {
-        List<JavaDoc.Tag> tags = JavaDocParser.extractTags(multiLineComment.getSource());
-        JavaDoc javaDoc = runtime.newJavaDoc(source(multiLineComment), multiLineComment.getSource(), tags);
+    private Comment parseJavaDoc(MultiLineComment multiLineComment,
+                                 Source source,
+                                 Context context,
+                                 Info.Builder<?> infoBuilder) {
+        JavaDoc javaDoc = new JavaDocParser(runtime).extractTags(multiLineComment.getSource(), source);
         if (context != null) {
             context.resolver().addJavadoc(infoBuilder, context, javaDoc);
         }

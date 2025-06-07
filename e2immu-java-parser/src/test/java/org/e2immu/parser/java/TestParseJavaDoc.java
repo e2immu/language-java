@@ -1,20 +1,8 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.JavaDoc;
-import org.e2immu.language.cst.api.expression.BinaryOperator;
-import org.e2immu.language.cst.api.expression.CharConstant;
-import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.expression.VariableExpression;
-import org.e2immu.language.cst.api.info.FieldInfo;
-import org.e2immu.language.cst.api.info.FieldModifier;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.cst.api.statement.Block;
-import org.e2immu.language.cst.api.statement.ReturnStatement;
-import org.e2immu.language.cst.api.variable.FieldReference;
-import org.e2immu.language.cst.api.variable.This;
-import org.e2immu.language.cst.impl.element.MultiLineComment;
-import org.e2immu.language.cst.impl.element.SingleLineComment;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +15,7 @@ public class TestParseJavaDoc extends CommonTestParse {
             package a.b;
             /**
              * Line 1
-             * Link to {@link D} and to {@link D#a()}
+             * Link to {@link D} and to {@see D#a()}
              */
             interface C {
                /**
@@ -52,5 +40,32 @@ public class TestParseJavaDoc extends CommonTestParse {
         JavaDoc javaDoc = typeInfo.javaDoc();
         assertNotNull(javaDoc);
         assertEquals(2, javaDoc.tags().size());
+
+        JavaDoc.Tag tag0 = javaDoc.tags().getFirst();
+        assertEquals(JavaDoc.TagIdentifier.LINK, tag0.identifier());
+        assertFalse(tag0.blockTag());
+        assertEquals("4-11:4-20", tag0.source().compact2());
+
+        JavaDoc.Tag tag1 = javaDoc.tags().getLast();
+        assertEquals(JavaDoc.TagIdentifier.SEE, tag1.identifier());
+        assertFalse(tag1.blockTag());
+        assertEquals("4-28:4-40", tag1.source().compact2());
+
+        assertEquals("""
+                *
+                 * Line 1
+                 * Link to {@link D} and to {@see D#a()}\
+                """, javaDoc.comment());
+
+        MethodInfo methodInfo = typeInfo.findUniqueMethod("method", 2);
+        JavaDoc javaDocMethod = methodInfo.javaDoc();
+        assertNotNull(javaDocMethod);
+        assertEquals("""
+                *
+                    * This is a method
+                    * param in1\s
+                    * param in2 some comment
+                    * return a value\
+                """, javaDocMethod.comment());
     }
 }
