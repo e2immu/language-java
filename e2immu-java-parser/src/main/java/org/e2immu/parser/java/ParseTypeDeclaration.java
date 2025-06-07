@@ -443,6 +443,7 @@ public class ParseTypeDeclaration extends CommonParse {
                             MethodInfo staticMethod = runtime.newMethod(typeInfo, name,
                                     runtime.methodTypeStaticBlock());
                             staticMethod.builder()
+                                    .setSource(cbSource)
                                     .setReturnType(runtime.voidParameterizedType())
                                     .setAccess(runtime.accessPrivate())
                                     .commitParameters();
