@@ -6,10 +6,7 @@ import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.info.Info;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.ParameterInfo;
-import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
@@ -259,7 +256,7 @@ public class ParseHelperImpl implements ParseHelper {
     public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info info, JavaDoc.Tag tag) {
         int hash = tag.content().indexOf('#');
         String packageOrType = hash < 0 ? tag.content() : tag.content().substring(0, hash);
-        String methodDescriptor = hash < 0 ? null : tag.content().substring(hash + 1);
+        String memberDescriptor = hash < 0 ? null : tag.content().substring(hash + 1);
         NamedType namedType;
         if (hash == 0) {
             namedType = info.typeInfo();
@@ -267,19 +264,21 @@ public class ParseHelperImpl implements ParseHelper {
             namedType = context.typeContext().get(packageOrType, false);
         }
         if (namedType instanceof TypeInfo typeInfo) {
-            if (methodDescriptor == null) {
+            if (memberDescriptor == null) {
                 return tag.withResolvedReference(typeInfo);
             }
-            int open = methodDescriptor.indexOf('(');
-            String methodName;
+            int open = memberDescriptor.indexOf('(');
+            String member;
             List<String> parameterTypes;
             if (open < 0) {
-                methodName = methodDescriptor.trim();
+                member = memberDescriptor.trim();
                 parameterTypes = null;
+                FieldInfo fieldInfo = typeInfo.getFieldByName(member, false);
+                if (fieldInfo != null) return tag.withResolvedReference(fieldInfo);
             } else {
-                methodName = methodDescriptor.substring(0, open);
-                int close = methodDescriptor.indexOf(')', open + 1);
-                String parametersString = methodDescriptor.substring(open + 1, close);
+                member = memberDescriptor.substring(0, open);
+                int close = memberDescriptor.indexOf(')', open + 1);
+                String parametersString = memberDescriptor.substring(open + 1, close);
                 if (parametersString.trim().isEmpty()) {
                     parameterTypes = List.of();
                 } else {
@@ -288,18 +287,42 @@ public class ParseHelperImpl implements ParseHelper {
                 }
             }
             MethodInfo methodInfo;
-            if (methodName.equals(typeInfo.simpleName())) {
+            if (member.equals(typeInfo.simpleName())) {
                 methodInfo = typeInfo.constructors().stream()
-                        .filter(c -> parameterTypes == null || c.parameters().size() == parameterTypes.size())
+                        .filter(c -> parameterTypes == null || parameterTypesMatch(c.parameters(), parameterTypes))
                         .findFirst().orElse(null);
             } else {
                 methodInfo = typeInfo.methodStream()
-                        .filter(m -> methodName.equals(m.name()))
-                        .filter(m -> parameterTypes == null || m.parameters().size() == parameterTypes.size())
+                        .filter(m -> member.equals(m.name()))
+                        .filter(m -> parameterTypes == null || parameterTypesMatch(m.parameters(), parameterTypes))
                         .findFirst().orElse(null);
             }
             return tag.withResolvedReference(methodInfo);
         }
         return tag;
+    }
+
+    private boolean parameterTypesMatch(List<ParameterInfo> parameters, List<String> parameterTypes) {
+        if (parameters.size() != parameterTypes.size()) return false;
+        for (ParameterInfo pi : parameters) {
+            String typeString = parameterTypes.get(pi.index());
+            if (!parameterTypeMatch(pi.parameterizedType(), typeString)) return false;
+        }
+        return true;
+    }
+
+    private boolean parameterTypeMatch(ParameterizedType parameterizedType, String typeString) {
+        if (parameterizedType.typeParameter() != null) {
+            String print1 = parameterizedType.print(runtime.qualificationFullyQualifiedNames(),
+                    false, runtime.diamondNo()).toString();
+            if (print1.equals(typeString)) return true;
+            // type parameter, maybe written as T... instead of T[]
+            return parameterizedType.arrays() > 0 && parameterizedType.print(runtime.qualificationFullyQualifiedNames(),
+                    true, runtime.diamondNo()).toString().equals(typeString);
+        }
+        String typeInfoFqn = parameterizedType.typeInfo().fullyQualifiedName();
+        if (typeString.equals(typeInfoFqn)) return true;
+        if (typeString.equals(parameterizedType.typeInfo().simpleName())) return true;
+        return typeString.equals(parameterizedType.typeInfo().fromPrimaryTypeDownwards());
     }
 }
