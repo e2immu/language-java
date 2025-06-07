@@ -45,11 +45,13 @@ public class TestParseJavaDoc extends CommonTestParse {
         assertEquals(JavaDoc.TagIdentifier.LINK, tag0.identifier());
         assertFalse(tag0.blockTag());
         assertEquals("4-11:4-20", tag0.source().compact2());
+        assertEquals("a.b.D", tag0.resolvedReference().fullyQualifiedName());
 
         JavaDoc.Tag tag1 = javaDoc.tags().getLast();
         assertEquals(JavaDoc.TagIdentifier.SEE, tag1.identifier());
         assertFalse(tag1.blockTag());
         assertEquals("4-28:4-40", tag1.source().compact2());
+        assertEquals("a.b.D.a()", tag1.resolvedReference().fullyQualifiedName());
 
         assertEquals("""
                 *
@@ -67,5 +69,13 @@ public class TestParseJavaDoc extends CommonTestParse {
                     * param in2 some comment
                     * return a value\
                 """, javaDocMethod.comment());
+        JavaDoc.Tag tag2 = methodInfo.javaDoc().tags().getFirst();
+        assertSame(JavaDoc.TagIdentifier.PARAM, tag2.identifier());
+        assertEquals("a.b.C.method(String,String):0:in1", tag2.resolvedReference().toString());
+        JavaDoc.Tag tag3 = methodInfo.javaDoc().tags().get(1);
+        assertSame(JavaDoc.TagIdentifier.PARAM, tag3.identifier());
+        assertEquals("a.b.C.method(String,String):1:in2", tag3.resolvedReference().toString());
+        JavaDoc.Tag tag4 = methodInfo.javaDoc().tags().get(2);
+        assertSame(JavaDoc.TagIdentifier.RETURN, tag4.identifier());
     }
 }

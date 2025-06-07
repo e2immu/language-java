@@ -34,10 +34,10 @@ public abstract class CommonParse {
     Note: we're not using Node.getAllTokens(), because that method recurses down unconditionally
      */
     public List<Comment> comments(Node node) {
-        return comments(node, null, null);
+        return comments(node, null, null, null);
     }
 
-    public List<Comment> comments(Node node, Context context, Info.Builder<?> infoBuilder) {
+    public List<Comment> comments(Node node, Context context, Info info, Info.Builder<?> infoBuilder) {
         Node.TerminalNode tn = firstTerminal(node);
         if (tn != null) {
             return tn.precedingUnparsedTokens().stream()
@@ -47,7 +47,7 @@ public abstract class CommonParse {
                         }
                         if (t instanceof MultiLineComment multiLineComment) {
                             if (multiLineComment.getSource().startsWith("/**")) {
-                                return parseJavaDoc(multiLineComment, source(multiLineComment), context, infoBuilder);
+                                return parseJavaDoc(multiLineComment, source(multiLineComment), context, info, infoBuilder);
                             }
                             return runtime.newMultilineComment(source(multiLineComment), multiLineComment.getSource());
                         }
@@ -62,10 +62,11 @@ public abstract class CommonParse {
     private Comment parseJavaDoc(MultiLineComment multiLineComment,
                                  Source source,
                                  Context context,
+                                 Info info,
                                  Info.Builder<?> infoBuilder) {
         JavaDoc javaDoc = new JavaDocParser(runtime).extractTags(multiLineComment.getSource(), source);
         if (context != null) {
-            context.resolver().addJavadoc(infoBuilder, context, javaDoc);
+            context.resolver().addJavadoc(info, infoBuilder, context, javaDoc);
         }
         return javaDoc;
     }

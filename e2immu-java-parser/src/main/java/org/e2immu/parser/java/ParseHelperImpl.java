@@ -13,6 +13,7 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
@@ -23,6 +24,7 @@ import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ParseHelperImpl implements ParseHelper {
@@ -254,7 +256,50 @@ public class ParseHelperImpl implements ParseHelper {
     }
 
     @Override
-    public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info.Builder<?> infoBuilder, JavaDoc.Tag tag) {
-        return tag; // FIXME!
+    public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info info, JavaDoc.Tag tag) {
+        int hash = tag.content().indexOf('#');
+        String packageOrType = hash < 0 ? tag.content() : tag.content().substring(0, hash);
+        String methodDescriptor = hash < 0 ? null : tag.content().substring(hash + 1);
+        NamedType namedType;
+        if (hash == 0) {
+            namedType = info.typeInfo();
+        } else {
+            namedType = context.typeContext().get(packageOrType, false);
+        }
+        if (namedType instanceof TypeInfo typeInfo) {
+            if (methodDescriptor == null) {
+                return tag.withResolvedReference(typeInfo);
+            }
+            int open = methodDescriptor.indexOf('(');
+            String methodName;
+            List<String> parameterTypes;
+            if (open < 0) {
+                methodName = methodDescriptor.trim();
+                parameterTypes = null;
+            } else {
+                methodName = methodDescriptor.substring(0, open);
+                int close = methodDescriptor.indexOf(')', open + 1);
+                String parametersString = methodDescriptor.substring(open + 1, close);
+                if (parametersString.trim().isEmpty()) {
+                    parameterTypes = List.of();
+                } else {
+                    String[] paramStrings = parametersString.split(",\\s*");
+                    parameterTypes = new ArrayList<>(Arrays.asList(paramStrings));
+                }
+            }
+            MethodInfo methodInfo;
+            if (methodName.equals(typeInfo.simpleName())) {
+                methodInfo = typeInfo.constructors().stream()
+                        .filter(c -> parameterTypes == null || c.parameters().size() == parameterTypes.size())
+                        .findFirst().orElse(null);
+            } else {
+                methodInfo = typeInfo.methodStream()
+                        .filter(m -> methodName.equals(m.name()))
+                        .filter(m -> parameterTypes == null || m.parameters().size() == parameterTypes.size())
+                        .findFirst().orElse(null);
+            }
+            return tag.withResolvedReference(methodInfo);
+        }
+        return tag;
     }
 }
