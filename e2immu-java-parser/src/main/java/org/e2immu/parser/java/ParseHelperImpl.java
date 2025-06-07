@@ -2,9 +2,11 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.Element;
+import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
+import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -249,5 +251,10 @@ public class ParseHelperImpl implements ParseHelper {
             expressions.add(e);
         }
         return List.copyOf(expressions);
+    }
+
+    @Override
+    public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info.Builder<?> infoBuilder, JavaDoc.Tag tag) {
+        throw new UnsupportedOperationException("NYI");
     }
 }

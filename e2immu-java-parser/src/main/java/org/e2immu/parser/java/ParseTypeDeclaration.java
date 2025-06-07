@@ -58,7 +58,6 @@ public class ParseTypeDeclaration extends CommonParse {
     private TypeInfo internalParse(Context context,
                                    Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                    TypeDeclaration td) {
-        List<Comment> comments = comments(td);
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         int i = 0;
@@ -97,6 +96,7 @@ public class ParseTypeDeclaration extends CommonParse {
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo.simpleName(), source(identifier));
 
         TypeInfo.Builder builder = typeInfo.builder();
+        List<Comment> comments = comments(td, context, builder);
         builder.addComments(comments);
         builder.computeAccess();
         builder.setEnclosingMethod(context.enclosingMethod());
@@ -363,7 +363,7 @@ public class ParseTypeDeclaration extends CommonParse {
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
         Source fieldSource = source(rc);
         fieldInfo.builder()
-                .addComments(comments(rc))
+                .addComments(comments(rc, context, fieldInfo.builder()))
                 .setSource(detailedSourcesBuilder == null
                         ? fieldSource : fieldSource.withDetailedSources(detailedSourcesBuilder.build()))
                 .setInitializer(runtime.newEmptyExpression())

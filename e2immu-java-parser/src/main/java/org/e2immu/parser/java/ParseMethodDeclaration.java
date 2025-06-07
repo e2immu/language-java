@@ -187,7 +187,7 @@ public class ParseMethodDeclaration extends CommonParse {
         builder.commitParameters();
         methodModifiers.forEach(builder::addMethodModifier);
         builder.computeAccess();
-        builder.addComments(comments(md));
+        builder.addComments(comments(md, context, builder));
         Source source = source(md);
         builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         return methodInfo;

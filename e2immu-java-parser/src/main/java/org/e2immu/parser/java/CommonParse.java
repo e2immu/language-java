@@ -1,9 +1,8 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
-import org.e2immu.language.cst.api.element.DetailedSources;
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -14,6 +13,7 @@ import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.parser.java.util.JavaDocParser;
 import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -34,6 +34,10 @@ public abstract class CommonParse {
     Note: we're not using Node.getAllTokens(), because that method recurses down unconditionally
      */
     public List<Comment> comments(Node node) {
+        return comments(node, null, null);
+    }
+
+    public List<Comment> comments(Node node, Context context, Info.Builder<?> infoBuilder) {
         Node.TerminalNode tn = firstTerminal(node);
         if (tn != null) {
             return tn.precedingUnparsedTokens().stream()
@@ -42,6 +46,9 @@ public abstract class CommonParse {
                             return runtime.newSingleLineComment(source(slc), slc.getSource());
                         }
                         if (t instanceof MultiLineComment multiLineComment) {
+                            if (multiLineComment.getSource().startsWith("/**")) {
+                                return parseJavaDoc(multiLineComment, context, infoBuilder);
+                            }
                             return runtime.newMultilineComment(source(multiLineComment), multiLineComment.getSource());
                         }
                         return null;
@@ -51,6 +58,16 @@ public abstract class CommonParse {
         }
         return List.of();
     }
+
+    private Comment parseJavaDoc(MultiLineComment multiLineComment, Context context, Info.Builder<?> infoBuilder) {
+        List<JavaDoc.Tag> tags = JavaDocParser.extractTags(multiLineComment.getSource());
+        JavaDoc javaDoc = runtime.newJavaDoc(source(multiLineComment), multiLineComment.getSource(), tags);
+        if (context != null) {
+            context.resolver().addJavadoc(infoBuilder, context, javaDoc);
+        }
+        return javaDoc;
+    }
+
 
     private Node.TerminalNode firstTerminal(Node node) {
         if (node instanceof Node.TerminalNode tn) return tn;
