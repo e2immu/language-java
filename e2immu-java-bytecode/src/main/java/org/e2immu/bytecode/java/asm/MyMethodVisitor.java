@@ -15,6 +15,7 @@
 package org.e2immu.bytecode.java.asm;
 
 import org.e2immu.language.cst.api.element.Comment;
+import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.info.*;
@@ -100,6 +101,11 @@ public class MyMethodVisitor extends MethodVisitor {
         @Override
         public ParamBuilder computeAccess() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ParameterInfo.Builder setJavaDoc(JavaDoc javaDoc) {
+            throw new UnsupportedOperationException("Parameters have no JavaDoc");
         }
 
         @Override
