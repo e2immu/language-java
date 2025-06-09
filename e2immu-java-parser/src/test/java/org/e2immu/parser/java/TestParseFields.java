@@ -1,5 +1,7 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.MultiLineComment;
+import org.e2immu.language.cst.api.element.SingleLineComment;
 import org.e2immu.language.cst.api.expression.BinaryOperator;
 import org.e2immu.language.cst.api.expression.CharConstant;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -12,8 +14,6 @@ import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.ReturnStatement;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.This;
-import org.e2immu.language.cst.impl.element.MultiLineComment;
-import org.e2immu.language.cst.impl.element.SingleLineComment;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 

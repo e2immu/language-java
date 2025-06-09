@@ -18,6 +18,8 @@ import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
+import org.parsers.java.ast.MultiLineComment;
+import org.parsers.java.ast.SingleLineComment;
 
 import java.util.*;
 

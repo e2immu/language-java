@@ -47,9 +47,17 @@ public class ParseExpression extends CommonParse {
         super(runtime, parsers);
     }
 
+    public Expression parseIgnoreComments(Context context, String index, ForwardType forwardType, Node node) {
+        return parse(context, index, forwardType, node, true);
+    }
+
     public Expression parse(Context context, String index, ForwardType forwardType, Node node) {
+        return parse(context, index, forwardType, node, false);
+    }
+
+    public Expression parse(Context context, String index, ForwardType forwardType, Node node, boolean ignoreComments) {
         try {
-            return internalParse(context, index, forwardType, node);
+            return internalParse(context, index, forwardType, node, ignoreComments);
         } catch (Throwable t) {
             LOGGER.error("Caught exception parsing expression at line {}, pos {}. Current info {}", node.getBeginLine(),
                     node.getBeginColumn(), context.info());
@@ -57,9 +65,9 @@ public class ParseExpression extends CommonParse {
         }
     }
 
-    private Expression internalParse(Context context, String index, ForwardType forwardType, Node node) {
+    private Expression internalParse(Context context, String index, ForwardType forwardType, Node node, boolean ignoreComments) {
         Source source = source(index, node);
-        List<Comment> comments = comments(node);
+        List<Comment> comments = ignoreComments ? List.of() : comments(node);
 
         if (node instanceof DotName dotName) {
             return parseDotName(context, comments, source, index, dotName);

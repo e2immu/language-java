@@ -109,7 +109,8 @@ public class ParseStatement extends CommonParse {
 
         if (statement instanceof ExpressionStatement es) {
             StatementExpression se = (StatementExpression) es.children().get(i);
-            Expression e = parsers.parseExpression().parse(context, index, context.emptyForwardType(), se.getFirst());
+            Expression e = parsers.parseExpression().parseIgnoreComments(context, index, context.emptyForwardType(),
+                    se.getFirst());
             return runtime.newExpressionAsStatementBuilder().setExpression(e).setSource(source).setLabel(label)
                     .addComments(comments).addAnnotations(annotations).build();
         }
