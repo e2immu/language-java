@@ -45,7 +45,7 @@ public class TestParseAnnotationExpression extends CommonTestParse {
         MethodInfo method = typeInfo.findUniqueMethod("method", 0);
         AnnotationExpression aeMethod = method.annotations().get(0);
         AnnotationExpression.KV kv0 = aeMethod.keyValuePairs().get(0);
-        assertEquals("\"on Method\"", kv0.value().toString());
+        assertEquals("stringConstant@8-21:8-31", kv0.value().toString());
         assertInstanceOf(StringConstant.class, kv0.value());
     }
 }

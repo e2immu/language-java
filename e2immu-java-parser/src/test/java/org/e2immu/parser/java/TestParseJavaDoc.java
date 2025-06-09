@@ -83,10 +83,10 @@ public class TestParseJavaDoc extends CommonTestParse {
         assertEquals("""
                 *
                     * This is a method
-                    * param in1\s
-                    * param in2 some comment
-                    * return a value
-                    * throws RuntimeException only when not happy\
+                    * @param in1\s
+                    * @param in2 some comment
+                    * @return a value
+                    * @throws RuntimeException only when not happy\
                 """, javaDocMethod.comment());
 
         JavaDoc.Tag tag2 = methodInfo.javaDoc().tags().getFirst();
