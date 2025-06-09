@@ -241,7 +241,8 @@ public class ParseExpression extends CommonParse {
         ParameterizedType commonType = null;
         for (Node child : node) {
             if (child instanceof NewCaseStatement ncs) {
-                SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder();
+                SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder()
+                        .setSource(source(ncs)).addComments(comments(ncs));
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
                     if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {

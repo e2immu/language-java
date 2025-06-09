@@ -39,6 +39,8 @@ public class ParseBlock extends CommonParse {
                 count++;
             }
         }
-        return builder.setSource(source).addComments(comments).setLabel(label).build();
+        List<Comment> trailingComments = comments(codeBlock.getLastChild());
+        return builder.addTrailingComments(trailingComments)
+                .setSource(source).addComments(comments).setLabel(label).build();
     }
 }
