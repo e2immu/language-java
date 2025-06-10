@@ -1,12 +1,12 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.expression.*;
+import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.LocalVariableCreation;
 import org.intellij.lang.annotations.Language;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -255,4 +255,41 @@ public class TestParseLiteral extends CommonTestParse {
             } else fail();
         } else fail();
     }
+
+    private static final String S1 = """
+            abc
+            """;
+    private static final String S2 = """
+             abc
+            """;
+
+    @Language("java")
+    private static final String INPUT9 = """
+            package a.b;
+            class C {
+                private static final String S1 = \"""
+                    abc
+                    \""";
+                private static final String S2 = ""\"
+                     abc
+                    ""\";
+            }
+            """;
+
+    @DisplayName("Tests 'last' in parseTextBlock")
+    @Test
+    public void test9() {
+        assertEquals("abc\n", S1);
+        assertEquals(" abc\n", S2);
+        TypeInfo typeInfo = parse(INPUT9);
+        FieldInfo S1 = typeInfo.getFieldByName("S1", true);
+        if (S1.initializer() instanceof TextBlock tb) {
+            assertEquals("abc\n", tb.constant());
+        } else fail();
+        FieldInfo S2 = typeInfo.getFieldByName("S2", true);
+        if (S2.initializer() instanceof TextBlock tb) {
+            assertEquals(" abc\n", tb.constant());
+        } else fail();
+    }
+
 }

@@ -5,7 +5,6 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.output.element.TextBlockFormatting;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.util.internal.util.StringUtil;
 import org.parsers.java.ast.StringLiteral;
 
 import java.util.List;
@@ -13,8 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public record TextBlockParser(Runtime runtime) {
-    private static final Pattern SLASH_NEWLINE = Pattern.compile("\\\\\n");
-
     private static final Pattern START = Pattern.compile("^\"\"\"[\t ]*\n", Pattern.MULTILINE);
 
     private static String stripQuotes(String s) {
@@ -73,7 +70,8 @@ public record TextBlockParser(Runtime runtime) {
             boolean empty = false;
             while (matcherQuotes.find()) {
                 empty = matcherQuotes.group(2).isEmpty();
-                if (!empty) {
+                boolean last = matcherQuotes.end() == string.length();
+                if (last || !empty) {
                     indent = Math.min(matcherQuotes.group(1).length(), indent);
                 }
             }
