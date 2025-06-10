@@ -28,6 +28,7 @@ public record JavaDocParser(Runtime runtime) {
                     int args = identifier.argumentsAsBlockTag();
                     int end;
                     String content;
+                    Source sourceOfReference;
                     if (args > 0) {
                         int nextSpace = line.indexOf(' ', endOfTag + 1);
                         if (nextSpace == -1) {
@@ -36,13 +37,16 @@ public record JavaDocParser(Runtime runtime) {
                             content = line.substring(endOfTag + 1, nextSpace);
                         }
                         end = endOfTag + 1 + content.length();
+                        // note that there is an offset of 1
+                        sourceOfReference = subSource(sourceOfComment, lineCount, endOfTag + 2, end);
                     } else {
                         content = "";
                         end = endOfTag;
+                        sourceOfReference = null;
                     }
                     Source sourceOfTag = subSource(sourceOfComment, lineCount, blockTagMatchar.start(2), end);
                     JavaDoc.Tag blockTag = runtime.newJavaDocTag(identifier, content, null, sourceOfTag,
-                            true);
+                            sourceOfReference, true);
                     modifiedComment.append("{").append(tags.size()).append("} ");
                     tags.add(blockTag);
                     restOfLine = end + 1 >= line.length() ? "" : line.substring(end + 1);
@@ -58,7 +62,10 @@ public record JavaDocParser(Runtime runtime) {
                 String content = inlineTagMatcher.group(2);
                 JavaDoc.TagIdentifier identifier = JavaDoc.identifier(inlineTagMatcher.group(1));
                 Source sourceOfTag = subSource(sourceOfComment, lineCount, inlineTagMatcher.start(), inlineTagMatcher.end());
-                JavaDoc.Tag tag = runtime().newJavaDocTag(identifier, content, null, sourceOfTag, false);
+                Source sourceOfReference = subSource(sourceOfComment, lineCount, inlineTagMatcher.start(2),
+                        inlineTagMatcher.end(2));
+                JavaDoc.Tag tag = runtime().newJavaDocTag(identifier, content, null, sourceOfTag,
+                        sourceOfReference, false);
                 inlineTagMatcher.appendReplacement(modifiedComment, "{" + tags.size() + "}");
                 tags.add(tag);
             }
