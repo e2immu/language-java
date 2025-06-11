@@ -5,11 +5,15 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.support.Either;
-import org.parsers.java.ast.*;
+import org.parsers.java.ast.Annotation;
+import org.parsers.java.ast.CompilationUnit;
+import org.parsers.java.ast.PackageDeclaration;
+import org.parsers.java.ast.TypeDeclaration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
 Second round! ScanCompilationUnit has already run.
@@ -47,7 +51,7 @@ public class ParseCompilationUnit extends CommonParse {
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         TypeContext typeContext = newContext.typeContext();
         compilationUnit.importStatements().forEach(is -> {
-            if(is.isStatic()) {
+            if (is.isStatic()) {
                 typeContext.addToStaticImportMap(is);
             } else {
                 typeContext.addNonStaticImportToContext(is);
@@ -65,7 +69,27 @@ public class ParseCompilationUnit extends CommonParse {
                 types.add(typeInfo);
             } // else: error...
         }
+        if (types.isEmpty() && compilationUnit.uri().toString().endsWith("package-info.java")) {
+            TypeInfo typeInfo = buildPackageInfoType(compilationUnit, cu, newContext);
+            types.add(typeInfo);
+        }
         return types;
+    }
+
+    private TypeInfo buildPackageInfoType(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit,
+                                          CompilationUnit cu,
+                                          Context context) {
+        PackageDeclaration packageDeclaration = cu.getPackageDeclaration();
+        List<Annotation> annotations = packageDeclaration.childrenOfType(Annotation.class);
+        String suffix = compilationUnit.sourceSet().test() ? "-test" : "";
+        TypeInfo typeInfo = runtime.newTypeInfo(compilationUnit, "package-info" + suffix);
+        TypeInfo.Builder builder = typeInfo.builder();
+        parseAnnotations(context, builder, annotations);
+        builder.setTypeNature(runtime.typeNaturePackageInfo())
+                .setParentClass(runtime.objectParameterizedType())
+                .setAccess(runtime.accessPublic())
+                .commit();
+        return typeInfo;
     }
 
 }
