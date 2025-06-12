@@ -88,6 +88,7 @@ public class ParseCompilationUnit extends CommonParse {
         builder.setTypeNature(runtime.typeNaturePackageInfo())
                 .setParentClass(runtime.objectParameterizedType())
                 .setAccess(runtime.accessPublic())
+                .setSource(source(cu))
                 .commit();
         return typeInfo;
     }
