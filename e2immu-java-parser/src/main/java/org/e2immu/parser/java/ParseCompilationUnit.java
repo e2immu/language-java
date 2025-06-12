@@ -45,7 +45,8 @@ public class ParseCompilationUnit extends CommonParse {
         }
     }
 
-    private List<TypeInfo> internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
+    private List<TypeInfo> internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit,
+                                         CompilationUnit cu) {
         assert compilationUnit.packageName() != null;
 
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
@@ -63,15 +64,17 @@ public class ParseCompilationUnit extends CommonParse {
                 .forEach(ti -> typeContext.addToContext(ti, false));
 
         List<TypeInfo> types = new ArrayList<>();
-        for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
-            TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
-            if (typeInfo != null) {
-                types.add(typeInfo);
-            } // else: error...
-        }
-        if (types.isEmpty() && compilationUnit.uri().toString().endsWith("package-info.java")) {
+        if (compilationUnit.uri().toString().endsWith("package-info.java")) {
             TypeInfo typeInfo = buildPackageInfoType(compilationUnit, cu, newContext);
             types.add(typeInfo);
+            LOGGER.debug("Added {}, test? {}", typeInfo, typeInfo.compilationUnit().sourceSet().test());
+        } else {
+            for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
+                TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
+                if (typeInfo != null) {
+                    types.add(typeInfo);
+                } // else: error...
+            }
         }
         return types;
     }
