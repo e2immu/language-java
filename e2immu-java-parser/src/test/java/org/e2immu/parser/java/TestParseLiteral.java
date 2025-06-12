@@ -292,4 +292,24 @@ public class TestParseLiteral extends CommonTestParse {
         } else fail();
     }
 
+
+    @Language("java")
+    private static final String INPUT10 = """
+            package a.b;
+            class C {
+                private static final float F1 = -0.03F;
+            }
+            """;
+
+    @DisplayName("Literal negative float")
+    @Test
+    public void test10() {
+        TypeInfo typeInfo = parse(INPUT10);
+        FieldInfo F1 = typeInfo.getFieldByName("F1", true);
+        if (F1.initializer() instanceof FloatConstant fc) {
+            assertEquals(-0.03f, fc.constant());
+            assertEquals("3-37:3-42", fc.source().compact2());
+        } else fail("Is of " + F1.initializer().getClass());
+    }
+
 }

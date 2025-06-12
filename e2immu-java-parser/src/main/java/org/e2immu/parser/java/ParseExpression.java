@@ -663,6 +663,21 @@ public class ParseExpression extends CommonParse {
         if (methodInfo == null) {
             return expression;
         }
+        if (operator.getType() == MINUS) {
+            if (expression instanceof IntConstant ic) {
+                return runtime.newInt(ic.comments(), source(ue), -ic.constant());
+            } else if (expression instanceof DoubleConstant dc) {
+                return runtime.newDouble(dc.comments(), source(ue), -dc.constant());
+            } else if (expression instanceof FloatConstant fc) {
+                return runtime.newFloat(fc.comments(), source(ue), -fc.constant());
+            } else if (expression instanceof LongConstant lc) {
+                return runtime.newLong(lc.comments(), source(ue), -lc.constant());
+            } else if (expression instanceof ByteConstant bc) {
+                return runtime.newByte(bc.comments(), source(ue), (byte) (-bc.constant()));
+            } else if (expression instanceof ShortConstant sc) {
+                return runtime.newShort(sc.comments(), source(ue), (short) (-sc.constant()));
+            }
+        }
         return runtime.newUnaryOperator(comments(ue), source(ue), methodInfo, expression, runtime.precedenceUnary());
     }
 

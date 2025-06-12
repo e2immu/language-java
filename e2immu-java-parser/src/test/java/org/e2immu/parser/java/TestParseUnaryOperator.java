@@ -73,15 +73,13 @@ public class TestParseUnaryOperator extends CommonTestParse {
 
         MethodInfo methodInfo5 = typeInfo.findUniqueMethod("minusConstant", 0);
         Expression e5 = rv(methodInfo5);
-        if (e5 instanceof UnaryOperator un) {
-            assertEquals("-10", un.toString());
-            Expression eval = runtime.unaryOperator(un);
-            assertInstanceOf(IntConstant.class, eval);
-        } else fail();
+        if (e5 instanceof IntConstant ic) {
+            assertEquals("-10", ic.toString());
+        } else fail("We don't expect a unary operator here");
     }
 
     private static Expression rv(MethodInfo methodInfo) {
-        if (methodInfo.methodBody().statements().get(0) instanceof ReturnStatement rs) {
+        if (methodInfo.methodBody().statements().getFirst() instanceof ReturnStatement rs) {
             return rs.expression();
         }
         throw new RuntimeException();
