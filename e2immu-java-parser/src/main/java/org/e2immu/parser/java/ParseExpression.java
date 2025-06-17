@@ -458,12 +458,12 @@ public class ParseExpression extends CommonParse {
 
     private Variable parseDottedVariable(Context context, List<Comment> comments, Source source, Name name, int end) {
         if (end == 0) {
-            return context.variableContext().get(name.get(0).getSource(), true);
+            return context.variableContext().get(name.getFirst().getSource(), true);
         }
         String varName = name.get(end).getSource();
         Expression scope;
         if (end == 2) {
-            scope = parseIdentifier(context, comments, source, (Identifier) name.get(0));
+            scope = parseIdentifier(context, comments, source(name, 0, 0), (Identifier) name.getFirst());
         } else {
             scope = parseDottedName(context, comments, source, name, end - 2);
         }
