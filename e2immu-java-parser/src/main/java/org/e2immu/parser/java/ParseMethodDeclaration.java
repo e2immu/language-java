@@ -227,8 +227,12 @@ public class ParseMethodDeclaration extends CommonParse {
         if (node1 instanceof Type type) {
             ParameterizedType pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             if (fp.get(i + 1) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
-                ++i;
                 typeOfParameter = pt.copyWithArrays(pt.arrays() + 1);
+                if (detailedSourcesBuilder != null) {
+                    detailedSourcesBuilder.put(typeOfParameter, source(fp, i, i + 1));
+                    detailedSourcesBuilder.putAssociatedObject(typeOfParameter, pt);
+                }
+                ++i;
                 varargs = true;
             } else {
                 typeOfParameter = pt;

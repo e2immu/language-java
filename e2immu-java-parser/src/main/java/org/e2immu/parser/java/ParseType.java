@@ -189,11 +189,15 @@ public class ParseType extends CommonParse {
             }
         }
         if (detailedSourcesBuilder != null) {
-            TypeInfo object = withoutTypeParameters.typeInfo();
-            while (true) {
-                detailedSourcesBuilder.put(object, details.pop());
-                if (details.isEmpty() || object.compilationUnitOrEnclosingType().isLeft()) break;
-                object = object.compilationUnitOrEnclosingType().getRight();
+            if(withoutTypeParameters.typeParameter() != null) {
+                detailedSourcesBuilder.put(withoutTypeParameters.typeParameter(), details.pop());
+            } else {
+                TypeInfo object = withoutTypeParameters.typeInfo();
+                while (true) {
+                    detailedSourcesBuilder.put(object, details.pop());
+                    if (details.isEmpty() || object.compilationUnitOrEnclosingType().isLeft()) break;
+                    object = object.compilationUnitOrEnclosingType().getRight();
+                }
             }
         }
         return withoutTypeParameters;

@@ -180,7 +180,7 @@ public class ParseLambdaExpression extends CommonParse {
             pi.builder().commit();
             newContext.variableContext().add(pi);
         } else if (lhs0 instanceof LambdaParameters lambdaParameters) {
-            assert lambdaParameters.get(0) instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
+            assert lambdaParameters.getFirst() instanceof Delimiter d && Token.TokenType.LPAREN.equals(d.getType());
             // we have a list of parameters, with type
             int i = 1;
             while (i < lambdaParameters.size()) {
@@ -193,7 +193,7 @@ public class ParseLambdaExpression extends CommonParse {
                         type = forwardType.type().parameters().get(1);
                         outputVariant = runtime.lambdaOutputVariantEmpty();
                     } else {
-                        type = parsers.parseType().parse(context, lp.get(0), detailedSourcesBuilder);
+                        type = parsers.parseType().parse(context, lp.getFirst(), detailedSourcesBuilder);
                         outputVariant = runtime.lambdaOutputVariantTyped();
                     }
                     Identifier identifier = (Identifier) lp.get(1);
@@ -224,6 +224,13 @@ public class ParseLambdaExpression extends CommonParse {
                     String parameterName = identifier.getSource();
                     ParameterInfo pi = miBuilder.addParameter(parameterName, type);
                     outputVariants.add(runtime.lambdaOutputVariantEmpty());
+
+                    Source source = source(identifier);
+                    DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source);
+                    pi.builder().setSource(detailedSourcesBuilder == null ? source
+                            : source.withDetailedSources(detailedSourcesBuilder.build()));
+
                     pi.builder().commit();
                     newContext.variableContext().add(pi);
                 } else throw new Summary.ParseException(context.info(), "Expected identifier");
