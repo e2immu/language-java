@@ -102,7 +102,7 @@ public class ParseLambdaExpression extends CommonParse {
         } else if (le1 instanceof CodeBlock codeBlock) {
             methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
-        } else throw new Summary.ParseException(context.info(), "Expected either expression or code block");
+        } else throw new Summary.ParseException(context, "Expected either expression or code block");
 
 
         miBuilder.setAccess(runtime.accessPublic());
@@ -160,7 +160,7 @@ public class ParseLambdaExpression extends CommonParse {
                                  Context newContext,
                                  MethodTypeParameterMap sam) {
         if (!(le.getFirst() instanceof LambdaLHS lhs)) {
-            throw new Summary.ParseException(context.info(), "Expected lambda lhs");
+            throw new Summary.ParseException(context, "Expected lambda lhs");
         }
         Node lhs0 = lhs.getFirst();
         if (lhs0 instanceof Identifier identifier) {
@@ -209,7 +209,7 @@ public class ParseLambdaExpression extends CommonParse {
                     newContext.variableContext().add(pi);
                 } else if (lambdaParameters.get(i) instanceof Delimiter) {
                     break;
-                } else throw new Summary.ParseException(context.info(), "Expected LambdaParameter");
+                } else throw new Summary.ParseException(context, "Expected LambdaParameter");
                 if (Token.TokenType.RPAREN.equals(lambdaParameters.get(i + 1).getType())) break;
                 i += 2;
             }
@@ -233,7 +233,7 @@ public class ParseLambdaExpression extends CommonParse {
 
                     pi.builder().commit();
                     newContext.variableContext().add(pi);
-                } else throw new Summary.ParseException(context.info(), "Expected identifier");
+                } else throw new Summary.ParseException(context, "Expected identifier");
                 if (Token.TokenType.RPAREN.equals(lhs.get(i + 1).getType())) break;
                 paramIndex++;
                 i += 2;
@@ -249,7 +249,7 @@ public class ParseLambdaExpression extends CommonParse {
         int numParameters;
         if (le.get(0) instanceof LambdaLHS lhs) {
             numParameters = countParameters(lhs);
-        } else throw new Summary.ParseException(context.info(), "Expected LambdaLHS");
+        } else throw new Summary.ParseException(context, "Expected LambdaLHS");
         Set<MethodResolution.Count> erasures;
         IsVoid isVoid = computeIsVoid(le);
         if (isVoid == IsVoid.NO_IDEA || isVoid == IsVoid.ESCAPE) {

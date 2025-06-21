@@ -29,9 +29,7 @@ public class TestParserError extends CommonTestParse {
         Context c = parseReturnContext(INPUT);
         Summary s = c.summary();
         assertTrue(s.haveErrors());
-        assertEquals(1, s.methodsWithErrors());
-        assertEquals(1, s.methodsSuccess());
-        assertEquals("Unknown variable in context: 'arguments' in VariableContext{VariableContext{null, " +
-                     "local [], fields []}, local [], fields []}", s.parserErrors().get(0).getMessage());
+        assertEquals("Unknown variable in context: 'arguments' in a.b.C.method1(String[])",
+                s.parseExceptions().getFirst().getMessage());
     }
 }

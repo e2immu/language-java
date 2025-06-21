@@ -44,10 +44,16 @@ public class ParseTypeDeclaration extends CommonParse {
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
-            Object where = packageNameOrEnclosing.isLeft() ? packageNameOrEnclosing.getLeft()
-                    : packageNameOrEnclosing.getRight();
-            LOGGER.error("Caught exception parsing type in {}", where);
-            context.summary().addParserError(re);
+            Summary.ParseException parseException;
+            if (packageNameOrEnclosing.isLeft()) {
+                parseException = new Summary.ParseException(packageNameOrEnclosing.getLeft(),
+                        packageNameOrEnclosing.getLeft(), re.getMessage(), re);
+            } else {
+                parseException = new Summary.ParseException(packageNameOrEnclosing.getRight().compilationUnit(),
+                        packageNameOrEnclosing.getRight(), re.getMessage(), re);
+            }
+            context.summary().addParseException(parseException);
+            LOGGER.error("Caught exception parsing type in {}", packageNameOrEnclosing);
             return null;
         }
     }
@@ -76,7 +82,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 }
             } else if (tdi instanceof Delimiter) {
                 if (!Token.TokenType.AT.equals(tdi.getType())) {
-                    throw new Summary.ParseException(context.info(), "Expect @ delimiter");
+                    throw new Summary.ParseException(context, "Expect @ delimiter");
                 }
             } else if (!(tdi instanceof KeyWord)) {
                 break;
@@ -136,7 +142,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 if (rhj instanceof RecordComponent rc) {
                     recordFields.add(parseRecordField(newContext, typeInfo, rc));
                 } else {
-                    throw new Summary.ParseException(newContext.info(), "Expected record component");
+                    throw new Summary.ParseException(newContext, "Expected record component");
                 }
             }
             if (detailedSourcesBuilder != null) {
@@ -342,7 +348,7 @@ public class ParseTypeDeclaration extends CommonParse {
         if (rc.get(i) instanceof Type type) {
             pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             i++;
-        } else throw new Summary.ParseException(typeInfo, "Expected type in record component");
+        } else throw new Summary.ParseException(context, "Expected type in record component");
         boolean varargs;
         ParameterizedType ptWithVarArgs;
         if (rc.get(i) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
@@ -358,7 +364,7 @@ public class ParseTypeDeclaration extends CommonParse {
             name = identifier.getSource();
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
         } else {
-            throw new Summary.ParseException(typeInfo, "Expected identifier in record component");
+            throw new Summary.ParseException(context, "Expected identifier in record component");
         }
         FieldInfo fieldInfo = runtime.newFieldInfo(name, false, ptWithVarArgs, typeInfo);
         Source fieldSource = source(rc);
@@ -451,7 +457,7 @@ public class ParseTypeDeclaration extends CommonParse {
                                     newContext.emptyForwardType(), null, cb, newContext);
                             builder.addMethod(staticMethod);
                         } else {
-                            throw new Summary.ParseException(newContext.info(), "Unknown node in static initializer");
+                            throw new Summary.ParseException(newContext, "Unknown node in static initializer");
                         }
                     } else if (i.getFirst() instanceof CodeBlock cb) {
                         Context initializerContext = newContext.newSubType(typeInfo);
@@ -464,7 +470,7 @@ public class ParseTypeDeclaration extends CommonParse {
                         initializerContext.resolver().add(constructor, constructor.builder(),
                                 initializerContext.emptyForwardType(), null, cb, initializerContext);
                         countNormalConstructors++;
-                    } else throw new Summary.ParseException(newContext.info(), "Unknown initializer");
+                    } else throw new Summary.ParseException(newContext, "Unknown initializer");
                 }
             }
         }

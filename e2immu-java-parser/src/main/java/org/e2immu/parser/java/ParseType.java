@@ -116,7 +116,7 @@ public class ParseType extends CommonParse {
             wildcard = runtime.wildcardExtends();
         } else if (Token.TokenType.SUPER.equals(type)) {
             wildcard = runtime.wildcardSuper();
-        } else throw new Summary.ParseException(context.info(), "Expect super or extends");
+        } else throw new Summary.ParseException(context, "Expect super or extends");
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(wildcard, source(node));
         ParameterizedType pt = parse(context, bounds.get(1), detailedSourcesBuilder);
         return pt.withWildcard(wildcard);
@@ -158,7 +158,7 @@ public class ParseType extends CommonParse {
                         details.add(source(ot, id));
                     }
                 } else {
-                    throw new Summary.ParseException(context.info(), "Expected an identifier");
+                    throw new Summary.ParseException(context, "Expected an identifier");
                 }
                 i++;
                 if (i < ot.size() && ot.get(i) instanceof Delimiter d && Token.TokenType.DOT.equals(d.getType())) {
@@ -168,17 +168,17 @@ public class ParseType extends CommonParse {
             }
         }
         String qualifiedName = sb.toString();
-        if (qualifiedName.isBlank()) throw new Summary.ParseException(context.info(), "Expected a qualified name");
+        if (qualifiedName.isBlank()) throw new Summary.ParseException(context, "Expected a qualified name");
         NamedType nt = context.typeContext().get(qualifiedName, complain);
         if (nt == null) {
-            if (complain) throw new Summary.ParseException(context.info(), "Expected non-null");
+            if (complain) throw new Summary.ParseException(context, "Expected non-null");
             return null;
         }
         ParameterizedType withoutTypeParameters = nt.asSimpleParameterizedType();
         if (ot.size() > i && ot.get(i) instanceof TypeArguments tas) {
             List<ParameterizedType> typeArguments = parseTypeArguments(context, tas, complain, detailedSourcesBuilder);
             if (typeArguments == null) {
-                if (complain) throw new Summary.ParseException(context.info(), "Expected type arguments");
+                if (complain) throw new Summary.ParseException(context, "Expected type arguments");
                 return null;
             }
             if (!typeArguments.isEmpty()) {
@@ -217,7 +217,7 @@ public class ParseType extends CommonParse {
                 ParameterizedType arg = parse(context, type, complain, detailedSourcesBuilder);
                 if (arg == null) {
                     if (complain) {
-                        throw new Summary.ParseException(context.info(), "Expected to know type argument");
+                        throw new Summary.ParseException(context, "Expected to know type argument");
                     }
                     return null;
                 }

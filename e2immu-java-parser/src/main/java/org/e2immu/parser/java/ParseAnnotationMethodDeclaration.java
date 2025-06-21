@@ -32,12 +32,12 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
             methodType = runtime.methodTypeMethod();
             returnType = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             i++;
-        } else throw new Summary.ParseException(context.info(), "Expect Type, got " + typeNode.getClass());
+        } else throw new Summary.ParseException(context, "Expect Type, got " + typeNode.getClass());
         String name;
         Node identifierNode = amd.children().get(i);
         if (identifierNode instanceof Identifier identifier) {
             name = identifier.getSource();
-        } else throw new Summary.ParseException(context.info(), "Expect Identifier, got " + identifierNode.getClass());
+        } else throw new Summary.ParseException(context, "Expect Identifier, got " + identifierNode.getClass());
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder()
                 .setMethodBody(runtime.emptyBlock())

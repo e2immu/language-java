@@ -187,7 +187,7 @@ public class ParseExpression extends CommonParse {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (node.get(0) instanceof Name name) {
             type = parsers.parseType().parse(context, name, detailedSourcesBuilder);
-        } else throw new Summary.ParseException(context.info(), "expected Name");
+        } else throw new Summary.ParseException(context, "expected Name");
         boolean isSuper = node instanceof DotSuper;
         TypeInfo explicitType = type.bestTypeInfo();
         return runtime.newVariableExpressionBuilder()
@@ -248,7 +248,7 @@ public class ParseExpression extends CommonParse {
                     if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
                         conditions.add(runtime.newEmptyExpression());
                     } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
-                        throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
+                        throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
                     }
                     int j = 1;
                     while (j < nsl.size() - 1) {
@@ -259,7 +259,7 @@ public class ParseExpression extends CommonParse {
                         j += 2;
                     }
                     entryBuilder.addConditions(conditions);
-                } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
+                } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 Node ncs1 = ncs.get(1);
                 if (ncs1 instanceof CodeBlock cb) {
@@ -278,7 +278,7 @@ public class ParseExpression extends CommonParse {
                             .setSource(pe.source()).build());
                     commonType = commonType == null ? pe.parameterizedType()
                             : runtime.commonType(commonType, pe.parameterizedType());
-                } else throw new Summary.ParseException(newContext.info(), "Expect statement, got " + ncs1.getClass());
+                } else throw new Summary.ParseException(newContext, "Expect statement, got " + ncs1.getClass());
                 count++;
                 entries.add(entryBuilder.setWhenExpression(whenExpression).build());
             }
@@ -337,7 +337,7 @@ public class ParseExpression extends CommonParse {
                     .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                     .build();
         } else if (namedType instanceof TypeParameter) {
-            throw new Summary.ParseException(context.info(), "?");
+            throw new Summary.ParseException(context, "?");
         }
         // since we don't have a type, we must have a variable
         // this will set the recursion going, from right to left
@@ -392,9 +392,9 @@ public class ParseExpression extends CommonParse {
                     .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                     .build();
         } else if (namedType instanceof TypeParameter) {
-            throw new Summary.ParseException(context.info(), "should not be possible");
+            throw new Summary.ParseException(context, "should not be possible");
         }
-        throw new Summary.ParseException(context.info(), "unknown name '" + name + "'");
+        throw new Summary.ParseException(context, "unknown name '" + name + "'");
     }
 
     private FieldReference findField(Context context, Expression scope, String name, boolean complain) {
@@ -408,8 +408,7 @@ public class ParseExpression extends CommonParse {
         FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
             if (complain) {
-                throw new Summary.ParseException(context.info(),
-                        "Cannot find field named '" + name + "' in hierarchy of " + pt);
+                throw new Summary.ParseException(context, "Cannot find field named '" + name + "' in hierarchy of " + pt);
             }
             return null;
         }
@@ -515,7 +514,7 @@ public class ParseExpression extends CommonParse {
         Expression wrappedTarget = parse(context, index, context.emptyForwardType(), assignmentExpression.get(0));
         Expression target = unwrapEnclosed(wrappedTarget);
         if (!(target instanceof VariableExpression targetVE)) {
-            throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
+            throw new Summary.ParseException(context, "Expected assignment target to be a variable expression");
         }
         ForwardType fwd = context.newForwardType(target.parameterizedType());
         Expression value = parse(context, index, fwd, assignmentExpression.get(2));
@@ -587,7 +586,7 @@ public class ParseExpression extends CommonParse {
         ForwardType fwd = context.newForwardType(runtime.intParameterizedType());
         Expression target = parse(context, index, fwd, node.get(expressionIndex));
         if (!(target instanceof VariableExpression targetVE)) {
-            throw new Summary.ParseException(context.info(), "Expected assignment target to be a variable expression");
+            throw new Summary.ParseException(context, "Expected assignment target to be a variable expression");
         }
         MethodInfo binaryOperator;
         MethodInfo assignmentOperator;

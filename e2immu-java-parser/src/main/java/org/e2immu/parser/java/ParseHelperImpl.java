@@ -60,11 +60,11 @@ public class ParseHelperImpl implements ParseHelper {
                                 context.newForwardType(returnType), mvp.get(2));
                         kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
                     } else {
-                        throw new Summary.ParseException(context.info(), "Expected mvp");
+                        throw new Summary.ParseException(context, "Expected mvp");
                     }
                 }
             } else {
-                throw new Summary.ParseException(context.info(), "Expected mvp");
+                throw new Summary.ParseException(context, "Expected mvp");
             }
         } else {
             throw new UnsupportedOperationException("NYI");
@@ -109,7 +109,7 @@ public class ParseHelperImpl implements ParseHelper {
                 e = parseStatements(context, s, 0);
             } else if (ccd.get(j) instanceof Delimiter) {
                 e = runtime.emptyBlock();
-            } else throw new Summary.ParseException(context.info(), "Expected either empty block, or statements");
+            } else throw new Summary.ParseException(context, "Expected either empty block, or statements");
         } else if (expression instanceof CodeBlock codeBlock) {
             e = parsers.parseBlock().parse(context, "", null, codeBlock, false,
                     eci == null ? 0 : 1);

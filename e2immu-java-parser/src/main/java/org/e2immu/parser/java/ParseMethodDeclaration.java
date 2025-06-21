@@ -34,8 +34,8 @@ public class ParseMethodDeclaration extends CommonParse {
             throw ffe;
         } catch (RuntimeException re) {
             LOGGER.error("Caught exception parsing method in type {}", context.info());
-            context.summary().addParserError(re);
-            context.summary().addType(context.enclosingType().primaryType(), false);
+            context.summary().addParseException(new Summary.ParseException(context.enclosingType().compilationUnit(),
+                    context.enclosingType(), re.getMessage(), re));
             return null;
         }
     }
@@ -207,9 +207,9 @@ public class ParseMethodDeclaration extends CommonParse {
                 } else if (modifier instanceof KeyWord kw) {
                     if (Token.TokenType.FINAL.equals(kw.getType())) {
                         isFinal = true;
-                    } else throw new Summary.ParseException(context.info(), "Expect 'final' as only keyword");
+                    } else throw new Summary.ParseException(context, "Expect 'final' as only keyword");
                 } else {
-                    throw new Summary.ParseException(context.info(), "Expect formal parameter's modifier to be an annotation");
+                    throw new Summary.ParseException(context, "Expect formal parameter's modifier to be an annotation");
                 }
             }
             ++i;
@@ -219,7 +219,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } else if (node0 instanceof KeyWord kw) {
             if (Token.TokenType.FINAL.equals(kw.getType())) {
                 isFinal = true;
-            } else throw new Summary.ParseException(context.info(), "Expect 'final' as only keyword");
+            } else throw new Summary.ParseException(context, "Expect 'final' as only keyword");
             ++i;
         }
         Node node1 = fp.get(i);
@@ -240,7 +240,7 @@ public class ParseMethodDeclaration extends CommonParse {
             }
             ++i;
         } else {
-            throw new Summary.ParseException(context.info(), "Expect formal parameter's type");
+            throw new Summary.ParseException(context, "Expect formal parameter's type");
         }
         String parameterName;
         Node node2 = fp.get(i);
@@ -252,7 +252,7 @@ public class ParseMethodDeclaration extends CommonParse {
             if (vdi.getFirst() instanceof Identifier identifier) {
                 parameterName = identifier.getSource();
                 if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
-            } else throw new Summary.ParseException(context.info(), "Expect first part to be Identifier");
+            } else throw new Summary.ParseException(context, "Expect first part to be Identifier");
             int arrayCount = (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();
             typeOfParameter = typeOfParameter.copyWithArrays(arrayCount);
         } else {

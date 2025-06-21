@@ -128,8 +128,8 @@ public abstract class CommonParse {
             if (tp.get(i) instanceof Identifier id) {
                 name = id.getSource();
                 i++;
-            } else throw new Summary.ParseException(context.info(), "Expected Identifier");
-        } else throw new Summary.ParseException(context.info(), "Expected Identifier or TypeParameter");
+            } else throw new Summary.ParseException(context, "Expected Identifier");
+        } else throw new Summary.ParseException(context, "Expected Identifier or TypeParameter");
         TypeParameter typeParameter = runtime.newTypeParameter(comments(node), source(node), List.copyOf(annotations),
                 typeParameterIndex, name, owner);
         context.typeContext().addToContext(typeParameter);

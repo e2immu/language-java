@@ -133,7 +133,7 @@ public class ParseConstructorCall extends CommonParse {
         if (ae.get(i) instanceof ArrayDimsAndInits ada) {
             return arrayCreation(newContext, index, ada, typeInfo, diamond, source, comments);
         }
-        throw new Summary.ParseException(newContext.info(), "Expected InvocationArguments or ArrayDimsAndInits, got "
+        throw new Summary.ParseException(newContext, "Expected InvocationArguments or ArrayDimsAndInits, got "
                                                             + ae.get(i).getClass());
     }
 
@@ -184,7 +184,7 @@ public class ParseConstructorCall extends CommonParse {
                 initializer = (org.e2immu.language.cst.api.expression.ArrayInitializer) parsers.parseExpression()
                         .parse(context, index, fwd, ai);
                 concreteReturnType = initializer.parameterizedType();
-            } else throw new Summary.ParseException(context.info(), "Expected array initializer");
+            } else throw new Summary.ParseException(context, "Expected array initializer");
         }
         return runtime.newConstructorCallBuilder()
                 .setObject(null)

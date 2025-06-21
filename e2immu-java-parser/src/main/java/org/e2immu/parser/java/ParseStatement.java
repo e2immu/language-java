@@ -596,7 +596,7 @@ public class ParseStatement extends CommonParse {
                     if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
                         conditions.add(runtime.newEmptyExpression());
                     } else if (!Token.TokenType.CASE.equals(nsl.getFirst().getType())) {
-                        throw new Summary.ParseException(newContext.info(), "Expect 'case' or 'default'");
+                        throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
                     }
                     int j = 1;
                     while (j < nsl.size() - 1) {
@@ -607,7 +607,7 @@ public class ParseStatement extends CommonParse {
                         j += 2;
                     }
                     entryBuilder.addConditions(conditions);
-                } else throw new Summary.ParseException(newContext.info(), "Expect NewCaseStatement");
+                } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 if (ncs.get(1) instanceof CodeBlock cb) {
                     String newIndex = index + "." + StringUtil.pad(count, n);
@@ -615,7 +615,7 @@ public class ParseStatement extends CommonParse {
                 } else if (ncs.get(1) instanceof Statement st) {
                     String newIndex = index + "." + StringUtil.pad(count, n) + "0";
                     entryBuilder.setStatement(parse(newContext, newIndex, st));
-                } else throw new Summary.ParseException(newContext.info(), "Expect statement");
+                } else throw new Summary.ParseException(newContext, "Expect statement");
                 count++;
                 entries.add(entryBuilder.setWhenExpression(whenExpression).build());
             }

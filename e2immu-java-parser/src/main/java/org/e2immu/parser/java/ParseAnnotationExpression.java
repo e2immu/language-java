@@ -75,11 +75,11 @@ public class ParseAnnotationExpression extends CommonParse {
                             return false;
                         }
                     } else {
-                        throw new Summary.ParseException(context.info(), "Expected mvp");
+                        throw new Summary.ParseException(context, "Expected mvp");
                     }
                 }
             } else {
-                throw new Summary.ParseException(context.info(), "Expected mvp");
+                throw new Summary.ParseException(context, "Expected mvp");
             }
         } else if (!(a instanceof MarkerAnnotation)) {
             throw new UnsupportedOperationException("NYI");
@@ -109,11 +109,11 @@ public class ParseAnnotationExpression extends CommonParse {
                                 mvp.get(2));
                         builder.addKeyValuePair(key, value);
                     } else {
-                        throw new Summary.ParseException(context.info(), "Expected mvp");
+                        throw new Summary.ParseException(context, "Expected mvp");
                     }
                 }
             } else {
-                throw new Summary.ParseException(context.info(), "Expected mvp");
+                throw new Summary.ParseException(context, "Expected mvp");
             }
         } else if (!(a instanceof MarkerAnnotation)) {
             throw new UnsupportedOperationException("NYI");
