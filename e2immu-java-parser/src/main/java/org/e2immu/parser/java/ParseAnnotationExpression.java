@@ -1,5 +1,7 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
@@ -24,8 +26,16 @@ public class ParseAnnotationExpression extends CommonParse {
     public AnnotationExpression parse(Context context, Info.Builder<?> infoBuilder, Annotation a, int index) {
         String name = a.get(1).getSource();
         TypeInfo typeInfo = (TypeInfo) context.typeContext().get(name, true);
-        AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo)
-                .addComments(comments(a)).setSource(source(a));
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        if (detailedSourcesBuilder != null) {
+            detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+        }
+        Source source = source(a);
+        AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder()
+                .setTypeInfo(typeInfo)
+                .addComments(comments(a))
+                .setSource(detailedSourcesBuilder == null ? source
+                        : source.withDetailedSources(detailedSourcesBuilder.build()));
         if (!(a instanceof MarkerAnnotation) && !onlyLiterals(context, a, builder)) {
             context.resolver().addAnnotationTodo(infoBuilder, typeInfo, builder, index, a, context);
         }
@@ -90,6 +100,10 @@ public class ParseAnnotationExpression extends CommonParse {
     public AnnotationExpression parseDirectly(Context context, Annotation a) {
         String name = a.get(1).getSource();
         TypeInfo typeInfo = (TypeInfo) context.typeContext().get(name, true);
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        if (detailedSourcesBuilder != null) {
+            detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+        }
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo);
         if (a instanceof SingleMemberAnnotation) {
             Expression expression = parsers.parseExpression().parse(context, "", context.emptyForwardType(), a.get(3));
@@ -118,6 +132,9 @@ public class ParseAnnotationExpression extends CommonParse {
         } else if (!(a instanceof MarkerAnnotation)) {
             throw new UnsupportedOperationException("NYI");
         }
-        return builder.addComments(comments(a)).setSource(source(a)).build();
+        Source source = source(a);
+        return builder.addComments(comments(a))
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .build();
     }
 }
