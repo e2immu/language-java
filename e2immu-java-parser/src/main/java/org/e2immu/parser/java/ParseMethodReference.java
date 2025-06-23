@@ -4,7 +4,6 @@ import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.expression.MethodReference;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
@@ -18,7 +17,8 @@ import org.parsers.java.ast.Identifier;
 import org.parsers.java.ast.ObjectType;
 import org.parsers.java.ast.Type;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 public class ParseMethodReference extends CommonParse {
 
@@ -36,7 +36,9 @@ public class ParseMethodReference extends CommonParse {
             // BEWARE! even if n0 represents a variable, we may end up in this branch
             ParameterizedType pt = parsers.parseType().parse(context, n0, false, detailedSourcesBuilder);
             if (pt != null) {
-                scope = runtime.newTypeExpression(pt, runtime.diamondNo());
+                scope = runtime.newTypeExpressionBuilder().setParameterizedType(pt)
+                        .setDiamond(runtime.diamondNo()).
+                        setSource(source(n0)).build();
             } else if (n0 instanceof ObjectType ot) {
                 // try again, cannot be a type
                 scope = parsers.parseExpression().parse(context, index, forwardType, ot);
