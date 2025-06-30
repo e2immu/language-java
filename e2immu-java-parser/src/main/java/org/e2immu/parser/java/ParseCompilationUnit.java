@@ -1,5 +1,6 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.ModuleInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -65,10 +66,13 @@ public class ParseCompilationUnit extends CommonParse {
                 .forEach(ti -> typeContext.addToContext(ti, false));
 
         List<TypeInfo> types = new ArrayList<>();
-        if (compilationUnit.uri().toString().endsWith("package-info.java")) {
+        String uriString = compilationUnit.uri().toString();
+        if (uriString.endsWith("package-info.java")) {
             TypeInfo typeInfo = buildPackageInfoType(compilationUnit, cu, newContext);
             types.add(typeInfo);
             LOGGER.debug("Added {}, test? {}", typeInfo, typeInfo.compilationUnit().sourceSet().test());
+        } else if (uriString.endsWith("module-info.java")) {
+            // silently ignore, been picked up earlier
         } else {
             for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
                 TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
