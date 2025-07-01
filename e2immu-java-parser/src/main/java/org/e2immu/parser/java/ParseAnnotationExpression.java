@@ -9,6 +9,8 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.parsers.java.Node;
+import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 
 /*
@@ -64,7 +66,8 @@ public class ParseAnnotationExpression extends CommonParse {
 
         if (a instanceof NormalAnnotation na) {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
-            if (na.get(3) instanceof MemberValuePair mvp) {
+            Node na3 = na.get(3);
+            if (na3 instanceof MemberValuePair mvp) {
                 String key = mvp.getFirst().getSource();
                 if (mvp.get(2) instanceof LiteralExpression literalExpression) {
                     Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
@@ -73,7 +76,7 @@ public class ParseAnnotationExpression extends CommonParse {
                 } else {
                     return false;
                 }
-            } else if (na.get(3) instanceof MemberValuePairs pairs) {
+            } else if (na3 instanceof MemberValuePairs pairs) {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
                         if (mvp.get(2) instanceof LiteralExpression literalExpression) {
@@ -85,11 +88,12 @@ public class ParseAnnotationExpression extends CommonParse {
                             return false;
                         }
                     } else {
-                        throw new Summary.ParseException(context, "Expected mvp");
+                        throw new Summary.ParseException(context, "Expected mvp, but got "
+                                                                  + pairs.get(j).getClass() + ", src '" + pairs.get(j).getSource() + "'");
                     }
                 }
-            } else {
-                throw new Summary.ParseException(context, "Expected mvp");
+            } else if (!(na3 instanceof Delimiter d && Token.TokenType.RPAREN.equals(d.getType()))) {
+                throw new Summary.ParseException(context, "Expected mvp, but got " + na3.getClass() + ", src '" + na3.getSource() + "'");
             }
         } else if (!(a instanceof MarkerAnnotation)) {
             throw new UnsupportedOperationException("NYI");
