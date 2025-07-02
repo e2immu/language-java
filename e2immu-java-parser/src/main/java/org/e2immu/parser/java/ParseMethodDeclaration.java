@@ -33,7 +33,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
-            LOGGER.error("Caught exception parsing method in type {}", context.info());
+            LOGGER.error("Caught exception parsing method in type {}, source {}", context.info(), source(md).compact2());
             context.summary().addParseException(new Summary.ParseException(context.enclosingType().compilationUnit(),
                     context.enclosingType(), re.getMessage(), re));
             return null;

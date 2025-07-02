@@ -3,6 +3,8 @@ package org.e2immu.parser.java.util;
 import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +12,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public record JavaDocParser(Runtime runtime) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JavaDocParser.class);
+
     private static final Pattern BLOCK_TAG = Pattern.compile("^(/\\*\\*|\\s*\\*\\s*)@(\\p{Alpha}+)");
     private static final Pattern INLINE_TAG = Pattern.compile("\\{@(\\p{Alpha}+)\\s([^}]+)}");
 
     public JavaDoc extractTags(String comment, Source sourceOfComment) {
+        try {
+            return internalExtractTags(comment, sourceOfComment);
+        } catch (RuntimeException re) {
+            LOGGER.error("Caught exception parsing javadoc comment at {}", sourceOfComment.compact2());
+            throw re;
+        }
+    }
+
+    private JavaDoc internalExtractTags(String comment, Source sourceOfComment) {
         List<JavaDoc.Tag> tags = new ArrayList<>();
         int lineCount = 0;
         StringBuilder modifiedComment = new StringBuilder();
@@ -29,7 +42,7 @@ public record JavaDocParser(Runtime runtime) {
                     int end;
                     String content;
                     Source sourceOfReference;
-                    if (args > 0) {
+                    if (args > 0 && endOfTag + 1 < line.length()) {
                         int nextSpace = line.indexOf(' ', endOfTag + 1);
                         if (nextSpace == -1) {
                             content = line.substring(endOfTag + 1);
