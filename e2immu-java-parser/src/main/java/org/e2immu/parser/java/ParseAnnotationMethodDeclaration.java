@@ -20,7 +20,7 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         assert context.enclosingType() != null;
 
         int i = 0;
-        if (amd.children().get(i) instanceof Modifiers) {
+        if (amd.children().get(i) instanceof KeyWord) {
             i++;
         }
         MethodInfo.MethodType methodType;
@@ -32,7 +32,9 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
             methodType = runtime.methodTypeMethod();
             returnType = parsers.parseType().parse(context, type, detailedSourcesBuilder);
             i++;
-        } else throw new Summary.ParseException(context, "Expect Type, got " + typeNode.getClass());
+        } else {
+            throw new RuntimeException("Expect Type, got " + typeNode.getClass());
+        }
         String name;
         Node identifierNode = amd.children().get(i);
         if (identifierNode instanceof Identifier identifier) {

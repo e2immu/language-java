@@ -278,6 +278,7 @@ public class ParseHelperImpl implements ParseHelper {
             } else {
                 member = memberDescriptor.substring(0, open);
                 int close = memberDescriptor.indexOf(')', open + 1);
+                if (close < 0) return tag;// cannot continue, not legal
                 String parametersString = memberDescriptor.substring(open + 1, close);
                 if (parametersString.trim().isEmpty()) {
                     parameterTypes = List.of();

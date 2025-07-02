@@ -693,7 +693,9 @@ public class ParseExpression extends CommonParse {
                         .setVariable(runtime.newThis(context.enclosingType().asParameterizedType()))
                         .build();
                 fr = findField(context, scope, name, true);
-            } else throw new UnsupportedOperationException("NYI");
+            } else {
+                throw new UnsupportedOperationException("NYI");
+            }
         } else {
             scope = parse(context, index, context.emptyForwardType(), n0);
             if ("length".equals(name)) {
