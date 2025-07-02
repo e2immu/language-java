@@ -685,12 +685,19 @@ public class ParseExpression extends CommonParse {
         String name = nameNode.getSource();
         Expression scope;
         FieldReference fr;
-        Node n0 = dotName.get(0);
+        Node n0 = dotName.getFirst();
         if (n0 instanceof LiteralExpression le) {
             if ("this".equals(le.getAsString())) {
                 scope = runtime.newVariableExpressionBuilder()
                         .setSource(source(le))
                         .setVariable(runtime.newThis(context.enclosingType().asParameterizedType()))
+                        .build();
+                fr = findField(context, scope, name, true);
+            } else if ("super".equals(le.getAsString())) {
+                TypeInfo parentClass = context.enclosingType().parentClass().typeInfo();
+                scope = runtime.newVariableExpressionBuilder()
+                        .setSource(source(le))
+                        .setVariable(runtime.newThis(parentClass.asParameterizedType()))
                         .build();
                 fr = findField(context, scope, name, true);
             } else {
