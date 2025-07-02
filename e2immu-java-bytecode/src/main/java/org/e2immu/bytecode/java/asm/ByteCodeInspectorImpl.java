@@ -174,19 +174,21 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         if (inMapAgain != null && (inMapAgain.status == Status.DONE || inMapAgain.status == Status.BEING_LOADED)) {
             return inMapAgain.typeInfo;
         }
+        // jump to the typeInfo object in inMapAgain
+        TypeInfo typeInfo1 = inMapAgain != null ? inMapAgain.typeInfo : typeInfo;
         if (loadMode == LoadMode.NOW) {
-            return continueLoadByteCodeAndStartASM(path, fqn, typeInfo, typeParameterContext);
+            return continueLoadByteCodeAndStartASM(path, fqn, typeInfo1, typeParameterContext);
         }
         Status newStatus = loadMode == LoadMode.QUEUE ? Status.IN_QUEUE : Status.ON_DEMAND;
         if (td == null || newStatus != td.status) {
-            localTypeMap.put(fqn, new TypeData(typeInfo, newStatus, new TypeParameterContext()));
+            localTypeMap.put(fqn, new TypeData(typeInfo1, newStatus, new TypeParameterContext()));
         }
-        if (!typeInfo.haveOnDemandInspection()) {
-            typeInfo.setOnDemandInspection(ti -> {
+        if (!typeInfo1.haveOnDemandInspection()) {
+            typeInfo1.setOnDemandInspection(ti -> {
                 inspectFromPath(ti, path, typeParameterContext, LoadMode.NOW);
             });
         }
-        return typeInfo;
+        return typeInfo1;
     }
 
     private TypeInfo createTypeInfo(SourceFile source,

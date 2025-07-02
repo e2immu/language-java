@@ -187,7 +187,8 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
-        if (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)) {
+        // IMPORTANT: delaying is only done at the top-level; not for sub-types. See inspection-integration/
+        if (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight()) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
                     detailedSourcesBuilder, i, annotations, recordFields));
         }

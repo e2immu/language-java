@@ -100,4 +100,7 @@ public class ParseCompilationUnit extends CommonParse {
         return typeInfo;
     }
 
+    public Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> parseDelayedType(ParseTypeDeclaration.DelayedParsingInformation d) {
+        return parsers.parseTypeDeclaration().continueParsingTypeDeclaration(d);
+    }
 }

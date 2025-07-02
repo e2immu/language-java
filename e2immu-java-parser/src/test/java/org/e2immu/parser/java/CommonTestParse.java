@@ -13,6 +13,7 @@ import org.e2immu.language.inspection.api.parser.Resolver;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.language.inspection.api.resource.CompiledTypesManager;
 import org.e2immu.language.inspection.impl.parser.*;
+import org.e2immu.support.Either;
 import org.parsers.java.JavaParser;
 
 import java.net.URI;
@@ -300,9 +301,10 @@ public class CommonTestParse {
             throw new RuntimeException(e);
         }
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
-        List<TypeInfo> types = parseCompilationUnit.parse(cu, parser.get().CompilationUnit());
+        List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>> types
+                = parseCompilationUnit.parse(cu, parser.get().CompilationUnit());
         rootContext.resolver().resolve();
-        return new ParseResult(rootContext, types);
+        return new ParseResult(rootContext, types.stream().map(Either::getLeft).toList());
     }
 
 
