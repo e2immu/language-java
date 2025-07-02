@@ -49,7 +49,7 @@ public class ParseConstructorCall extends CommonParse {
             if (typeInfo != null) {
                 // see TestConstructor,15 for an example
                 newContext = context.newTypeContext();
-                newContext.typeContext().addSubTypesOfHierarchy(typeInfo);
+                newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo);
             } else {
                 newContext = context; // type is Object... nothing to add
             }
@@ -243,7 +243,7 @@ public class ParseConstructorCall extends CommonParse {
         Context newContext = context.newAnonymousClassBody(anonymousType);
         // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
         // also those of the type we're extending:
-        newContext.typeContext().addSubTypesOfHierarchy(concreteReturnType.typeInfo());
+        newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(concreteReturnType.typeInfo());
         parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType, builder);
         newContext.resolver().resolve();
         builder.commit();

@@ -36,9 +36,9 @@ public class ParseTypeDeclaration extends CommonParse {
         this.getSetUtil = new GetSetUtil(runtime);
     }
 
-    public TypeInfo parse(Context context,
-                          Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
-                          TypeDeclaration td) {
+    public Either<TypeInfo, DelayedParsingInformation> parse(Context context,
+                                                             Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                                                             TypeDeclaration td) {
         try {
             return internalParse(context, packageNameOrEnclosing, td);
         } catch (Summary.FailFastException ffe) {
@@ -58,12 +58,23 @@ public class ParseTypeDeclaration extends CommonParse {
         }
     }
 
-    record RecordField(FieldInfo fieldInfo, boolean varargs) {
+    public record RecordField(FieldInfo fieldInfo, boolean varargs) {
     }
 
-    private TypeInfo internalParse(Context context,
-                                   Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
-                                   TypeDeclaration td) {
+    public record DelayedParsingInformation(TypeInfo typeInfo, TypeInfo.Builder builder, TypeDeclaration td,
+                                            Context context,
+                                            TypeNature typeNature,
+                                            Context newContext,
+                                            DetailedSources.Builder detailedSourcesBuilder,
+                                            int iStart,
+                                            List<Annotation> annotations,
+                                            List<RecordField> recordFields) {
+
+    }
+
+    private Either<TypeInfo, DelayedParsingInformation> internalParse(Context context,
+                                                                      Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                                                                      TypeDeclaration td) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         int i = 0;
@@ -176,8 +187,32 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
-        newContext.typeContext().addSubTypesOfHierarchy(typeInfo);
+        if (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)) {
+            return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
+                    detailedSourcesBuilder, i, annotations, recordFields));
+        }
+        return Either.right(new DelayedParsingInformation(typeInfo, builder, td, context, typeNature, newContext,
+                detailedSourcesBuilder, i, annotations, recordFields));
+    }
 
+    public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {
+        // try again...
+        if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)) {
+            return Either.left(continueParsingTypeDeclaration(d.typeInfo, d.builder, d.td, d.context, d.typeNature,
+                    d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordFields));
+        }
+        return Either.right(d);
+    }
+
+    public TypeInfo continueParsingTypeDeclaration(TypeInfo typeInfo, TypeInfo.Builder builder, TypeDeclaration td,
+                                                   Context context,
+                                                   TypeNature typeNature,
+                                                   Context newContext,
+                                                   DetailedSources.Builder detailedSourcesBuilder,
+                                                   int iStart,
+                                                   List<Annotation> annotations,
+                                                   List<RecordField> recordFields) {
+        int i = iStart;
         if (td.get(i) instanceof PermitsList permitsList) {
             for (int j = 1; j < permitsList.size(); j += 2) {
                 ParameterizedType pt = parsers.parseType().parse(newContext, permitsList.get(j), detailedSourcesBuilder);
@@ -236,7 +271,7 @@ public class ParseTypeDeclaration extends CommonParse {
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof TypeDeclaration subTd) {
-                    TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd);
+                    TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd).getLeft();
                     newContext.typeContext().addToContext(subTypeInfo);
                 }
             }
@@ -422,7 +457,7 @@ public class ParseTypeDeclaration extends CommonParse {
         // scan phase
 
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
-            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration);
+            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration).getLeft();
             newContext.typeContext().addToContext(subTypeInfo);
         }
 

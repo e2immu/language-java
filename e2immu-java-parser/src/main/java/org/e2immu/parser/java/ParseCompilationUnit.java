@@ -1,6 +1,5 @@
 package org.e2immu.parser.java;
 
-import org.e2immu.language.cst.api.element.ModuleInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -31,7 +30,8 @@ public class ParseCompilationUnit extends CommonParse {
         this.rootContext = rootContext;
     }
 
-    public List<TypeInfo> parse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
+    public List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>>
+    parse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
         assert compilationUnit.packageName() != null;
         assert compilationUnit.uri() != null;
         try {
@@ -47,8 +47,8 @@ public class ParseCompilationUnit extends CommonParse {
         }
     }
 
-    private List<TypeInfo> internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit,
-                                         CompilationUnit cu) {
+    private List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>>
+    internalParse(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit, CompilationUnit cu) {
         assert compilationUnit.packageName() != null;
 
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
@@ -65,22 +65,21 @@ public class ParseCompilationUnit extends CommonParse {
         rootContext.typeContext().typesInSamePackage(compilationUnit.packageName())
                 .forEach(ti -> typeContext.addToContext(ti, false));
 
-        List<TypeInfo> types = new ArrayList<>();
+        List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>> types = new ArrayList<>();
         String uriString = compilationUnit.uri().toString();
         if (uriString.endsWith("package-info.java")) {
             TypeInfo typeInfo = buildPackageInfoType(compilationUnit, cu, newContext);
-            types.add(typeInfo);
+            types.add(Either.left(typeInfo));
             LOGGER.debug("Added {}, test? {}", typeInfo, typeInfo.compilationUnit().sourceSet().test());
-        } else if (uriString.endsWith("module-info.java")) {
-            // silently ignore, been picked up earlier
-        } else {
+        } else if (!uriString.endsWith("module-info.java")) {
             for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
-                TypeInfo typeInfo = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
-                if (typeInfo != null) {
-                    types.add(typeInfo);
+                Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> either
+                        = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
+                if (either != null) {
+                    types.add(either);
                 } // else: error...
             }
-        }
+        } // else: has been parsed elsewhere
         return types;
     }
 
