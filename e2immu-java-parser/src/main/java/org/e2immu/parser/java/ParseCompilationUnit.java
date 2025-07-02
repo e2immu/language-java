@@ -5,10 +5,7 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.support.Either;
-import org.parsers.java.ast.Annotation;
-import org.parsers.java.ast.CompilationUnit;
-import org.parsers.java.ast.PackageDeclaration;
-import org.parsers.java.ast.TypeDeclaration;
+import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,11 +70,15 @@ public class ParseCompilationUnit extends CommonParse {
             LOGGER.debug("Added {}, test? {}", typeInfo, typeInfo.compilationUnit().sourceSet().test());
         } else if (!uriString.endsWith("module-info.java")) {
             for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
-                Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> either
-                        = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
-                if (either != null) {
-                    types.add(either);
-                } // else: error...
+                if (td instanceof EmptyDeclaration) {
+                    LOGGER.warn("Skipping empty declaration in {}", compilationUnit.uri());
+                } else {
+                    Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> either
+                            = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
+                    if (either != null) {
+                        types.add(either);
+                    } // else: error...
+                }
             }
         } // else: has been parsed elsewhere
         return types;
