@@ -274,7 +274,7 @@ public class CommonTestParse {
     }
 
     protected TypeInfo parse(String input, boolean detailedSources) {
-        return parseReturnBoth(input, true, detailedSources).types.get(0);
+        return parseReturnBoth(input, true, detailedSources).types.getFirst();
     }
 
     protected ParseResult parseReturnBoth(String input, boolean failFast, boolean detailedSources) {
@@ -303,7 +303,7 @@ public class CommonTestParse {
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
         List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>> types
                 = parseCompilationUnit.parse(cu, parser.get().CompilationUnit());
-        rootContext.resolver().resolve();
+        rootContext.resolver().resolve(true);
         return new ParseResult(rootContext, types.stream().map(Either::getLeft).toList());
     }
 
