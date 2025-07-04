@@ -32,7 +32,7 @@ public class TestParseConstructorCall extends CommonTestParse {
         TypeInfo typeInfo = parse(INPUT);
         MethodInfo constructor = typeInfo.findConstructor(0);
         MethodInfo main = typeInfo.findUniqueMethod("main", 1);
-        if (main.methodBody().statements().get(0) instanceof LocalVariableCreation lvc
+        if (main.methodBody().statements().getFirst() instanceof LocalVariableCreation lvc
             && lvc.localVariable().assignmentExpression() instanceof ConstructorCall cc) {
             assertSame(constructor, cc.constructor());
             assertSame(typeInfo, cc.parameterizedType().typeInfo());
@@ -63,7 +63,7 @@ public class TestParseConstructorCall extends CommonTestParse {
             ParameterizedType pt = lvc.localVariable().parameterizedType();
             assertSame(typeInfo, pt.typeInfo());
             assertEquals(1, pt.parameters().size());
-            assertSame(runtime.stringTypeInfo(), pt.parameters().get(0).typeInfo());
+            assertSame(runtime.stringTypeInfo(), pt.parameters().getFirst().typeInfo());
 
             assertSame(constructor, cc.constructor());
             assertSame(typeInfo, cc.parameterizedType().typeInfo());

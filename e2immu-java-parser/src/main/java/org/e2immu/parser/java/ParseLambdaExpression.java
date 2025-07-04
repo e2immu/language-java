@@ -61,12 +61,18 @@ public class ParseLambdaExpression extends CommonParse {
         MethodInfo sam = singleAbstractMethod.methodInfo();
         MethodInfo methodInfo = runtime.newMethod(anonymousType, sam.name(), runtime.methodTypeMethod());
         MethodInfo.Builder miBuilder = methodInfo.builder();
+        miBuilder.setAccess(runtime.accessPublic());
+        miBuilder.setSynthetic(true);
 
         parseParameters(context, forwardType, le, miBuilder, outputVariants, context, singleAbstractMethod);
-        // a lambda does not start a new type context, simply a new variable context. See e.g. TestOverload1, 5.
-        Context newContext = context.newVariableContext("lambda"); //.newLambdaContext(methodInfo);
-        methodInfo.parameters().forEach(newContext.variableContext()::add);
         ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
+
+        // FIXME this works well in concrete cases (TestMethodCall8, 9; TestLambda,4) but is problematic in MethodCall1,4
+        miBuilder.setReturnType(returnTypeOfLambda);
+
+        // a lambda does not start a new type context, simply a new variable context. See e.g. TestOverload1, 5.
+        Context newContext = context.newVariableContext("lambda");
+        methodInfo.parameters().forEach(newContext.variableContext()::add);
 
         // add all formal -> concrete of the parameters of the SAM, without the return type
         Map<NamedType, ParameterizedType> extra = new HashMap<>();
@@ -100,13 +106,13 @@ public class ParseLambdaExpression extends CommonParse {
             }
             methodBody = runtime.newBlockBuilder().addStatement(statement).setSource(source(e)).build();
         } else if (le1 instanceof CodeBlock codeBlock) {
-            methodBody = parsers.parseBlock().parse(newContext, "", null, codeBlock);
+            Context newContextMi = newContext.withEnclosingMethod(methodInfo);
+            methodBody = parsers.parseBlock().parse(newContextMi, "", null, codeBlock);
             concreteReturnType = mostSpecificReturnType(context.enclosingType(), methodBody);
-        } else throw new Summary.ParseException(context, "Expected either expression or code block");
+        } else {
+            throw new Summary.ParseException(context, "Expected either expression or code block");
+        }
 
-
-        miBuilder.setAccess(runtime.accessPublic());
-        miBuilder.setSynthetic(true);
         miBuilder.setMethodBody(methodBody);
         miBuilder.setReturnType(concreteReturnType);
         miBuilder.commit();
@@ -240,14 +246,13 @@ public class ParseLambdaExpression extends CommonParse {
             }
         }
         miBuilder.commitParameters();
-        miBuilder.computeAccess();
     }
 
     private enum IsVoid {NO_IDEA, YES, NO, ESCAPE}
 
     private Expression parseInErasureMode(Context context, Source source, LambdaExpression le) {
         int numParameters;
-        if (le.get(0) instanceof LambdaLHS lhs) {
+        if (le.getFirst() instanceof LambdaLHS lhs) {
             numParameters = countParameters(lhs);
         } else throw new Summary.ParseException(context, "Expected LambdaLHS");
         Set<MethodResolution.Count> erasures;
