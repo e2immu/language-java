@@ -41,23 +41,25 @@ public class ParseHelperImpl implements ParseHelper {
     public List<AnnotationExpression.KV> parseAnnotationExpression(TypeInfo annotationType, Object annotation, Context context) {
         List<AnnotationExpression.KV> kvs = new ArrayList<>();
         if (annotation instanceof SingleMemberAnnotation sma) {
-            Expression expression = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
-                    sma.get(3));
+            MethodInfo methodInfo = annotationType.findUniqueMethod("value", 0);
+            ForwardType forwardType = context.newForwardType(methodInfo.returnType());
+            Expression expression = parsers.parseExpression().parse(context, "", forwardType, sma.get(3));
             kvs.add(runtime.newAnnotationExpressionKeyValuePair("value", expression));
         } else if (annotation instanceof NormalAnnotation na) {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
             if (na.get(3) instanceof MemberValuePair mvp) {
                 String key = mvp.getFirst().getSource();
-                Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
-                        mvp.get(2));
+                MethodInfo methodInfo = annotationType.findUniqueMethod(key, 0);
+                ForwardType forwardType = context.newForwardType(methodInfo.returnType());
+                Expression value = parsers.parseExpression().parse(context, "", forwardType, mvp.get(2));
                 kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
             } else if (na.get(3) instanceof MemberValuePairs pairs) {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
                         String key = mvp.getFirst().getSource();
-                        ParameterizedType returnType = findReturnType(annotationType, key);
-                        Expression value = parsers.parseExpression().parse(context, "",
-                                context.newForwardType(returnType), mvp.get(2));
+                        MethodInfo methodInfo = annotationType.findUniqueMethod(key, 0);
+                        ForwardType forwardType = context.newForwardType(methodInfo.returnType());
+                        Expression value = parsers.parseExpression().parse(context, "", forwardType, mvp.get(2));
                         kvs.add(runtime.newAnnotationExpressionKeyValuePair(key, value));
                     } else {
                         throw new Summary.ParseException(context, "Expected mvp");
@@ -70,12 +72,6 @@ public class ParseHelperImpl implements ParseHelper {
             throw new UnsupportedOperationException("NYI");
         }
         return kvs;
-    }
-
-    // key ~ method in annotations
-    private ParameterizedType findReturnType(TypeInfo annotationType, String key) {
-        MethodInfo methodInfo = annotationType.findUniqueMethod(key, 0);
-        return methodInfo.returnType();
     }
 
     @Override
