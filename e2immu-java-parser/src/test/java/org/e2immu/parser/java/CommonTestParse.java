@@ -18,7 +18,9 @@ import org.parsers.java.JavaParser;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 
@@ -84,6 +86,10 @@ public class CommonTestParse {
             return predefined(fullyQualifiedName, false);
         }
 
+        @Override
+        public Collection<TypeInfo> primaryTypesInPackage(String packageName) {
+            return Set.of();
+        }
     }
 
     protected CommonTestParse() {

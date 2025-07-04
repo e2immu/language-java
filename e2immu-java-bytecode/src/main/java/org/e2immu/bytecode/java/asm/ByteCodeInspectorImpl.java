@@ -30,6 +30,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 /*
@@ -49,6 +50,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
                             TypeParameterContext typeParameterContext) {
     }
 
+    private final ReentrantReadWriteLock localTypeMapLock = new ReentrantReadWriteLock();
     private final Map<String, TypeData> localTypeMap = new LinkedHashMap<>();
     private final Runtime runtime;
     private final CompiledTypesManager compiledTypesManager;
@@ -81,8 +83,8 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
 
     @Override
     public TypeInfo getLocal(String fqName) {
-        TypeData td = localTypeMap.get(fqName);
-        return td == null ? null : td.typeInfo;
+        TypeData typeData = localTypeMapGet(fqName);
+        return typeData == null ? null : typeData.typeInfo;
     }
 
     @Override
@@ -90,12 +92,21 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         return compiledTypesManager.classPath().pathToFqn(name);
     }
 
+    private TypeData localTypeMapGet(String fqn) {
+        localTypeMapLock.readLock().lock();
+        try {
+            return localTypeMap.get(fqn);
+        } finally {
+            localTypeMapLock.readLock().unlock();
+        }
+    }
+
     @Override
     public TypeInfo getOrCreate(String fqn, LoadMode loadMode) {
         if (!compiledTypesManager.acceptFQN(fqn)) {
             return null;
         }
-        TypeData local = localTypeMap.get(fqn);
+        TypeData local = localTypeMapGet(fqn);
         TypeInfo typeInfo;
         TypeParameterContext typeParameterContext;
         if (local != null) {
@@ -121,7 +132,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
     @Override
     public TypeInfo load(TypeInfo knownType) {
         String fqn = knownType.fullyQualifiedName();
-        TypeData local = localTypeMap.get(fqn);
+        TypeData local = localTypeMapGet(fqn);
         TypeInfo typeInfo;
         TypeParameterContext typeParameterContext;
         if (local != null) {
@@ -153,7 +164,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         String fqn;
         if (typeInfoOrNull != null) fqn = typeInfoOrNull.fullyQualifiedName();
         else fqn = pathToFqn(path.stripDotClass());
-        TypeData td = localTypeMap.get(fqn);
+        TypeData td = localTypeMapGet(fqn);
         if (td != null && (td.status == Status.DONE || td.status == Status.BEING_LOADED)) {
             return td.typeInfo; // already working on it
         }
@@ -170,7 +181,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             }
         }
         // because both the above if and else clause can trigger recursion, we must check again
-        TypeData inMapAgain = localTypeMap.get(fqn);
+        TypeData inMapAgain = localTypeMapGet(fqn);
         if (inMapAgain != null && (inMapAgain.status == Status.DONE || inMapAgain.status == Status.BEING_LOADED)) {
             return inMapAgain.typeInfo;
         }
@@ -181,7 +192,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         }
         Status newStatus = loadMode == LoadMode.QUEUE ? Status.IN_QUEUE : Status.ON_DEMAND;
         if (td == null || newStatus != td.status) {
-            localTypeMap.put(fqn, new TypeData(typeInfo1, newStatus, new TypeParameterContext()));
+            localTypeMapPut(fqn, new TypeData(typeInfo1, newStatus, new TypeParameterContext()));
         }
         if (!typeInfo1.haveOnDemandInspection()) {
             typeInfo1.setOnDemandInspection(ti -> {
@@ -189,6 +200,15 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             });
         }
         return typeInfo1;
+    }
+
+    private TypeData localTypeMapPut(String fqn, TypeData typeData) {
+        localTypeMapLock.writeLock().lock();
+        try {
+            return localTypeMap.put(fqn, typeData);
+        } finally {
+            localTypeMapLock.writeLock().unlock();
+        }
     }
 
     private TypeInfo createTypeInfo(SourceFile source,
@@ -223,7 +243,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
                                                      String fqn,
                                                      TypeInfo typeInfo,
                                                      TypeParameterContext typeParameterContext) {
-        TypeData prev = localTypeMap.put(fqn, new TypeData(typeInfo, Status.BEING_LOADED, typeParameterContext));
+        TypeData prev = localTypeMapPut(fqn, new TypeData(typeInfo, Status.BEING_LOADED, typeParameterContext));
         assert prev == null || prev.status != Status.DONE;
         try {
             byte[] classBytes = compiledTypesManager.classPath().loadBytes(path.path());
@@ -243,7 +263,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             classReader.accept(myClassVisitor, 0);
             LOGGER.debug("Finished bytecode inspection of {}", fqn);
             compiledTypesManager.add(typeInfo);
-            localTypeMap.put(fqn, new TypeData(typeInfo, Status.DONE, typeParameterContext));
+            localTypeMapPut(fqn, new TypeData(typeInfo, Status.DONE, typeParameterContext));
             return typeInfo;
         } catch (RuntimeException re) {
             LOGGER.error("Path = {}", path);

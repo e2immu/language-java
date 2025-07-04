@@ -299,7 +299,7 @@ public class ParseLambdaExpression extends CommonParse {
                 return recursiveComputeIsVoid(cb2);
             }
             if (!(ni instanceof ThrowStatement) && !(ni instanceof Delimiter)) {
-                if (ni instanceof StatementExpression || ni instanceof ExpressionStatement) {
+                if (ni instanceof StatementExpression || ni instanceof ExpressionStatement || ni instanceof NoVarDeclaration) {
                     return IsVoid.YES;
                 }
                 if (ni instanceof IfStatement) {
