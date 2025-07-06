@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
@@ -40,7 +41,12 @@ public class ParseTypeDeclaration extends CommonParse {
                                                              Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                                              TypeDeclaration td) {
         try {
-            return internalParse(context, packageNameOrEnclosing, td);
+            return internalParse(context, packageNameOrEnclosing,
+                    simpleName -> {
+                        // during the "scan" phase, we have already created all the TypeInfo objects
+                        String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
+                        return (TypeInfo) context.typeContext().get(fqn, true);
+                    }, td);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -55,6 +61,21 @@ public class ParseTypeDeclaration extends CommonParse {
             context.summary().addParseException(parseException);
             LOGGER.error("Caught exception parsing type in {}", packageNameOrEnclosing);
             return null;
+        }
+    }
+
+    public TypeInfo parseLocal(Context context, MethodInfo enclosingMethod, TypeDeclaration classDeclaration) {
+        try {
+            return internalParse(context, Either.right(enclosingMethod.typeInfo()),
+                    simpleName -> {
+                        TypeInfo typeInfo = runtime.newTypeInfo(enclosingMethod, simpleName);
+                        handleTypeModifiers(classDeclaration, typeInfo, context.isDetailedSources());
+                        return typeInfo;
+                    },
+                    classDeclaration).getLeft();
+        } catch (RuntimeException | AssertionError e) {
+            LOGGER.error("Caught exception", e);
+            throw e;
         }
     }
 
@@ -74,6 +95,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
     private Either<TypeInfo, DelayedParsingInformation> internalParse(Context context,
                                                                       Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
+                                                                      Function<String, TypeInfo> bySimpleName,
                                                                       TypeDeclaration td) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
@@ -105,9 +127,7 @@ public class ParseTypeDeclaration extends CommonParse {
         simpleName = identifier.getSource();
         i++;
 
-        // during the "scan" phase, we have already created all the TypeInfo objects
-        String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
-        TypeInfo typeInfo = (TypeInfo) context.typeContext().get(fqn, true);
+        TypeInfo typeInfo = bySimpleName.apply(simpleName);
         assert typeInfo != null;
 
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo.simpleName(), source(identifier));
@@ -143,6 +163,7 @@ public class ParseTypeDeclaration extends CommonParse {
         }
 
         TypeNature typeNature = builder.typeNature();
+        assert typeNature != null;
         List<RecordField> recordFields;
         if (td.get(i) instanceof RecordHeader rh) {
             assert typeNature.isRecord();

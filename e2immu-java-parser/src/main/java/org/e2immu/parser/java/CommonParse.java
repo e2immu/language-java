@@ -185,7 +185,15 @@ public abstract class CommonParse {
             typeInfo = runtime.newTypeInfo(enclosingType, typeName);
             enclosingType.builder().addSubType(typeInfo);
         }
+        Node sub = handleTypeModifiers(td, typeInfo, addDetailedSources);
+        map.put(typeInfo.fullyQualifiedName(), typeInfo);
+        if (sub != null) {
+            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub, addDetailedSources));
+        }
+    }
 
+    // also called for local type declarations
+    protected Node handleTypeModifiers(TypeDeclaration td, TypeInfo typeInfo, boolean addDetailedSources) {
         DetailedSources.Builder detailedSourcesBuilder = addDetailedSources ? runtime.newDetailedSourcesBuilder() : null;
 
         Identifier identifier = null;
@@ -238,10 +246,7 @@ public abstract class CommonParse {
                 .setSource(detailedSourcesBuilder == null ? source
                         : source.withDetailedSources(detailedSourcesBuilder.build()));
         typeModifiers.forEach(typeInfo.builder()::addTypeModifier);
-        map.put(typeInfo.fullyQualifiedName(), typeInfo);
-        if (sub != null) {
-            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub, addDetailedSources));
-        }
+        return sub;
     }
 
 
