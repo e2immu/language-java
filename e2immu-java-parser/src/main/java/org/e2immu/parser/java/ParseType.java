@@ -81,8 +81,10 @@ public class ParseType extends CommonParse {
             }
             if (n0 instanceof PrimitiveType primitive && primitive.getFirst() instanceof Primitive p) {
                 tt = p.getType();
-            } else if (n0 instanceof KeyWord keyWord && nodes.size() == 1) {
-                tt = keyWord.getType();
+            } else if (n0 instanceof KeyWord keyWord) {
+                if (nodes.size() == 1 || nodes.size() == 3 && nodes.get(2).getType() == Token.TokenType.CLASS) {
+                    tt = keyWord.getType();
+                } else throw new UnsupportedOperationException();
             } else tt = null;
             if (tt != null) {
                 pt = primitiveType(tt);
@@ -189,7 +191,7 @@ public class ParseType extends CommonParse {
             }
         }
         if (detailedSourcesBuilder != null) {
-            if(withoutTypeParameters.typeParameter() != null) {
+            if (withoutTypeParameters.typeParameter() != null) {
                 detailedSourcesBuilder.put(withoutTypeParameters.typeParameter(), details.pop());
             } else {
                 TypeInfo object = withoutTypeParameters.typeInfo();
