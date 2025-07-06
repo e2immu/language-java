@@ -29,8 +29,12 @@ public class EscapeSequence {
             if (c == '\\' && i + 1 < chars.length) {
                 char c2 = chars[i + 1];
                 if (c2 != '\n') {
-                    sb.append(escapeSequence(c2));
-                    ++i;
+                    if (c2 >= '0' && c2 <= '7') {
+                        i = octal(chars, sb, c2, i);
+                    } else {
+                        sb.append(escapeSequence(c2));
+                        ++i;
+                    }
                 } else {
                     sb.append(c);
                 }
@@ -40,5 +44,18 @@ public class EscapeSequence {
             ++i;
         }
         return sb.toString();
+    }
+
+    private static int octal(char[] chars, StringBuilder sb, char first, int start) {
+        int i = start + 1;
+        StringBuilder newSb = new StringBuilder();
+        newSb.append(first);
+        while (i < chars.length && chars[i] >= '0' && chars[i] <= '7') {
+            newSb.append(chars[i]);
+            ++i;
+        }
+        int value = Integer.parseInt(newSb.toString(), 8);
+        sb.append((char) value);
+        return i;
     }
 }

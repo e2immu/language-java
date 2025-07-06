@@ -470,6 +470,9 @@ public class ParseStatement extends CommonParse {
         if (iterable == null) {
             throw new UnsupportedOperationException("Cannot deduce var type in enhanced for without Iterable in the classpath");
         }
+        if (concreteIterableType.arrays() > 0) {
+            return concreteIterableType.copyWithOneFewerArrays();
+        }
         ParameterizedType formal = iterable.asParameterizedType();
         Map<NamedType, ParameterizedType> map = context.genericsHelper().translateMap(formal, concreteIterableType,
                 true);

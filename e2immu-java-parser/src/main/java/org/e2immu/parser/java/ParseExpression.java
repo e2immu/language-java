@@ -371,18 +371,20 @@ public class ParseExpression extends CommonParse {
             }
         } // else: see for example parsing of annotation '...importhelper.a.Resources', line 6
         NamedType namedType = context.typeContext().get(name, false);
-        if (namedType instanceof TypeInfo typeInfo) {
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo, source);
-            ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
-            return runtime.newTypeExpressionBuilder()
-                    .setParameterizedType(parameterizedType)
-                    .setDiamond(runtime.diamondShowAll())
-                    .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
-                    .build();
-        } else if (namedType instanceof TypeParameter) {
-            throw new Summary.ParseException(context, "should not be possible");
-        }
-        throw new Summary.ParseException(context, "unknown name '" + name + "'");
+        TypeInfo typeInfo;
+        if (namedType instanceof TypeInfo ti) {
+            typeInfo = ti;
+        } else if (namedType instanceof TypeParameter tp) {
+            typeInfo = tp.typeBounds().size() != 1 ? runtime.objectTypeInfo() :
+                    tp.typeBounds().stream().findFirst().orElseThrow().typeInfo();
+        } else throw new UnsupportedOperationException();
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo, source);
+        ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
+        return runtime.newTypeExpressionBuilder()
+                .setParameterizedType(parameterizedType)
+                .setDiamond(runtime.diamondShowAll())
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .build();
     }
 
     private FieldReference findField(Context context, Expression scope, String name, boolean complain) {
