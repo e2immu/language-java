@@ -412,7 +412,12 @@ public class ParseExpression extends CommonParse {
 
             ParameterizedType superType = fieldInfo.owner().asParameterizedType();
             // we need to obtain a translation map to get the concrete types or type bounds
-            map = context.genericsHelper().mapInTermsOfParametersOfSuperType(context.enclosingType(), superType);
+            if (superType.typeInfo() == context.enclosingType()) {
+                // see e.g. TestField2,3
+                map = pt.initialTypeParameterMap();
+            } else {
+                map = context.genericsHelper().mapInTermsOfParametersOfSuperType(context.enclosingType(), superType);
+            }
         }
         ParameterizedType concreteType = map == null || map.isEmpty() ? fieldInfo.type()
                 : fieldInfo.type().applyTranslation(runtime, map);
