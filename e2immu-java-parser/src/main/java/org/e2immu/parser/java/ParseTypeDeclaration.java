@@ -258,9 +258,16 @@ public class ParseTypeDeclaration extends CommonParse {
                 ParameterizedType type = typeInfo.asSimpleParameterizedType();
                 for (Node child : body.children()) {
                     if (child instanceof EnumConstant ec) {
-                        String name = ec.getFirst().getSource();
+                        List<Annotation> enumAnnotations = new ArrayList<>();
+                        int j = 0;
+                        while (ec.get(j) instanceof Annotation) {
+                            enumAnnotations.add((Annotation) ec.get(j));
+                            ++j;
+                        }
+                        Node nameNode = ec.get(j);
+                        String name = nameNode.getSource();
                         DetailedSources.Builder dsbuilder = context.newDetailedSourcesBuilder();
-                        Source nameSource = source(ec.getFirst());
+                        Source nameSource = source(nameNode);
                         if (dsbuilder != null) dsbuilder.put(name, nameSource);
                         FieldInfo fieldInfo = runtime.newFieldInfo(name, true, type, typeInfo);
                         Source source = source(ec);
@@ -272,13 +279,15 @@ public class ParseTypeDeclaration extends CommonParse {
                                 .addFieldModifier(runtime.fieldModifierStatic())
                                 .setSource(dsbuilder == null ? source : source.withDetailedSources(dsbuilder.build()))
                                 .computeAccess();
+                        parseAnnotations(context, fieldInfo.builder(), enumAnnotations);
                         // register evaluation of parameters as an object creation for the field
                         builder.addField(fieldInfo);
                         enumFields.add(fieldInfo);
                         contextForBody.variableContext().add(runtime.newFieldReference(fieldInfo));
-                        if (ec.size() >= 2 && ec.get(1) instanceof InvocationArguments ia) {
+                        if (ec.size() > j + 1 && ec.get(j + 1) instanceof InvocationArguments ia) {
                             // FIXME pass on detailed sources
-                            newContext.resolver().add(fieldInfo, fieldInfo.builder(), newContext.newForwardType(typeInfo.asSimpleParameterizedType()),
+                            newContext.resolver().add(fieldInfo, fieldInfo.builder(),
+                                    newContext.newForwardType(typeInfo.asSimpleParameterizedType()),
                                     null, ia, newContext);
                         } else {
                             fieldInfo.builder().commit();

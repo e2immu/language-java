@@ -174,7 +174,10 @@ public class ParseExpression extends CommonParse {
 
     private VariableExpression parseArrayAccess(Context context, String index, ForwardType forwardType, ArrayAccess arrayAccess, List<Comment> comments, Source source) {
         assert arrayAccess.size() == 4 : "Not implemented";
-        Expression ae = parse(context, index, forwardType, arrayAccess.get(0));
+        ParameterizedType forwardPt = forwardType.type() == null ? runtime.objectParameterizedType().copyWithArrays(1)
+                : forwardType.type().copyWithArrays(forwardType.type().arrays() + 1);
+        ForwardType arrayForward = context.newForwardType(forwardPt);
+        Expression ae = parse(context, index, arrayForward, arrayAccess.get(0));
         ForwardType fwdInt = context.newForwardType(runtime.intParameterizedType());
         Expression ie = parse(context, index, fwdInt, arrayAccess.get(2));
         Variable variable = runtime.newDependentVariable(ae, ie);
