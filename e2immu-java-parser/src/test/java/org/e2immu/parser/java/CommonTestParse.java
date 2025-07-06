@@ -312,7 +312,7 @@ public class CommonTestParse {
         CompiledTypesManager compiledTypesManager = new CompiledTypesManagerImpl();
         SourceTypeMapImpl stm = new SourceTypeMapImpl();
         TypeContextImpl typeContext = new TypeContextImpl(runtime, compiledTypesManager, stm, false);
-        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime));
+        Resolver resolver = new ResolverImpl(runtime.computeMethodOverrides(), new ParseHelperImpl(runtime), false);
         Context rootContext = ContextImpl.create(runtime, failFastSummary, resolver, typeContext, detailedSources);
 
         ScanCompilationUnit scanCompilationUnit = new ScanCompilationUnit(failFastSummary, runtime);
