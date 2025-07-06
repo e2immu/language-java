@@ -68,7 +68,8 @@ public class ParseTypeDeclaration extends CommonParse {
         try {
             return internalParse(context, Either.right(enclosingMethod.typeInfo()),
                     simpleName -> {
-                        TypeInfo typeInfo = runtime.newTypeInfo(enclosingMethod, simpleName);
+                        int typeIndex = enclosingMethod.typeInfo().builder().getAndIncrementAnonymousTypes();
+                        TypeInfo typeInfo = runtime.newTypeInfo(enclosingMethod, simpleName, typeIndex);
                         handleTypeModifiers(classDeclaration, typeInfo, context.isDetailedSources());
                         return typeInfo;
                     },

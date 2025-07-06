@@ -16,11 +16,11 @@ public class ParseLocalTypeDeclaration extends CommonParse {
         Context newContext = context.newLocalTypeDeclaration();
 
         TypeInfo typeInfo = parsers.parseTypeDeclaration().parseLocal(newContext, context.enclosingMethod(), classDeclaration);
-
+        newContext.resolver().resolve(false);
         context.typeContext().addToContext(typeInfo);
         return runtime.newLocalTypeDeclarationBuilder()
                 .setTypeInfo(typeInfo)
-                .setSource(source(classDeclaration))
+                .setSource(source(index, classDeclaration))
                 .build();
     }
 }
