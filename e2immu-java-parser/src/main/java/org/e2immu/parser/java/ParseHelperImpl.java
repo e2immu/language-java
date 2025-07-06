@@ -16,6 +16,7 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.ParseHelper;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.parser.java.erasure.LambdaErasure;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -221,12 +222,17 @@ public class ParseHelperImpl implements ParseHelper {
                 // isAssignable from at erased level, because we did not have the forward type yet when evaluating
                 // the expressions.
                 ParameterizedType erasedFormal = pi.parameterizedType().erased();
-                ParameterizedType erasedArgument = expression.parameterizedType().erased();
-                if (!erasedFormal.isAssignableFrom(runtime, erasedArgument)) {
-                    if (!pi.isVarArgs() || !erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime,
-                            expression.parameterizedType())) {
-                        return false;
-                    }
+                boolean accept;
+                if (erasedFormal.isFunctionalInterface() && expression instanceof LambdaErasure lambdaErasure) {
+                    accept = lambdaErasure.erasureTypes().stream().anyMatch(et -> erasedFormal.isAssignableFrom(runtime, et));
+                } else {
+                    ParameterizedType erasedArgument = expression.parameterizedType().erased();
+                    accept = erasedFormal.isAssignableFrom(runtime, erasedArgument) ||
+                             pi.isVarArgs() && erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime,
+                                     expression.parameterizedType());
+                }
+                if (!accept) {
+                    return false;
                 }
                 i++;
             }
@@ -242,7 +248,7 @@ public class ParseHelperImpl implements ParseHelper {
         for (int k = 1; k < node.size(); k += 2) {
             Node nodeK = node.get(k);
             if (nodeK instanceof Delimiter) break;
-            Expression e = parsers.parseExpression().parse(context, "0", context.emptyForwardType(), nodeK);
+            Expression e = parsers.parseExpression().parse(context, "0", context.erasureForwardType(), nodeK);
             expressions.add(e);
         }
         return List.copyOf(expressions);

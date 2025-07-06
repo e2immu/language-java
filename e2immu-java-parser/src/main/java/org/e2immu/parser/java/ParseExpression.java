@@ -420,10 +420,10 @@ public class ParseExpression extends CommonParse {
             map = pt.initialTypeParameterMap();
         } else {
             // either fieldInfo.owner() is a super type of typeInfo,
-            boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
+           // boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
             // or, fieldInfo.owner() is an enclosing type, typeInfo an inner type
-            boolean ownerIsEnclosingType = typeInfo.primaryType().equals(fieldInfo.owner().primaryType());
-            assert ownerIsSuperType || ownerIsEnclosingType;
+            //boolean ownerIsEnclosingType = typeInfo.primaryType().equals(fieldInfo.owner().primaryType());
+            //assert ownerIsSuperType || ownerIsEnclosingType;
 
             ParameterizedType superType = fieldInfo.owner().asParameterizedType();
             // we need to obtain a translation map to get the concrete types or type bounds
