@@ -35,7 +35,7 @@ public class TestParserError extends CommonTestParse {
                         In: a.b.C.method1(String[])
                         Message: In: input
                         In: a.b.C.method1(String[])
-                        Message: unknown name 'arguments'\
+                        Message: Unknown identifier 'arguments'\
                         """,
                 s.parseExceptions().getFirst().getMessage());
     }

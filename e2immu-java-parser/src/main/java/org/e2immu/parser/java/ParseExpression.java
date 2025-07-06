@@ -377,7 +377,9 @@ public class ParseExpression extends CommonParse {
         } else if (namedType instanceof TypeParameter tp) {
             typeInfo = tp.typeBounds().size() != 1 ? runtime.objectTypeInfo() :
                     tp.typeBounds().stream().findFirst().orElseThrow().typeInfo();
-        } else throw new UnsupportedOperationException();
+        } else {
+            throw new Summary.ParseException(context, "Unknown identifier '" + name + "'");
+        }
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo, source);
         ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
         return runtime.newTypeExpressionBuilder()
