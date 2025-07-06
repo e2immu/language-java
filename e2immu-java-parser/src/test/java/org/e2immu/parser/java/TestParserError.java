@@ -30,10 +30,12 @@ public class TestParserError extends CommonTestParse {
         Summary s = c.summary();
         assertTrue(s.haveErrors());
         assertEquals("""
-                        Exception: java.lang.RuntimeException
+                        Exception: org.e2immu.language.inspection.api.parser.Summary.ParseException
                         In: input
                         In: a.b.C.method1(String[])
-                        Message: Unknown variable in context: 'arguments'\
+                        Message: In: input
+                        In: a.b.C.method1(String[])
+                        Message: unknown name 'arguments'\
                         """,
                 s.parseExceptions().getFirst().getMessage());
     }

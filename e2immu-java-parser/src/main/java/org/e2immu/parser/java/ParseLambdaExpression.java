@@ -41,10 +41,6 @@ public class ParseLambdaExpression extends CommonParse {
             return parseInErasureMode(context, source, le);
         }
 
-        MethodTypeParameterMap singleAbstractMethod = forwardType.computeSAM(runtime, context.genericsHelper(),
-                context.enclosingType());
-        assert singleAbstractMethod != null : "No singleAbstractMethod computed from forwardType";
-
         Lambda.Builder builder = runtime.newLambdaBuilder();
 
         List<Lambda.OutputVariant> outputVariants = new ArrayList<>();
@@ -58,6 +54,15 @@ public class ParseLambdaExpression extends CommonParse {
                 .setTypeNature(runtime.typeNatureClass())
                 .setParentClass(runtime.objectParameterizedType());
 
+        MethodTypeParameterMap forwardSingleAbstractMethod = forwardType.computeSAM(runtime, context.genericsHelper(),
+                context.enclosingType());
+        MethodTypeParameterMap singleAbstractMethod;
+        if (forwardSingleAbstractMethod == null) {
+            singleAbstractMethod = someFunction(context, le);
+        } else {
+            singleAbstractMethod = forwardSingleAbstractMethod;
+        }
+
         MethodInfo sam = singleAbstractMethod.methodInfo();
         MethodInfo methodInfo = runtime.newMethod(anonymousType, sam.name(), runtime.methodTypeMethod());
         MethodInfo.Builder miBuilder = methodInfo.builder();
@@ -67,7 +72,6 @@ public class ParseLambdaExpression extends CommonParse {
         parseParameters(context, forwardType, le, miBuilder, outputVariants, context, singleAbstractMethod);
         ParameterizedType returnTypeOfLambda = singleAbstractMethod.getConcreteReturnType(runtime);
 
-        // FIXME this works well in concrete cases (TestMethodCall8, 9; TestLambda,4) but is problematic in MethodCall1,4
         miBuilder.setReturnType(returnTypeOfLambda);
 
         // a lambda does not start a new type context, simply a new variable context. See e.g. TestOverload1, 5.
@@ -156,6 +160,28 @@ public class ParseLambdaExpression extends CommonParse {
             return true;
         });
         return mostSpecific.get() == null ? runtime.voidParameterizedType() : mostSpecific.get();
+    }
+
+    private MethodTypeParameterMap someFunction(Context context, LambdaExpression le) {
+        if (le.getFirst() instanceof LambdaLHS lhs) {
+            int numParams = computeNumberOfParameters(lhs);
+            TypeInfo synthetic = runtime.syntheticFunctionalType(numParams, true);
+            return context.genericsHelper().newMethodTypeParameterMap(synthetic.singleAbstractMethod(), Map.of());
+        } else {
+            throw new Summary.ParseException(context, "Expected lambda lhs");
+        }
+    }
+
+    private static int computeNumberOfParameters(LambdaLHS lhs) {
+        int numParams;
+        Node first = lhs.getFirst();
+        numParams = switch (first) {
+            case Identifier nodes -> 1; // x -> ...
+            case LambdaParameters lps -> (lps.size() - 1) / 2; // (int i, String j) -> ...
+            case Delimiter d when Token.TokenType.LPAREN.equals(d.getType()) -> (lhs.size() - 1) / 2; // (i, j) -> ...
+            case null, default -> throw new UnsupportedOperationException();
+        };
+        return numParams;
     }
 
     private void parseParameters(Context context,
@@ -248,22 +274,14 @@ public class ParseLambdaExpression extends CommonParse {
         miBuilder.commitParameters();
     }
 
-    private enum IsVoid {NO_IDEA, YES, NO, ESCAPE}
-
     private Expression parseInErasureMode(Context context, Source source, LambdaExpression le) {
         int numParameters;
         if (le.getFirst() instanceof LambdaLHS lhs) {
             numParameters = countParameters(lhs);
         } else throw new Summary.ParseException(context, "Expected LambdaLHS");
-        Set<MethodResolution.Count> erasures;
-        IsVoid isVoid = computeIsVoid(le);
-        if (isVoid == IsVoid.NO_IDEA || isVoid == IsVoid.ESCAPE) {
-            erasures = Set.of(
+        Set<MethodResolution.Count> erasures = Set.of(
                     new MethodResolution.Count(numParameters, true),
                     new MethodResolution.Count(numParameters, false));
-        } else {
-            erasures = Set.of(new MethodResolution.Count(numParameters, isVoid == IsVoid.YES));
-        }
         LOGGER.debug("Returning erasure {}", erasures);
         return new LambdaErasure(runtime, erasures, source);
     }
@@ -278,54 +296,5 @@ public class ParseLambdaExpression extends CommonParse {
         // () ->
         if (Token.TokenType.RPAREN.equals(lhs.get(1).getType())) return 0;
         return (int) lhs.stream().filter(n -> Token.TokenType.COMMA.equals(n.getType())).count() + 1;
-    }
-
-    private IsVoid computeIsVoid(LambdaExpression le) {
-        if (le.get(1) instanceof org.parsers.java.ast.Expression e) {
-            // void expressions: void method call, but we don't have the machinery yet... luckily,
-            // the Java compiler cannot handle this neither IF in direct competition (see MethodCall_25, but also _7)
-            if (e instanceof MethodCall) return IsVoid.NO_IDEA;
-            return IsVoid.NO;
-        }
-        if (le.get(1) instanceof CodeBlock codeBlock) {
-            return recursiveComputeIsVoid(codeBlock);
-        }
-        throw new UnsupportedOperationException("? either block or expression");
-    }
-
-    private static IsVoid recursiveComputeIsVoid(Node cb) {
-        int i = cb.size() - 1;
-        while (i >= 0) {
-            Node ni = cb.get(i);
-            if (ni instanceof ReturnStatement rs) {
-                return rs.get(1) instanceof Delimiter ? IsVoid.YES : IsVoid.NO;
-            }
-            if (ni instanceof CodeBlock cb2) {
-                return recursiveComputeIsVoid(cb2);
-            }
-            if (!(ni instanceof ThrowStatement) && !(ni instanceof Delimiter)) {
-                if (ni instanceof StatementExpression || ni instanceof ExpressionStatement || ni instanceof NoVarDeclaration) {
-                    return IsVoid.YES;
-                }
-                if (ni instanceof IfStatement) {
-                    IsVoid iv;
-                    if (ni.get(4) instanceof CodeBlock cb2) {
-                        iv = recursiveComputeIsVoid(cb2);
-                    } else throw new UnsupportedOperationException();
-                    if (iv != null) return iv;
-                    if (ni.size() > 6 && ni.get(6) instanceof CodeBlock cb3) {
-                        return recursiveComputeIsVoid(cb3);
-                    }
-                    return IsVoid.YES;
-                }
-                if (ni instanceof TryStatement) {
-                    CodeBlock cbt = ni.firstChildOfType(CodeBlock.class);
-                    return recursiveComputeIsVoid(cbt);
-                }
-                throw new UnsupportedOperationException("IMPLEMENT! " + ni.getClass());
-            }
-            --i;
-        }
-        return null;
     }
 }

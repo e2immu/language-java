@@ -309,21 +309,12 @@ public class ParseExpression extends CommonParse {
         assert endIncl > 0 && endIncl < name.children().size();
         String trimmedAfterDot = name.get(endIncl).getSource();
         if ("length".equals(trimmedAfterDot)) {
-            Variable array = parseDottedVariable(context, comments, source, name, endIncl - 2);
-            assert array != null;
-            Source sourceUpToEnd = source(name, 0, endIncl);
-            if (detailedSourcesBuilder != null) {
-                detailedSourcesBuilder.put(array, sourceUpToEnd);
-            }
-            VariableExpression scope = runtime.newVariableExpressionBuilder()
-                    .setVariable(array)
-                    .setSource(detailedSourcesBuilder == null ? sourceUpToEnd : sourceUpToEnd
-                            .withDetailedSources(detailedSourcesBuilder.build()))
-                    .build();
+            Expression arrayExpression = parseDottedVariable(context, comments, source, name, endIncl - 2,
+                    detailedSourcesBuilder);
             return runtime.newArrayLengthBuilder()
                     .addComments(comments)
                     .setSource(source)
-                    .setExpression(scope)
+                    .setExpression(arrayExpression)
                     .build();
         }
         String nameUpToEnd = name.children().subList(0, endIncl + 1).stream().map(Node::getSource).collect(Collectors.joining());
@@ -341,13 +332,7 @@ public class ParseExpression extends CommonParse {
         }
         // since we don't have a type, we must have a variable
         // this will set the recursion going, from right to left
-        Variable variable = parseDottedVariable(context, comments, source, name, endIncl);
-        if (detailedSourcesBuilder != null && variable instanceof FieldReference fr) {
-            detailedSourcesBuilder.put(fr.fieldInfo(), source(name.get(endIncl)));
-        }
-        return runtime.newVariableExpressionBuilder().setVariable(variable)
-                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
-                .build();
+        return parseDottedVariable(context, comments, source, name, endIncl, detailedSourcesBuilder);
     }
 
     private Expression parseIdentifier(Context context, List<Comment> comments, Source source, Identifier identifier) {
@@ -420,7 +405,7 @@ public class ParseExpression extends CommonParse {
             map = pt.initialTypeParameterMap();
         } else {
             // either fieldInfo.owner() is a super type of typeInfo,
-           // boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
+            // boolean ownerIsSuperType = typeInfo.superTypesExcludingJavaLangObject().contains(fieldInfo.owner());
             // or, fieldInfo.owner() is an enclosing type, typeInfo an inner type
             //boolean ownerIsEnclosingType = typeInfo.primaryType().equals(fieldInfo.owner().primaryType());
             //assert ownerIsSuperType || ownerIsEnclosingType;
@@ -455,9 +440,10 @@ public class ParseExpression extends CommonParse {
         return null;
     }
 
-    private Variable parseDottedVariable(Context context, List<Comment> comments, Source source, Name name, int end) {
+    private Expression parseDottedVariable(Context context, List<Comment> comments, Source source, Name name, int end,
+                                           DetailedSources.Builder detailedSourcesBuilder) {
         if (end == 0) {
-            return context.variableContext().get(name.getFirst().getSource(), true);
+            return parseIdentifier(context, comments, source(name, 0, 0), (Identifier) name.getFirst());
         }
         String varName = name.get(end).getSource();
         Expression scope;
@@ -466,7 +452,14 @@ public class ParseExpression extends CommonParse {
         } else {
             scope = parseDottedName(context, comments, source, name, end - 2);
         }
-        return findField(context, scope, varName, true);
+        FieldReference fr = findField(context, scope, varName, true);
+        assert fr != null;
+        if (detailedSourcesBuilder != null) {
+            detailedSourcesBuilder.put(fr.fieldInfo(), source(name.get(end)));
+        }
+        return runtime.newVariableExpressionBuilder().setVariable(fr)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .build();
     }
 
     private Expression arrayInitializer(Context context, String index, ForwardType forwardType, List<Comment> comments,

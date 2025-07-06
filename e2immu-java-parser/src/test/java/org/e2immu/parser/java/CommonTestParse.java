@@ -43,6 +43,7 @@ public class CommonTestParse {
             case "java.lang.AutoCloseable" -> autoCloseable;
             case "java.io.PrintStream" -> printStream;
             case "java.util.function.Function" -> function;
+            case "java.util.function.Consumer" -> consumer;
             case "java.util.function.BiConsumer" -> biConsumer;
             case "java.util.Hashtable" -> hashtable;
             default -> {
@@ -61,6 +62,7 @@ public class CommonTestParse {
         @Override
         public TypeInfo syntheticFunctionalType(int inputParameters, boolean hasReturnValue) {
             if (inputParameters == 1 && hasReturnValue) return function;
+            if (inputParameters == 1) return consumer;
             if (inputParameters == 2 && !hasReturnValue) return biConsumer;
             throw new UnsupportedOperationException();
         }
@@ -72,6 +74,7 @@ public class CommonTestParse {
     protected final TypeInfo runtimeException;
     protected final TypeInfo printStream;
     protected final TypeInfo function;
+    protected final TypeInfo consumer;
     protected final TypeInfo biConsumer;
     protected final TypeInfo suppressWarnings;
     protected final TypeInfo override;
@@ -107,6 +110,7 @@ public class CommonTestParse {
         exception = runtime.newTypeInfo(javaLang, "Exception");
         runtimeException = runtime.newTypeInfo(javaLang, "RuntimeException");
         function = runtime.newTypeInfo(javaUtilFunction, "Function");
+        consumer = runtime.newTypeInfo(javaUtilFunction, "Consumer");
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
         autoCloseable = runtime.newTypeInfo(javaLang, "AutoCloseable");
         hashtable = runtime.newTypeInfo(javaUtil, "Hashtable");
@@ -129,6 +133,7 @@ public class CommonTestParse {
         runtime.objectTypeInfo().builder().addMethod(getClass).addMethod(clone).addMethod(toString);
 
         defineFunction();
+        defineConsumer();
         defineBiConsumer();
 
         MethodInfo equals = runtime.newMethod(runtime.objectTypeInfo(), "equals", runtime.methodTypeMethod());
@@ -248,6 +253,20 @@ public class CommonTestParse {
                 .setParentClass(runtime.objectParameterizedType())
                 .addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
                 .setSingleAbstractMethod(apply)
+                .computeAccess();
+    }
+
+    private void defineConsumer() {
+        TypeParameter T = runtime.newTypeParameter(0, "T", consumer).builder().commit();
+        consumer.builder().addOrSetTypeParameter(T).setTypeNature(runtime.typeNatureInterface());
+        MethodInfo accept = runtime.newMethod(consumer, "accept", runtime.methodTypeAbstractMethod());
+        accept.builder().setReturnType(runtime.voidParameterizedType())
+                .addMethodModifier(runtime.methodModifierPublic())
+                .addParameter("t", runtime.newParameterizedType(T, 0, null));
+        accept.builder().computeAccess();
+        accept.builder().commit();
+        consumer.builder().addMethod(accept).addTypeModifier(runtime.typeModifierPublic())
+                .setSingleAbstractMethod(accept)
                 .computeAccess();
     }
 
