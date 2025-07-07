@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -12,8 +13,10 @@ import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.*;
-import org.e2immu.parser.java.erasure.LambdaErasure;
+import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
+import org.e2immu.language.inspection.api.parser.ParseHelper;
+import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -170,90 +173,38 @@ public class ParseHelperImpl implements ParseHelper {
     private org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation parseEci(Context context,
                                                                                          Object eciObject) {
         ExplicitConstructorInvocation unparsedEci = (ExplicitConstructorInvocation) eciObject;
-        org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
+
         ConstructorDeclaration cd = (ConstructorDeclaration) unparsedEci.getParent();
         List<Comment> comments = parsers.parseStatement().comments(cd);
         Source source = parsers.parseStatement().source("0", cd);
         boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.getFirst().getType());
-        List<Expression> parameterExpressions = parseArguments(context, unparsedEci.get(1));
-        MethodInfo eciMethod;
-        if (isSuper) {
-            ParameterizedType parent = context.enclosingType().parentClass();
-            eciMethod = null;
-            while (parent != null) {
-                TypeInfo typeInfo = parent.typeInfo();
-                eciMethod = findCompatibleConstructor(typeInfo, parameterExpressions);
-                if (eciMethod != null) break;
-                parent = typeInfo.parentClass();
+
+        List<Object> unparsedArguments = new ArrayList<>();
+        int j = 1;
+        if (unparsedEci.get(1) instanceof InvocationArguments ia) {
+            while (j < ia.size() && !(ia.get(j) instanceof Delimiter)) {
+                unparsedArguments.add(ia.get(j));
+                j += 2;
             }
-        } else {
-            eciMethod = findCompatibleConstructor(context.enclosingType(), parameterExpressions);
-        }
-        if (eciMethod == null) {
-            throw new UnsupportedOperationException("Cannot find compatible constructor in explicit constructor invocation of  "
-                                                    + context.enclosingMethod());
-        }
-        eci = runtime.newExplicitConstructorInvocationBuilder()
-                .addComments(comments)
-                .setSource(source)
-                .setIsSuper(isSuper)
-                .setMethodInfo(eciMethod)
-                .setParameterExpressions(parameterExpressions)
-                .build();
-        return eci;
-    }
+        } else throw new UnsupportedOperationException();
+        TypeInfo typeInfo = isSuper ? context.enclosingType().parentClass().typeInfo() : context.enclosingType();
+        ParameterizedType formalType = typeInfo.asParameterizedType();
 
-    private MethodInfo findCompatibleConstructor(TypeInfo typeInfo, List<Expression> parameterExpressions) {
-        return typeInfo.constructors().stream()
-                .filter(c -> compatible(c.parameters(), parameterExpressions))
-                .findFirst().orElse(null);
-    }
-
-    private boolean compatible(List<ParameterInfo> formal, List<Expression> arguments) {
-        int f = formal.size();
-        int a = arguments.size();
-        if (f == a || f > 0 && formal.getLast().isVarArgs() && a >= f - 1) {
-            int i = 0;
-            for (Expression expression : arguments) {
-                ParameterInfo pi = formal.get(Math.min(i, formal.size() - 1));
-                // isAssignable from at erased level, because we did not have the forward type yet when evaluating
-                // the expressions.
-                ParameterizedType erasedFormal = pi.parameterizedType().erased();
-                boolean accept;
-                if (erasedFormal.isFunctionalInterface() && expression instanceof LambdaErasure lambdaErasure) {
-                    accept = lambdaErasure.erasureTypes().stream().anyMatch(et -> erasedFormal.isAssignableFrom(runtime, et));
-                } else {
-                    ParameterizedType erasedArgument = expression.parameterizedType().erased();
-                    // see TestConstructor2,4 for allowReverse
-                    // TODO allowReverse is probably not stringent enough
-                    boolean allowReverse = expression instanceof ErasedExpression &&  erasedArgument.typeParameter() != null;
-                    accept = erasedFormal.isAssignableFrom(runtime, erasedArgument)
-                             || allowReverse && erasedArgument.isAssignableFrom(runtime, erasedFormal)
-                             || pi.isVarArgs() &&
-                                (erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime, erasedArgument)
-                                 || allowReverse && erasedArgument.isAssignableFrom(runtime, erasedFormal.copyWithOneFewerArrays()));
-                }
-                if (!accept) {
-                    return false;
-                }
-                i++;
-            }
-            return true;
+        Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
+                "0", formalType, formalType, runtime.diamondNo(), null, runtime.noSource(),
+                unparsedArguments,
+                List.of(), true, false);
+        if (constructorCall instanceof ConstructorCall cc) {
+            assert cc.constructor() != null;
+            return runtime.newExplicitConstructorInvocationBuilder()
+                    .addComments(comments)
+                    .setSource(source)
+                    .setIsSuper(isSuper)
+                    .setMethodInfo(cc.constructor())
+                    .setParameterExpressions(cc.parameterExpressions())
+                    .build();
         }
-        return false;
-    }
-
-    // arguments of ECI
-    private List<Expression> parseArguments(Context context, Node node) {
-        assert node instanceof InvocationArguments;
-        List<Expression> expressions = new ArrayList<>();
-        for (int k = 1; k < node.size(); k += 2) {
-            Node nodeK = node.get(k);
-            if (nodeK instanceof Delimiter) break;
-            Expression e = parsers.parseExpression().parse(context, "0", context.erasureForwardType(), nodeK);
-            expressions.add(e);
-        }
-        return List.copyOf(expressions);
+        throw new UnsupportedOperationException("No ECI erasure yet");
     }
 
     @Override
