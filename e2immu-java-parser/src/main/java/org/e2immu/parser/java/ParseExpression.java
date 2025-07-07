@@ -400,6 +400,12 @@ public class ParseExpression extends CommonParse {
             pt = context.enclosingType().asParameterizedType();
         }
         TypeInfo typeInfo = pt.bestTypeInfo();
+        if (typeInfo == null) {
+            if (complain) {
+                throw new Summary.ParseException(context, "Cannot find field named '" + name + "'; null TypeInfo");
+            }
+            return null;
+        }
         FieldInfo fieldInfo = findRecursively(typeInfo, name);
         if (fieldInfo == null) {
             if (complain) {

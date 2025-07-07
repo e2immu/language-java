@@ -60,16 +60,16 @@ public class ParseConstructorCall extends CommonParse {
         }
         assert ae.getFirst() instanceof KeyWord kw && Token.TokenType.NEW.equals(kw.getType());
         int i = 1;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         List<ParameterizedType> methodTypeArguments;
         // new <String>Parameterized(...) == generics on the constructor, see TestConstructor,2
         if (ae.get(1) instanceof TypeArguments tas) {
             methodTypeArguments = parsers.parseType().parseTypeArguments(newContext, tas, true,
-                    null);
+                    detailedSourcesBuilder);
             ++i;
         } else {
             methodTypeArguments = List.of();
         }
-        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         ParameterizedType typeAsIs = parsers.parseType().parse(newContext, ae.get(i), detailedSourcesBuilder);
         TypeInfo typeInfo = typeAsIs.typeInfo();
         assert typeInfo != null;
@@ -126,7 +126,7 @@ public class ParseConstructorCall extends CommonParse {
             // inAnonymous() call to prevent parsing the method body when we're re-evaluating the arguments
             if (isAnonymousType) {
                 return anonymousType(newContext, comments, source, constructorCall, expectedConcreteType, typeAsIs, ia,
-                        (ClassOrInterfaceBody) (ae.get(i + 1)), diamond);
+                        (ClassOrInterfaceBody) (ae.get(i + 1)), diamond, methodTypeArguments);
             }
             return constructorCall;
         }
@@ -134,7 +134,7 @@ public class ParseConstructorCall extends CommonParse {
             return arrayCreation(newContext, index, ada, typeInfo, diamond, source, comments);
         }
         throw new Summary.ParseException(newContext, "Expected InvocationArguments or ArrayDimsAndInits, got "
-                                                            + ae.get(i).getClass());
+                                                     + ae.get(i).getClass());
     }
 
     private int countArrays(ArrayDimsAndInits ada) {
@@ -215,7 +215,8 @@ public class ParseConstructorCall extends CommonParse {
                                           ParameterizedType type,
                                           InvocationArguments ia,
                                           ClassOrInterfaceBody body,
-                                          Diamond diamond) {
+                                          Diamond diamond,
+                                          List<ParameterizedType> methodTypeArguments) {
         TypeInfo anonymousType = runtime.newAnonymousType(context.enclosingType(),
                 context.enclosingType().builder().getAndIncrementAnonymousTypes());
         TypeNature typeNature = runtime.typeNatureClass();
@@ -254,6 +255,7 @@ public class ParseConstructorCall extends CommonParse {
                 .setConstructor(constructor)
                 .setConcreteReturnType(concreteReturnType)
                 .setParameterExpressions(arguments)
+                .setTypeArguments(methodTypeArguments)
                 .setAnonymousClass(anonymousType).build();
     }
 
@@ -265,9 +267,10 @@ public class ParseConstructorCall extends CommonParse {
             j += 2;
         }
         ParameterizedType formalType = enumType.asSimpleParameterizedType();
-        return context.methodResolution().resolveConstructor(context, List.of(), null,
+        return context.methodResolution().resolveConstructor(context, List.of(), source(ia),
                 index, formalType, formalType, runtime.diamondNo(), null, null,
-                unparsedArguments, List.of(), true, true);
+                unparsedArguments, List.of(),
+                true, true);
     }
 }
 

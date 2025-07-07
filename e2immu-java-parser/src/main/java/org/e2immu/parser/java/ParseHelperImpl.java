@@ -192,8 +192,7 @@ public class ParseHelperImpl implements ParseHelper {
 
         Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
                 "0", formalType, formalType, runtime.diamondNo(), null, runtime.noSource(),
-                unparsedArguments,
-                List.of(), true, false);
+                unparsedArguments, List.of(), true, false);
         if (constructorCall instanceof ConstructorCall cc) {
             assert cc.constructor() != null;
             return runtime.newExplicitConstructorInvocationBuilder()

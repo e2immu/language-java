@@ -30,7 +30,7 @@ public class ParseMethodCall extends CommonParse {
         List<Object> unparsedArguments = new ArrayList<>();
         Node name = mc.getFirst();
         assert name instanceof Name || name instanceof DotName;
-        Node methodNameNode = name.get(name.size() - 1);
+        Node methodNameNode = name.getLast();
         String methodName = methodNameNode.getSource();
         Source sourceOfName = source(methodNameNode);
 
@@ -55,12 +55,31 @@ public class ParseMethodCall extends CommonParse {
             }
             return new MethodCallErasure(runtime, source, types, common, methodName);
         }
+        DetailedSources.Builder typeArgsDetailedSources = context.newDetailedSourcesBuilder();
+        List<ParameterizedType> methodTypeArguments = methodTypeArguments(context, name, typeArgsDetailedSources);
+
         // now we should have a more correct forward type!
         return context.methodResolution().resolveMethod(context, comments, source, sourceOfName,
                 index, forwardType, methodName,
                 unparsedObject,
                 unparsedObject == null ? runtime.noSource() : source(unparsedObject),
+                methodTypeArguments,
+                typeArgsDetailedSources,
                 unparsedArguments);
+    }
+
+    private List<ParameterizedType> methodTypeArguments(Context context, Node dotName, DetailedSources.Builder detailedSourcesBuilder) {
+        TypeArguments typeArguments = dotName.firstChildOfType(TypeArguments.class);
+        if (typeArguments == null) {
+            return List.of();
+        }
+        List<ParameterizedType> list = new ArrayList<>();
+        for (int i = 1; i < typeArguments.size(); i += 2) {
+            int index = i / 2;
+            ParameterizedType pt = parsers.parseType().parse(context, typeArguments.get(i), true, detailedSourcesBuilder);
+            list.add(pt);
+        }
+        return List.copyOf(list);
     }
 
     private Name newNameObject(Node name) {
