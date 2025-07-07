@@ -12,10 +12,7 @@ import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.inspection.api.parser.Context;
-import org.e2immu.language.inspection.api.parser.ForwardType;
-import org.e2immu.language.inspection.api.parser.ParseHelper;
-import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.*;
 import org.e2immu.parser.java.erasure.LambdaErasure;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -227,9 +224,13 @@ public class ParseHelperImpl implements ParseHelper {
                     accept = lambdaErasure.erasureTypes().stream().anyMatch(et -> erasedFormal.isAssignableFrom(runtime, et));
                 } else {
                     ParameterizedType erasedArgument = expression.parameterizedType().erased();
-                    accept = erasedFormal.isAssignableFrom(runtime, erasedArgument) ||
-                             pi.isVarArgs() && erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime,
-                                     expression.parameterizedType());
+                    // see TestConstructor2,4 for allowReverse
+                    boolean allowReverse = expression instanceof ErasedExpression &&  erasedArgument.typeParameter() != null;
+                    accept = erasedFormal.isAssignableFrom(runtime, erasedArgument)
+                             || allowReverse && erasedArgument.isAssignableFrom(runtime, erasedFormal)
+                             || pi.isVarArgs() &&
+                                (erasedFormal.copyWithOneFewerArrays().isAssignableFrom(runtime, erasedArgument)
+                                 || allowReverse && erasedArgument.isAssignableFrom(runtime, erasedFormal.copyWithOneFewerArrays()));
                 }
                 if (!accept) {
                     return false;
