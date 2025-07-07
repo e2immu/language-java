@@ -225,6 +225,7 @@ public class ParseHelperImpl implements ParseHelper {
                 } else {
                     ParameterizedType erasedArgument = expression.parameterizedType().erased();
                     // see TestConstructor2,4 for allowReverse
+                    // TODO allowReverse is probably not stringent enough
                     boolean allowReverse = expression instanceof ErasedExpression &&  erasedArgument.typeParameter() != null;
                     accept = erasedFormal.isAssignableFrom(runtime, erasedArgument)
                              || allowReverse && erasedArgument.isAssignableFrom(runtime, erasedFormal)
