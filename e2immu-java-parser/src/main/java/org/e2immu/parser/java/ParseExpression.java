@@ -42,6 +42,7 @@ import static org.parsers.java.Token.TokenType.*;
 
 public class ParseExpression extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseExpression.class);
+    public static final String LENGTH = "length";
 
     public ParseExpression(Runtime runtime, Parsers parsers) {
         super(runtime, parsers);
@@ -311,14 +312,16 @@ public class ParseExpression extends CommonParse {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         assert endIncl > 0 && endIncl < name.children().size();
         String trimmedAfterDot = name.get(endIncl).getSource();
-        if ("length".equals(trimmedAfterDot)) {
+        if (LENGTH.equals(trimmedAfterDot)) {
             Expression arrayExpression = parseDottedVariable(context, comments, source, name, endIncl - 2,
                     detailedSourcesBuilder);
-            return runtime.newArrayLengthBuilder()
-                    .addComments(comments)
-                    .setSource(source)
-                    .setExpression(arrayExpression)
-                    .build();
+            if (arrayExpression.parameterizedType().arrays() > 0) {
+                return runtime.newArrayLengthBuilder()
+                        .addComments(comments)
+                        .setSource(source)
+                        .setExpression(arrayExpression)
+                        .build();
+            }
         }
         String nameUpToEnd = name.children().subList(0, endIncl + 1).stream().map(Node::getSource).collect(Collectors.joining());
         NamedType namedType = context.typeContext().get(nameUpToEnd, false);
@@ -710,11 +713,12 @@ public class ParseExpression extends CommonParse {
             }
         } else {
             scope = parse(context, index, context.emptyForwardType(), n0);
-            if ("length".equals(name)) {
-                if (scope.parameterizedType().arrays() == 0) throw new UnsupportedOperationException();
-                return runtime.newArrayLengthBuilder().setExpression(scope)
-                        .addComments(comments).setSource(source(nameNode))
-                        .build();
+            if (LENGTH.equals(name)) {
+                if (scope.parameterizedType().arrays() > 0) {
+                    return runtime.newArrayLengthBuilder().setExpression(scope)
+                            .addComments(comments).setSource(source(nameNode))
+                            .build();
+                } // else: can be a normal field name!
             }
             fr = findField(context, scope, name, true);
         }
