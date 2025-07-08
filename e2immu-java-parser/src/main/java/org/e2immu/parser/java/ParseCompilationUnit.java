@@ -71,7 +71,7 @@ public class ParseCompilationUnit extends CommonParse {
         } else if (!uriString.endsWith("module-info.java")) {
             for (TypeDeclaration td : cu.childrenOfType(TypeDeclaration.class)) {
                 if (td instanceof EmptyDeclaration) {
-                    LOGGER.warn("Skipping empty declaration in {}", compilationUnit.uri());
+                    LOGGER.debug("Skipping empty declaration in {}", compilationUnit.uri());
                 } else {
                     Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> either
                             = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);

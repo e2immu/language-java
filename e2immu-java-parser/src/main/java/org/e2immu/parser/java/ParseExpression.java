@@ -175,7 +175,8 @@ public class ParseExpression extends CommonParse {
 
     private VariableExpression parseArrayAccess(Context context, String index, ForwardType forwardType, ArrayAccess arrayAccess, List<Comment> comments, Source source) {
         assert arrayAccess.size() == 4 : "Not implemented";
-        ParameterizedType forwardPt = forwardType.type() == null ? runtime.objectParameterizedType().copyWithArrays(1)
+        ParameterizedType forwardPt = forwardType.type() == null
+                ? null// better than runtime.objectParameterizedType().copyWithArrays(1)
                 : forwardType.type().copyWithArrays(forwardType.type().arrays() + 1);
         ForwardType arrayForward = context.newForwardType(forwardPt);
         Expression ae = parse(context, index, arrayForward, arrayAccess.get(0));
@@ -939,7 +940,7 @@ public class ParseExpression extends CommonParse {
         if (child instanceof CharacterLiteral cl) {
             char c = cl.charAt(1);
             if (c == '\\') {
-                c = EscapeSequence.escapeSequence(cl.charAt(2));
+                c = EscapeSequence.escapeSequence(cl.getSource().substring(2));
             }
             return runtime.newChar(comments, source, c);
         }

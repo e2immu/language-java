@@ -28,7 +28,7 @@ public class TestParseLiteral extends CommonTestParse {
             """;
 
     @Test
-    public void test8() {
+    public void test1() {
         parse(INPUT1);
     }
 
@@ -311,5 +311,28 @@ public class TestParseLiteral extends CommonTestParse {
             assertEquals("3-37:3-42", fc.source().compact2());
         } else fail("Is of " + F1.initializer().getClass());
     }
+
+
+    @Language("java")
+    public static final String INPUT11 = """
+            package a.b;
+            public class X {
+               void method() {
+                   System.out.println('\\r' + "abc" + '\\15');
+               }
+            }
+            """;
+
+    @Test
+    public void test11() {
+        TypeInfo X = parse(INPUT11);
+        MethodInfo methodInfo = X.findUniqueMethod("method", 0);
+        MethodCall mc = (MethodCall) methodInfo.methodBody().lastStatement().expression();
+        BinaryOperator bo = (BinaryOperator) mc.parameterExpressions().getFirst();
+        assertEquals("'\\r'+\"abc\"", bo.lhs().toString());
+        CharConstant cc = (CharConstant) bo.rhs();
+        assertEquals(13, cc.constant().charValue());
+    }
+
 
 }

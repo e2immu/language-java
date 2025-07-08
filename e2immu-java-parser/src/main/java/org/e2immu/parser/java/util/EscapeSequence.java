@@ -1,7 +1,7 @@
 package org.e2immu.parser.java.util;
 
 public class EscapeSequence {
-    public static char escapeSequence(char c2) {
+    static char escapeSequence(char c2) {
         return switch (c2) {
             case '0' -> '\0';
             case 'b' -> '\b';
@@ -17,6 +17,16 @@ public class EscapeSequence {
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    public static char escapeSequence(String c2) {
+        char c = c2.charAt(0);
+        if (c >= '0' && c <= '7') {
+            StringBuilder sb = new StringBuilder();
+            octal(c2.toCharArray(), sb, c, 0);
+            return sb.charAt(0);
+        }
+        return escapeSequence(c);
     }
 
     // replace everything except for \<line terminator>
