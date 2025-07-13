@@ -223,7 +223,9 @@ public class ParseTypeDeclaration extends CommonParse {
 
     public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {
         // try again...
-        if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)) {
+        if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)
+                && d.typeInfo.compilationUnit().importStatements().stream()
+                .allMatch(is -> !is.isStatic() || d.context.typeContext().addToStaticImportMap(is))) {
             return Either.left(continueParsingTypeDeclaration(d.typeInfo, d.builder, d.td, d.context, d.typeNature,
                     d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordComponents));
         }
