@@ -168,25 +168,84 @@ public class ParseExpression extends CommonParse {
         Expression expression = parse(context, index, forwardType, ioe.get(0));
         assert INSTANCEOF.equals(ioe.get(1).getType());
         ParameterizedType testType;
-        LocalVariable patternVariable;
+        RecordPattern recordPattern;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        if (ioe.get(2) instanceof NoVarDeclaration nvd) {
+        Node ioe2 = ioe.get(2);
+        if (ioe2 instanceof NoVarDeclaration nvd) {
             testType = parsers.parseType().parse(context, nvd.get(0), detailedSourcesBuilder);
             String lvName = nvd.get(1).getSource();
-            patternVariable = runtime.newLocalVariable(lvName, testType);
+            LocalVariable patternVariable = runtime.newLocalVariable(lvName, testType);
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(patternVariable, source(nvd.get(1)));
             context.variableContext().add(patternVariable);
+            recordPattern = runtime.newRecordPatternBuilder()
+                    .setLocalVariable(patternVariable)
+                    .build();
+        } else if (ioe2 instanceof org.parsers.java.ast.RecordPattern rp) {
+            recordPattern = parseRecordPattern(context, rp);
+            testType = recordPattern.recordType();
         } else {
-            testType = parsers.parseType().parse(context, ioe.get(2), detailedSourcesBuilder);
-            patternVariable = null;
+            testType = parsers.parseType().parse(context, ioe2, detailedSourcesBuilder);
+            recordPattern = null;
         }
-        RecordPattern recordPattern = patternVariable == null ? null: runtime.newRecordPatternBuilder()
-                .setLocalVariable(patternVariable)
-                .build();
+        if(detailedSourcesBuilder != null && recordPattern != null) {
+            detailedSourcesBuilder.put(recordPattern, source(ioe2));
+        }
         return runtime.newInstanceOfBuilder()
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .addComments(comments)
-                .setExpression(expression).setTestType(testType).setPatternVariable(recordPattern)
+                .setExpression(expression)
+                .setTestType(testType)
+                .setPatternVariable(recordPattern)
+                .build();
+    }
+
+    private RecordPattern parseRecordPattern(Context context,
+                                             org.parsers.java.ast.RecordPattern rp) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        ParameterizedType recordType = parsers.parseType().parse(context, rp.getFirst(), detailedSourcesBuilder);
+        List<RecordPattern> list = new ArrayList<>();
+        for (int i = 2; i < rp.size(); i += 2) {
+            Node node = rp.get(i);
+            RecordPattern pattern;
+            if (node instanceof org.parsers.java.ast.RecordPattern subRp) {
+                pattern = parseRecordPattern(context, subRp);
+            } else if (node instanceof LocalVariableDeclaration lvd) {
+                pattern = parseLocalVariableDeclaration(context, lvd);
+            } else {
+                throw new UnsupportedOperationException();
+            }
+            list.add(pattern);
+            if (detailedSourcesBuilder != null) {
+                detailedSourcesBuilder.put(pattern, source(node));
+            }
+        }
+        Source source = source(rp);
+        return runtime.newRecordPatternBuilder()
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                .setRecordType(recordType)
+                .setPatterns(List.copyOf(list))
+                .build();
+    }
+
+    private RecordPattern parseLocalVariableDeclaration(Context context,
+                                                        LocalVariableDeclaration lvd) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        ParameterizedType pt;
+        if (lvd.getFirst() instanceof Type type) {
+            pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
+        } else throw new UnsupportedOperationException();
+        String name;
+        if (lvd.get(1) instanceof Identifier identifier) {
+            name = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
+        } else throw new UnsupportedOperationException();
+        LocalVariable lv = runtime.newLocalVariable(name, pt);
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(lvd));
+        context.variableContext().add(lv);
+        Source source = source(lvd);
+        return runtime.newRecordPatternBuilder()
+                .setLocalVariable(lv)
+                .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .build();
     }
 
