@@ -253,7 +253,7 @@ public class ParseStatement extends CommonParse {
                     } else if (cbj instanceof Identifier) {
                         break;
                     } else if (!(cbj instanceof Operator operator
-                                 && Token.TokenType.BIT_OR.equals(operator.getType()))) {
+                            && Token.TokenType.BIT_OR.equals(operator.getType()))) {
                         throw new UnsupportedOperationException();
                     }
                     j++;
@@ -492,31 +492,36 @@ public class ParseStatement extends CommonParse {
         boolean first = true;
         while (i < nvd.size() && nvd.get(i) instanceof VariableDeclarator vd) {
             Node vd0 = vd.getFirst();
-            Identifier identifier;
-            ParameterizedType type;
-            if (vd0 instanceof VariableDeclaratorId vdi) {
-                identifier = (Identifier) vdi.getFirst();
-                int arrays = (vdi.size() - 1) / 2;
-                type = baseType.copyWithArrays(arrays);
-                if (detailedSourcesBuilder != null) {
-                    detailedSourcesBuilder.put(type, source(typeNode));
-                }
+            LocalVariable lv;
+            if (vd0 instanceof KeyWord && Token.TokenType.UNDERSCORE.equals(vd0.getType())) {
+                lv = runtime.newUnnamedLocalVariable(baseType, runtime.newEmptyExpression());
             } else {
-                identifier = (Identifier) vd0;
-                type = baseType;
-            }
-            String variableName = identifier.getSource();
-            LocalVariable lv = runtime.newLocalVariable(variableName, type, runtime.newEmptyExpression());
-            context.variableContext().add(lv);
-            if (vd.size() > 2) {
-                ForwardType forwardType = context.newForwardType(type);
-                Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
-                lv = runtime.newLocalVariable(variableName, type, expression);
-                // replace! See TestAssignment,2 for the cause of this silly construction
+                Identifier identifier;
+                ParameterizedType type;
+                if (vd0 instanceof VariableDeclaratorId vdi) {
+                    identifier = (Identifier) vdi.getFirst();
+                    int arrays = (vdi.size() - 1) / 2;
+                    type = baseType.copyWithArrays(arrays);
+                    if (detailedSourcesBuilder != null) {
+                        detailedSourcesBuilder.put(type, source(typeNode));
+                    }
+                } else if (vd0 instanceof Identifier id) {
+                    identifier = id;
+                    type = baseType;
+                } else throw new UnsupportedOperationException();
+                String variableName = identifier.getSource();
+                lv = runtime.newLocalVariable(variableName, type, runtime.newEmptyExpression());
                 context.variableContext().add(lv);
-            }
-            if (detailedSourcesBuilder != null) {
-                detailedSourcesBuilder.put(lv, source(identifier));
+                if (vd.size() > 2) {
+                    ForwardType forwardType = context.newForwardType(type);
+                    Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
+                    lv = runtime.newLocalVariable(variableName, type, expression);
+                    // replace! See TestAssignment,2 for the cause of this silly construction
+                    context.variableContext().add(lv);
+                }
+                if (detailedSourcesBuilder != null) {
+                    detailedSourcesBuilder.put(lv, source(identifier));
+                }
             }
             if (first) {
                 builder.setLocalVariable(lv);
