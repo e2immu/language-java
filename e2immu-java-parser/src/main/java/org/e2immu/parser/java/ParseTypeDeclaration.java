@@ -91,7 +91,7 @@ public class ParseTypeDeclaration extends CommonParse {
                                             DetailedSources.Builder detailedSourcesBuilder,
                                             int iStart,
                                             List<Annotation> annotations,
-                                            List<RecordField> recordFields) {
+                                            List<RecordComponent> recordComponents) {
 
     }
 
@@ -167,15 +167,15 @@ public class ParseTypeDeclaration extends CommonParse {
 
         TypeNature typeNature = builder.typeNature();
         assert typeNature != null;
-        List<RecordField> recordFields;
+        List<RecordComponent> recordComponents;
         if (td.get(i) instanceof RecordHeader rh) {
             assert typeNature.isRecord();
-            recordFields = new ArrayList<>();
+            recordComponents = new ArrayList<>();
             for (int j = 1; j < rh.size(); j += 2) {
                 Node rhj = rh.get(j);
                 if (rhj instanceof Delimiter) break; // empty parameter list
                 if (rhj instanceof RecordComponent rc) {
-                    recordFields.add(parseRecordField(newContext, typeInfo, rc));
+                    recordComponents.add(rc);
                 } else {
                     throw new Summary.ParseException(newContext, "Expected record component");
                 }
@@ -185,7 +185,7 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         } else {
-            recordFields = null;
+            recordComponents = null;
         }
 
         builder.setParentClass(runtime.objectParameterizedType());
@@ -215,17 +215,17 @@ public class ParseTypeDeclaration extends CommonParse {
         if (!mustDelayForStaticStarImport
                 && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight())) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
-                    detailedSourcesBuilder, i, annotations, recordFields));
+                    detailedSourcesBuilder, i, annotations, recordComponents));
         }
         return Either.right(new DelayedParsingInformation(typeInfo, builder, td, context, typeNature, newContext,
-                detailedSourcesBuilder, i, annotations, recordFields));
+                detailedSourcesBuilder, i, annotations, recordComponents));
     }
 
     public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {
         // try again...
         if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)) {
             return Either.left(continueParsingTypeDeclaration(d.typeInfo, d.builder, d.td, d.context, d.typeNature,
-                    d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordFields));
+                    d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordComponents));
         }
         return Either.right(d);
     }
@@ -237,7 +237,16 @@ public class ParseTypeDeclaration extends CommonParse {
                                                    DetailedSources.Builder detailedSourcesBuilder,
                                                    int iStart,
                                                    List<Annotation> annotations,
-                                                   List<RecordField> recordFields) {
+                                                   List<RecordComponent> recordComponents) {
+        List<RecordField> recordFields;
+        if(recordComponents != null) {
+            recordFields = new ArrayList<>(recordComponents.size());
+            for(RecordComponent rc: recordComponents) {
+                recordFields.add(parseRecordField(newContext, typeInfo, rc));
+            }
+        } else {
+            recordFields = null;
+        }
         int i = iStart;
         if (td.get(i) instanceof PermitsList permitsList) {
             for (int j = 1; j < permitsList.size(); j += 2) {
