@@ -187,7 +187,7 @@ public class ParseExpression extends CommonParse {
             testType = parsers.parseType().parse(context, ioe2, detailedSourcesBuilder);
             recordPattern = null;
         }
-        if(detailedSourcesBuilder != null && recordPattern != null) {
+        if (detailedSourcesBuilder != null && recordPattern != null) {
             detailedSourcesBuilder.put(recordPattern, source(ioe2));
         }
         return runtime.newInstanceOfBuilder()
@@ -206,14 +206,14 @@ public class ParseExpression extends CommonParse {
         List<RecordPattern> list = new ArrayList<>();
         for (int i = 2; i < rp.size(); i += 2) {
             Node node = rp.get(i);
-            RecordPattern pattern;
-            if (node instanceof org.parsers.java.ast.RecordPattern subRp) {
-                pattern = parseRecordPattern(context, subRp);
-            } else if (node instanceof LocalVariableDeclaration lvd) {
-                pattern = parseLocalVariableDeclaration(context, lvd);
-            } else {
-                throw new UnsupportedOperationException();
-            }
+            RecordPattern pattern = switch (node) {
+                case org.parsers.java.ast.RecordPattern subRp -> parseRecordPattern(context, subRp);
+                case LocalVariableDeclaration lvd -> parseLocalVariableDeclaration(context, lvd);
+                case KeyWord kw when UNDERSCORE.equals(kw.getType()) -> runtime.newRecordPatternBuilder()
+                        .setSource(source(kw))
+                        .setUnnamedPattern(true).build();
+                case null, default -> throw new UnsupportedOperationException();
+            };
             list.add(pattern);
             if (detailedSourcesBuilder != null) {
                 detailedSourcesBuilder.put(pattern, source(node));
@@ -234,12 +234,17 @@ public class ParseExpression extends CommonParse {
         if (lvd.getFirst() instanceof Type type) {
             pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
         } else throw new UnsupportedOperationException();
-        String name;
+        LocalVariable lv;
         if (lvd.get(1) instanceof Identifier identifier) {
-            name = identifier.getSource();
+            String name = identifier.getSource();
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
-        } else throw new UnsupportedOperationException();
-        LocalVariable lv = runtime.newLocalVariable(name, pt);
+            lv = runtime.newLocalVariable(name, pt);
+        } else if (lvd.get(1) instanceof KeyWord kw && UNDERSCORE.equals(kw.getType())) {
+            lv = runtime.newUnnamedLocalVariable(pt, null);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(lvd));
         context.variableContext().add(lv);
         Source source = source(lvd);
