@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -179,10 +180,13 @@ public class ParseExpression extends CommonParse {
             testType = parsers.parseType().parse(context, ioe.get(2), detailedSourcesBuilder);
             patternVariable = null;
         }
+        RecordPattern recordPattern = patternVariable == null ? null: runtime.newRecordPatternBuilder()
+                .setLocalVariable(patternVariable)
+                .build();
         return runtime.newInstanceOfBuilder()
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .addComments(comments)
-                .setExpression(expression).setTestType(testType).setPatternVariable(patternVariable)
+                .setExpression(expression).setTestType(testType).setPatternVariable(recordPattern)
                 .build();
     }
 

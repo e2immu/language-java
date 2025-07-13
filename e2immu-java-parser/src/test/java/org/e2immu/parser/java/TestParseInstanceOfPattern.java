@@ -33,7 +33,7 @@ public class TestParseInstanceOfPattern extends CommonTestParse {
         MethodInfo method = typeInfo.findUniqueMethod("method", 2);
         if (method.methodBody().statements().get(0) instanceof IfElseStatement ifElse) {
             if (ifElse.expression() instanceof InstanceOf io) {
-                assertEquals("i", io.patternVariable().simpleName());
+                assertEquals("i", io.patternVariable().localVariable().simpleName());
             } else fail();
         } else fail();
     }
