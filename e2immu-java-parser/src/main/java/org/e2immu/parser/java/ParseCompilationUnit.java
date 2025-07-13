@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
 Second round! ScanCompilationUnit has already run.
@@ -50,9 +51,12 @@ public class ParseCompilationUnit extends CommonParse {
 
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         TypeContext typeContext = newContext.typeContext();
+        AtomicBoolean mustDelayForStaticImportTypeHierarchy = new AtomicBoolean();
         compilationUnit.importStatements().forEach(is -> {
             if (is.isStatic()) {
-                typeContext.addToStaticImportMap(is);
+                if (!typeContext.addToStaticImportMap(is)) {
+                    mustDelayForStaticImportTypeHierarchy.set(true);
+                }
             } else {
                 typeContext.addNonStaticImportToContext(is);
             }
@@ -74,7 +78,8 @@ public class ParseCompilationUnit extends CommonParse {
                     LOGGER.debug("Skipping empty declaration in {}", compilationUnit.uri());
                 } else {
                     Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation> either
-                            = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td);
+                            = parsers.parseTypeDeclaration().parse(newContext, Either.left(compilationUnit), td,
+                            mustDelayForStaticImportTypeHierarchy.get());
                     if (either != null) {
                         types.add(either);
                     } // else: error...

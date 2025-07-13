@@ -39,14 +39,15 @@ public class ParseTypeDeclaration extends CommonParse {
 
     public Either<TypeInfo, DelayedParsingInformation> parse(Context context,
                                                              Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
-                                                             TypeDeclaration td) {
+                                                             TypeDeclaration td,
+                                                             boolean mustDelayForStaticStarImport) {
         try {
             return internalParse(context, packageNameOrEnclosing,
                     simpleName -> {
                         // during the "scan" phase, we have already created all the TypeInfo objects
                         String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
                         return (TypeInfo) context.typeContext().get(fqn, true);
-                    }, td);
+                    }, td, mustDelayForStaticStarImport);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -73,7 +74,7 @@ public class ParseTypeDeclaration extends CommonParse {
                         handleTypeModifiers(classDeclaration, typeInfo, context.isDetailedSources());
                         return typeInfo;
                     },
-                    classDeclaration).getLeft();
+                    classDeclaration, false).getLeft();
         } catch (RuntimeException | AssertionError e) {
             LOGGER.error("Caught exception", e);
             throw e;
@@ -97,7 +98,8 @@ public class ParseTypeDeclaration extends CommonParse {
     private Either<TypeInfo, DelayedParsingInformation> internalParse(Context context,
                                                                       Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                                                       Function<String, TypeInfo> bySimpleName,
-                                                                      TypeDeclaration td) {
+                                                                      TypeDeclaration td,
+                                                                    boolean  mustDelayForStaticStarImport) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         int i = 0;
@@ -209,8 +211,9 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
-        // IMPORTANT: delaying is only done at the top-level; not for sub-types. See inspection-integration/
-        if (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight()) {
+        // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
+        if (!mustDelayForStaticStarImport
+                && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight())) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
                     detailedSourcesBuilder, i, annotations, recordFields));
         }
@@ -303,7 +306,7 @@ public class ParseTypeDeclaration extends CommonParse {
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof TypeDeclaration subTd) {
-                    TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd).getLeft();
+                    TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd, false).getLeft();
                     newContext.typeContext().addToContext(subTypeInfo);
                 }
             }
@@ -489,7 +492,8 @@ public class ParseTypeDeclaration extends CommonParse {
         // scan phase
 
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
-            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration).getLeft();
+            TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration,
+                    false).getLeft();
             newContext.typeContext().addToContext(subTypeInfo);
         }
 
