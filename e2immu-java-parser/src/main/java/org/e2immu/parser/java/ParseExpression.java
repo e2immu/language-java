@@ -70,110 +70,71 @@ public class ParseExpression extends CommonParse {
         Source source = source(index, node);
         List<Comment> comments = ignoreComments ? List.of() : comments(node);
 
-        if (node instanceof DotName dotName) {
-            return parseDotName(context, comments, source, index, dotName);
-        }
-        if (node instanceof MethodCall mc) {
-            return parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
-        }
-        if (node instanceof LiteralExpression le) {
-            return parseLiteral(context, comments, source, le);
-        }
-        if (node instanceof ConditionalAndExpression || node instanceof ConditionalOrExpression) {
-            return parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
-        }
-        if (node instanceof AdditiveExpression ae) {
-            return parseAdditive(context, index, ae);
-        }
-        if (node instanceof MultiplicativeExpression
-            || node instanceof AndExpression
-            || node instanceof InclusiveOrExpression
-            || node instanceof ExclusiveOrExpression
-            || node instanceof ShiftExpression) {
-            return parseMultiplicative(context, index, node);
-        }
-        if (node instanceof RelationalExpression re) {
-            return parseRelational(context, index, re);
-        }
-        if (node instanceof EqualityExpression eq) {
-            return parseEquality(context, index, eq);
-        }
-        if (node instanceof UnaryExpression || node instanceof UnaryExpressionNotPlusMinus) {
-            return parseUnaryExpression(context, index, (org.parsers.java.ast.Expression) node);
-        }
-        if (node instanceof Identifier i) {
-            return parseIdentifier(context, comments, source, i);
-        }
-        if (node instanceof Name name) {
-            if (name.children().size() >= 3) {
-                return parseDottedName(context, comments, source, name, name.children().size() - 1);
+        return switch (node) {
+            case DotName dotName -> parseDotName(context, comments, source, index, dotName);
+            case MethodCall mc -> parsers.parseMethodCall().parse(context, comments, source, index, forwardType, mc);
+            case LiteralExpression le -> parseLiteral(context, comments, source, le);
+            case ConditionalAndExpression _, ConditionalOrExpression _ ->
+                    parseConditionalExpression(context, comments, source, index, (org.parsers.java.ast.Expression) node);
+            case AdditiveExpression ae -> parseAdditive(context, index, ae);
+            case MultiplicativeExpression _,
+                 AndExpression _,
+                 InclusiveOrExpression _,
+                 ExclusiveOrExpression _,
+                 ShiftExpression _ -> parseMultiplicative(context, index, node);
+            case RelationalExpression re -> parseRelational(context, index, re);
+            case EqualityExpression eq -> parseEquality(context, index, eq);
+            case UnaryExpression _, UnaryExpressionNotPlusMinus _ ->
+                    parseUnaryExpression(context, index, (org.parsers.java.ast.Expression) node);
+            case Identifier i -> parseIdentifier(context, comments, source, i);
+            case Name name -> {
+                if (name.children().size() >= 3) {
+                    yield parseDottedName(context, comments, source, name, name.children().size() - 1);
+                }
+                // see TestMethodCall7.test6 for an example where we arrive here with "Collections.", size 2
+                // recurse into first child; single identifier will end up in parseIdentifier
+                yield parse(context, index, forwardType, name.getFirst());
             }
-            // see TestMethodCall7.test6 for an example where we arrive here with "Collections.", size 2
-            // recurse into first child; single identifier will end up in parseIdentifier
-            return parse(context, index, forwardType, name.getFirst());
-        }
-        if (node instanceof CastExpression castExpression) {
-            return parseCast(context, index, comments, source, castExpression);
-        }
-        if (node instanceof AssignmentExpression assignmentExpression) {
-            return parseAssignment(context, index, assignmentExpression, comments, source);
-        }
-        if (node instanceof ArrayAccess arrayAccess) {
-            return parseArrayAccess(context, index, forwardType, arrayAccess, comments, source);
-        }
-        if (node instanceof ClassLiteral cl) {
-            return parseClassLiteral(context, comments, source, cl);
-        }
-        if (node instanceof Parentheses p) {
-            return parseParentheses(context, index, comments, source, forwardType, p);
-        }
-        if (node instanceof AllocationExpression ae) {
-            return parsers.parseConstructorCall().parse(context, index, forwardType, ae);
-        }
-        if (node instanceof MethodReference mr) {
-            return parsers.parseMethodReference().parse(context, comments, source, index, forwardType, mr);
-        }
-        if (node instanceof LambdaExpression le) {
-            return parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
-        }
-        if (node instanceof PostfixExpression) {
-            return plusPlusMinMin(context, index, comments, source, 0, 1, false, node);
-        }
-        if (node instanceof PreIncrementExpression || node instanceof PreDecrementExpression) {
-            return plusPlusMinMin(context, index, comments, source, 1, 0, true, node);
-        }
-        if (node instanceof TernaryExpression) {
-            return inlineConditional(context, index, forwardType, comments, source, node);
-        }
-        if (node instanceof ArrayInitializer || node instanceof MemberValueArrayInitializer) {
-            return arrayInitializer(context, index, forwardType, comments, source, node);
-        }
-        if (node instanceof org.parsers.java.ast.SwitchExpression) {
-            return parseSwitchExpression(context, index, forwardType, comments, source, node.getFirst());
-        }
-        if (node instanceof InstanceOfExpression ioe) {
-            return parseInstanceOf(context, index, forwardType, comments, source, ioe);
-        }
-        if (node instanceof ObjectType ot) {
-            // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
-            if (ot.size() == 3 && Token.TokenType.DOT.equals(ot.get(1).getType())) {
-                return parseDotName(context, comments, source, index, node);
+            case CastExpression castExpression -> parseCast(context, index, comments, source, castExpression);
+            case AssignmentExpression assignmentExpression ->
+                    parseAssignment(context, index, assignmentExpression, comments, source);
+            case ArrayAccess arrayAccess ->
+                    parseArrayAccess(context, index, forwardType, arrayAccess, comments, source);
+            case ClassLiteral cl -> parseClassLiteral(context, comments, source, cl);
+            case Parentheses p -> parseParentheses(context, index, comments, source, forwardType, p);
+            case AllocationExpression ae -> parsers.parseConstructorCall().parse(context, index, forwardType, ae);
+            case MethodReference mr ->
+                    parsers.parseMethodReference().parse(context, comments, source, index, forwardType, mr);
+            case LambdaExpression le ->
+                    parsers.parseLambdaExpression().parse(context, comments, source, index, forwardType, le);
+            case PostfixExpression _ -> plusPlusMinMin(context, index, comments, source, 0, 1, false, node);
+            case PreIncrementExpression _, PreDecrementExpression _ ->
+                    plusPlusMinMin(context, index, comments, source, 1, 0, true, node);
+            case TernaryExpression _ -> inlineConditional(context, index, forwardType, comments, source, node);
+            case ArrayInitializer _, MemberValueArrayInitializer _ ->
+                    arrayInitializer(context, index, forwardType, comments, source, node);
+            case org.parsers.java.ast.SwitchExpression _ ->
+                    parseSwitchExpression(context, index, forwardType, comments, source, node.getFirst());
+            case InstanceOfExpression ioe -> parseInstanceOf(context, index, forwardType, comments, source, ioe);
+            case ObjectType ot -> {
+                // maybe really hard-coded, but serves ParseMethodReference, e.g. TestMethodCall0,9
+                if (ot.size() == 3 && Token.TokenType.DOT.equals(ot.get(1).getType())) {
+                    yield parseDotName(context, comments, source, index, node);
+                }
+                // ditto, see TestParseMethodReference
+                if (ot.size() == 1 && ot.getFirst() instanceof Identifier i) {
+                    yield parseIdentifier(context, comments, source, i);
+                }
+                throw new UnsupportedOperationException();
             }
-            // ditto, see TestParseMethodReference
-            if (ot.size() == 1 && ot.getFirst() instanceof Identifier i) {
-                return parseIdentifier(context, comments, source, i);
-            }
-        }
-        if (node instanceof NormalAnnotation na) {
-            return parsers.parseAnnotationExpression().parseDirectly(context, na);
-        }
-        if (node instanceof DotThis || node instanceof DotSuper) {
-            return parseDotThisDotSuper(context, node, source);
-        }
-        throw new UnsupportedOperationException("node " + node.getClass());
+            case NormalAnnotation na -> parsers.parseAnnotationExpression().parseDirectly(context, na);
+            case DotThis _, DotSuper _ -> parseDotThisDotSuper(context, node, source);
+            default -> throw new UnsupportedOperationException("node " + node.getClass());
+        };
     }
 
-    private VariableExpression parseArrayAccess(Context context, String index, ForwardType forwardType, ArrayAccess arrayAccess, List<Comment> comments, Source source) {
+    private Expression parseArrayAccess(Context context, String index, ForwardType forwardType,
+                                        ArrayAccess arrayAccess, List<Comment> comments, Source source) {
         assert arrayAccess.size() == 4 : "Not implemented";
         ParameterizedType forwardPt = forwardType.type() == null
                 ? null// better than runtime.objectParameterizedType().copyWithArrays(1)
@@ -187,7 +148,7 @@ public class ParseExpression extends CommonParse {
                 .setVariable(variable).build();
     }
 
-    private VariableExpression parseDotThisDotSuper(Context context, Node node, Source source) {
+    private Expression parseDotThisDotSuper(Context context, Node node, Source source) {
         ParameterizedType type;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (node.get(0) instanceof Name name) {
@@ -521,7 +482,7 @@ public class ParseExpression extends CommonParse {
                 .build(runtime);
     }
 
-    private Assignment parseAssignment(Context context,
+    private Expression parseAssignment(Context context,
                                        String index,
                                        AssignmentExpression assignmentExpression,
                                        List<Comment> comments,
@@ -741,7 +702,7 @@ public class ParseExpression extends CommonParse {
                 .build();
     }
 
-    private Cast parseCast(Context context, String index, List<Comment> comments, Source source, CastExpression castExpression) {
+    private Expression parseCast(Context context, String index, List<Comment> comments, Source source, CastExpression castExpression) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         // 0 = '(', 2 = ')'
