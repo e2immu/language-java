@@ -35,11 +35,11 @@ public record TextBlockParser(Runtime runtime) {
 
     private static String removeIndentation(String s, int indent, TextBlockFormatting.Builder builder) {
         String indentString = " ".repeat(indent);
-        Pattern slashNewline = Pattern.compile("(\\\\)?\n" + indentString);
+        Pattern slashNewline = Pattern.compile("(\\\\)?(\\\\)?\n" + indentString);
         Matcher m = slashNewline.matcher(s);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {
-            if (m.group(1) == null) {
+            if (m.group(2) == null && m.group(1) == null) {
                 m.appendReplacement(sb, "\n");
             } else {
                 m.appendReplacement(sb, "");
