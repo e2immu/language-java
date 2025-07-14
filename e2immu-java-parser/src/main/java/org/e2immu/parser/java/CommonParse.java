@@ -330,18 +330,23 @@ public abstract class CommonParse {
         int j = 1;
         while (j < nsl.size() - 1) {
             Node node = nsl.get(j);
-            if(node instanceof LocalVariableDeclaration lvd) {
-                RecordPattern recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(newContext, lvd);
-                entryBuilder.setPatternVariable(recordPattern);
-            } else if(node instanceof org.parsers.java.ast.RecordPattern rp) {
-                RecordPattern recordPattern = parsers.parseRecordPattern().parseRecordPattern(newContext, rp);
-                entryBuilder.setPatternVariable(recordPattern);
-            } else if(node instanceof WhenClause whenClause) {
-                ForwardType booleanTypeFwd = newContext.newForwardType(runtime.booleanParameterizedType());
-                whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
-            } else {
-                Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
-                conditions.add(c);
+            switch (node) {
+                case LocalVariableDeclaration lvd -> {
+                    RecordPattern recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(newContext, lvd);
+                    entryBuilder.setPatternVariable(recordPattern);
+                }
+                case org.parsers.java.ast.RecordPattern rp -> {
+                    RecordPattern recordPattern = parsers.parseRecordPattern().parseRecordPattern(newContext, rp);
+                    entryBuilder.setPatternVariable(recordPattern);
+                }
+                case WhenClause whenClause -> {
+                    ForwardType booleanTypeFwd = newContext.newForwardType(runtime.booleanParameterizedType());
+                    whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
+                }
+                default -> {
+                    Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
+                    conditions.add(c);
+                }
             }
             Node next = nsl.get(j + 1);
             if (Token.TokenType.COMMA.equals(next.getType())) {

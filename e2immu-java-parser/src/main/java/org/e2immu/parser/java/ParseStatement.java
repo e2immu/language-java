@@ -2,7 +2,6 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.DetailedSources;
-import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -654,10 +653,31 @@ public class ParseStatement extends CommonParse {
                         assert Token.TokenType.CASE.equals(csl.getFirst().getType());
                         for (int k = 1; k < csl.size(); k += 2) {
                             String newIndex = index + ".0." + StringUtil.pad(pos, n);
-                            Expression literal = parsers.parseExpression().parse(newContext, newIndex,
-                                    newContext.emptyForwardType(), csl.get(k));
-                            SwitchStatementOldStyle.SwitchLabel sl = runtime.newSwitchLabelOldStyle(literal, pos,
-                                    null, runtime.newEmptyExpression());
+
+                            Node node = csl.get(k);
+                            SwitchStatementOldStyle.SwitchLabel sl;
+                            if (node instanceof LocalVariableDeclaration || node instanceof RecordPattern) {
+                                org.e2immu.language.cst.api.element.RecordPattern recordPattern;
+                                if (node instanceof LocalVariableDeclaration lvd) {
+                                    recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(context, lvd);
+                                } else {
+                                    recordPattern = parsers.parseRecordPattern().parseRecordPattern(context, (RecordPattern) node);
+                                }
+                                Expression whenExpression;
+                                if (csl.get(k + 1) instanceof WhenClause whenClause) {
+                                    ForwardType forwardType = context.newForwardType(runtime.booleanParameterizedType());
+                                    whenExpression = parsers.parseExpression().parse(context, index, forwardType, whenClause.get(1));
+                                    k += 2;
+                                } else {
+                                    whenExpression = runtime.newEmptyExpression();
+                                }
+                                sl = runtime.newSwitchLabelOldStyle(null, pos, recordPattern, whenExpression);
+                            } else {
+                                Expression literal = parsers.parseExpression().parse(newContext, newIndex,
+                                        newContext.emptyForwardType(), node);
+                                sl = runtime.newSwitchLabelOldStyle(literal, pos,
+                                        null, runtime.newEmptyExpression());
+                            }
                             switchLabels.add(sl);
                         }
                     }
