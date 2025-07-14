@@ -130,7 +130,10 @@ public class ParseExpression extends CommonParse {
             }
             case NormalAnnotation na -> parsers.parseAnnotationExpression().parseDirectly(context, na);
             case DotThis _, DotSuper _ -> parseDotThisDotSuper(context, node, source);
-            default -> throw new UnsupportedOperationException("node " + node.getClass());
+            case NullLiteral _ -> runtime.newNullConstant(comments, source);
+            default -> {
+                throw new UnsupportedOperationException("node " + node.getClass());
+            }
         };
     }
 
@@ -226,27 +229,32 @@ public class ParseExpression extends CommonParse {
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
                     parseNewSwitchLabel(index, nsl, newContext, entryBuilder, selectorTypeFwd);
                 } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
-                Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 Node ncs1 = ncs.get(1);
-                if (ncs1 instanceof CodeBlock cb) {
-                    String newIndex = index + "." + StringUtil.pad(count, n);
-                    entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
-                } else if (ncs1 instanceof Statement statement) {
-                    // throw statement is allowed!
-                    String newIndex = index + "." + StringUtil.pad(count, n) + "0";
-                    org.e2immu.language.cst.api.statement.Statement st = parsers.parseStatement()
-                            .parse(newContext, newIndex, statement);
-                    entryBuilder.setStatement(st);
-                } else if (ncs1 instanceof org.parsers.java.ast.Expression expression) {
-                    String newIndex = index + "." + StringUtil.pad(count, n) + "0";
-                    Expression pe = parse(newContext, newIndex, forwardType, expression);
-                    entryBuilder.setStatement(runtime.newExpressionAsStatementBuilder().setExpression(pe)
-                            .setSource(pe.source()).build());
-                    commonType = commonType == null ? pe.parameterizedType()
-                            : runtime.commonType(commonType, pe.parameterizedType());
-                } else throw new Summary.ParseException(newContext, "Expect statement, got " + ncs1.getClass());
+                switch (ncs1) {
+                    case CodeBlock cb -> {
+                        String newIndex = index + "." + StringUtil.pad(count, n);
+                        entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
+                    }
+                    case Statement statement -> {
+                        // throw statement is allowed!
+                        String newIndex = index + "." + StringUtil.pad(count, n) + "0";
+                        org.e2immu.language.cst.api.statement.Statement st = parsers.parseStatement()
+                                .parse(newContext, newIndex, statement);
+                        entryBuilder.setStatement(st);
+                    }
+                    case org.parsers.java.ast.Expression expression -> {
+                        String newIndex = index + "." + StringUtil.pad(count, n) + "0";
+                        Expression pe = parse(newContext, newIndex, forwardType, expression);
+                        entryBuilder.setStatement(runtime.newExpressionAsStatementBuilder().setExpression(pe)
+                                .setSource(pe.source()).build());
+                        commonType = commonType == null ? pe.parameterizedType()
+                                : runtime.commonType(commonType, pe.parameterizedType());
+                    }
+                    default ->
+                            throw new Summary.ParseException(newContext, "Expect statement, got " + ncs1.getClass());
+                }
                 count++;
-                entries.add(entryBuilder.setWhenExpression(whenExpression).build());
+                entries.add(entryBuilder.build());
             }
         }
         assert commonType != null;

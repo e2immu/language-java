@@ -235,9 +235,9 @@ public abstract class CommonParse {
             } else if (child instanceof Identifier id) {
                 identifier = id;
             } else if (child instanceof ClassOrInterfaceBody
-                       || child instanceof AnnotationTypeBody
-                       || child instanceof RecordBody
-                       || child instanceof EnumBody) {
+                    || child instanceof AnnotationTypeBody
+                    || child instanceof RecordBody
+                    || child instanceof EnumBody) {
                 sub = child;
                 break;
             }
@@ -322,13 +322,8 @@ public abstract class CommonParse {
     protected void parseNewSwitchLabel(String index, NewSwitchLabel nsl, Context newContext, SwitchEntry.Builder entryBuilder, ForwardType selectorTypeFwd) {
         org.e2immu.language.cst.api.expression.Expression whenExpression = runtime.newEmptyExpression();
         List<org.e2immu.language.cst.api.expression.Expression> conditions = new ArrayList<>();
-        if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
-            conditions.add(runtime.newEmptyExpression());
-        } else if (!Token.TokenType.CASE.equals(nsl.getFirst().getType())) {
-            throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
-        }
-        int j = 1;
-        while (j < nsl.size() - 1) {
+        int j = 0;
+        while (j < nsl.size()) {
             Node node = nsl.get(j);
             switch (node) {
                 case LocalVariableDeclaration lvd -> {
@@ -343,6 +338,11 @@ public abstract class CommonParse {
                     ForwardType booleanTypeFwd = newContext.newForwardType(runtime.booleanParameterizedType());
                     whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
                 }
+                case KeyWord kw -> {
+                    if (Token.TokenType._DEFAULT.equals(kw.getType())) {
+                        conditions.add(runtime.newEmptyExpression());
+                    } // else: ignore: case, (, ), ...
+                }
                 default -> {
                     Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
                     conditions.add(c);
@@ -351,7 +351,7 @@ public abstract class CommonParse {
             Node next = nsl.get(j + 1);
             if (Token.TokenType.COMMA.equals(next.getType())) {
                 j += 2;
-            } else if(Token.TokenType.LAMBDA.equals(next.getType())) {
+            } else if (Token.TokenType.LAMBDA.equals(next.getType())) {
                 break;
             } else {
                 j++;
