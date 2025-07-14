@@ -67,7 +67,7 @@ public class ParseType extends CommonParse {
             }
         } else {
             if (n0 instanceof PrimitiveArrayType pat && pat.getFirst() instanceof PrimitiveType primitive
-                && primitive.getFirst() instanceof Primitive p) {
+                    && primitive.getFirst() instanceof Primitive p) {
                 tt = p.getType();
                 int arrays = countArrays(pat);
                 ParameterizedType parameterizedType = primitiveType(tt);
@@ -171,12 +171,28 @@ public class ParseType extends CommonParse {
         }
         String qualifiedName = sb.toString();
         if (qualifiedName.isBlank()) throw new Summary.ParseException(context, "Expected a qualified name");
-        NamedType nt = context.typeContext().get(qualifiedName, complain);
-        if (nt == null) {
+        List<? extends NamedType> nts = context.typeContext().getWithQualification(qualifiedName, complain);
+        if (nts == null) {
             if (complain) throw new Summary.ParseException(context, "Expected non-null");
             return null;
         }
-        ParameterizedType withoutTypeParameters = nt.asSimpleParameterizedType();
+        ParameterizedType withoutTypeParameters = nts.getLast().asSimpleParameterizedType();
+        if (detailedSourcesBuilder != null) {
+            if (withoutTypeParameters.typeParameter() != null) {
+                detailedSourcesBuilder.put(withoutTypeParameters.typeParameter(), details.pop());
+            } else {
+                detailedSourcesBuilder.put(withoutTypeParameters.typeInfo(), details.pop());
+                List<DetailedSources.Builder.TypeInfoSource> associatedList = new ArrayList<>();
+                for (int j = nts.size() - 2; j >= 0; --j) {
+                    TypeInfo qualifier = (TypeInfo) nts.get(j);
+                    Source source = details.pop();
+                    associatedList.add(new DetailedSources.Builder.TypeInfoSource(qualifier, source));
+                }
+                if (!associatedList.isEmpty()) {
+                    detailedSourcesBuilder.putTypeQualification(withoutTypeParameters.typeInfo(), List.copyOf(associatedList));
+                }
+            }
+        }
         if (ot.size() > i && ot.get(i) instanceof TypeArguments tas) {
             List<ParameterizedType> typeArguments = parseTypeArguments(context, tas, complain, detailedSourcesBuilder);
             if (typeArguments == null) {
@@ -184,22 +200,7 @@ public class ParseType extends CommonParse {
                 return null;
             }
             if (!typeArguments.isEmpty()) {
-                if (detailedSourcesBuilder != null) {
-                    detailedSourcesBuilder.put(withoutTypeParameters.typeInfo(), source(ot, startNamedType, endNamedType));
-                }
                 return withoutTypeParameters.withParameters(List.copyOf(typeArguments));
-            }
-        }
-        if (detailedSourcesBuilder != null) {
-            if (withoutTypeParameters.typeParameter() != null) {
-                detailedSourcesBuilder.put(withoutTypeParameters.typeParameter(), details.pop());
-            } else {
-                TypeInfo object = withoutTypeParameters.typeInfo();
-                while (true) {
-                    detailedSourcesBuilder.put(object, details.pop());
-                    if (details.isEmpty() || object.compilationUnitOrEnclosingType().isLeft()) break;
-                    object = object.compilationUnitOrEnclosingType().getRight();
-                }
             }
         }
         return withoutTypeParameters;
