@@ -17,6 +17,7 @@ public class Parsers {
     private final ParseConstructorCall parseConstructorCall;
     private final ParseLambdaExpression parseLambdaExpression;
     private final ParseBlock parseBlock;
+    private final ParseRecordPattern parseRecordPattern;
 
     public Parsers(Runtime runtime) {
         parseType = new ParseType(runtime);
@@ -32,6 +33,7 @@ public class Parsers {
         parseMethodReference = new ParseMethodReference(runtime, this);
         parseConstructorCall = new ParseConstructorCall(runtime, this);
         parseLambdaExpression = new ParseLambdaExpression(runtime, this);
+        parseRecordPattern = new ParseRecordPattern(runtime, this);
     }
 
     public ParseBlock parseBlock() {
@@ -84,5 +86,9 @@ public class Parsers {
 
     public ParseTypeDeclaration parseTypeDeclaration() {
         return parseTypeDeclaration;
+    }
+
+    public ParseRecordPattern parseRecordPattern() {
+        return parseRecordPattern;
     }
 }

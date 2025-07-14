@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.DetailedSources;
+import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
@@ -599,6 +600,7 @@ public class ParseStatement extends CommonParse {
             if (child instanceof NewCaseStatement ncs) {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder()
                         .setSource(source(ncs)).addComments(comments(ncs));
+                Expression whenExpression = runtime.newEmptyExpression();
                 if (ncs.getFirst() instanceof NewSwitchLabel nsl) {
                     List<Expression> conditions = new ArrayList<>();
                     if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
@@ -608,15 +610,28 @@ public class ParseStatement extends CommonParse {
                     }
                     int j = 1;
                     while (j < nsl.size() - 1) {
-                        Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, nsl.get(j));
-                        conditions.add(c);
+                        Node node = nsl.get(j);
+                        if(node instanceof LocalVariableDeclaration lvd) {
+                            RecordPattern recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(context, lvd);
+                            entryBuilder.setPatternVariable(recordPattern);
+                        } else if(node instanceof WhenClause whenClause) {
+                            ForwardType booleanTypeFwd = context.newForwardType(runtime.booleanParameterizedType());
+                            whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
+                        } else {
+                            Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
+                            conditions.add(c);
+                        }
                         Node next = nsl.get(j + 1);
-                        if (!Token.TokenType.COMMA.equals(next.getType())) break;
-                        j += 2;
+                        if (Token.TokenType.COMMA.equals(next.getType())) {
+                            j += 2;
+                        } else if(Token.TokenType.LAMBDA.equals(next.getType())) {
+                            break;
+                        } else {
+                            j++;
+                        }
                     }
                     entryBuilder.addConditions(conditions);
                 } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
-                Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 if (ncs.get(1) instanceof CodeBlock cb) {
                     String newIndex = index + "." + StringUtil.pad(count, n);
                     entryBuilder.setStatement(parsers.parseBlock().parse(newContext, newIndex, null, cb));
@@ -628,8 +643,14 @@ public class ParseStatement extends CommonParse {
                 entries.add(entryBuilder.setWhenExpression(whenExpression).build());
             }
         }
-        return runtime.newSwitchStatementNewStyleBuilder().addComments(comments).setSource(source).setLabel(label)
-                .addAnnotations(annotations).setSelector(selector).addSwitchEntries(entries).build();
+        return runtime.newSwitchStatementNewStyleBuilder()
+                .addComments(comments)
+                .setSource(source)
+                .setLabel(label)
+                .addAnnotations(annotations)
+                .setSelector(selector)
+                .addSwitchEntries(entries)
+                .build();
     }
 
     private SwitchStatementOldStyle parseOldStyleSwitch(Context context, String index, Statement statement,
