@@ -600,37 +600,8 @@ public class ParseStatement extends CommonParse {
             if (child instanceof NewCaseStatement ncs) {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder()
                         .setSource(source(ncs)).addComments(comments(ncs));
-                Expression whenExpression = runtime.newEmptyExpression();
                 if (ncs.getFirst() instanceof NewSwitchLabel nsl) {
-                    List<Expression> conditions = new ArrayList<>();
-                    if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
-                        conditions.add(runtime.newEmptyExpression());
-                    } else if (!Token.TokenType.CASE.equals(nsl.getFirst().getType())) {
-                        throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
-                    }
-                    int j = 1;
-                    while (j < nsl.size() - 1) {
-                        Node node = nsl.get(j);
-                        if(node instanceof LocalVariableDeclaration lvd) {
-                            RecordPattern recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(context, lvd);
-                            entryBuilder.setPatternVariable(recordPattern);
-                        } else if(node instanceof WhenClause whenClause) {
-                            ForwardType booleanTypeFwd = context.newForwardType(runtime.booleanParameterizedType());
-                            whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
-                        } else {
-                            Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
-                            conditions.add(c);
-                        }
-                        Node next = nsl.get(j + 1);
-                        if (Token.TokenType.COMMA.equals(next.getType())) {
-                            j += 2;
-                        } else if(Token.TokenType.LAMBDA.equals(next.getType())) {
-                            break;
-                        } else {
-                            j++;
-                        }
-                    }
-                    entryBuilder.addConditions(conditions);
+                    parseNewSwitchLabel(index, nsl, newContext, entryBuilder, selectorTypeFwd);
                 } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
                 if (ncs.get(1) instanceof CodeBlock cb) {
                     String newIndex = index + "." + StringUtil.pad(count, n);
@@ -640,7 +611,7 @@ public class ParseStatement extends CommonParse {
                     entryBuilder.setStatement(parse(newContext, newIndex, st));
                 } else throw new Summary.ParseException(newContext, "Expect statement");
                 count++;
-                entries.add(entryBuilder.setWhenExpression(whenExpression).build());
+                entries.add(entryBuilder.build());
             }
         }
         return runtime.newSwitchStatementNewStyleBuilder()

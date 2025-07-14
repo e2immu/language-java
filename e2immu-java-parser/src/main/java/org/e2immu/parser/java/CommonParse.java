@@ -3,15 +3,19 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.statement.SwitchEntry;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.parser.java.util.JavaDocParser;
 import org.e2immu.support.Either;
@@ -313,4 +317,43 @@ public abstract class CommonParse {
                     annotationIndex++));
         }
     }
+
+
+    protected void parseNewSwitchLabel(String index, NewSwitchLabel nsl, Context newContext, SwitchEntry.Builder entryBuilder, ForwardType selectorTypeFwd) {
+        org.e2immu.language.cst.api.expression.Expression whenExpression = runtime.newEmptyExpression();
+        List<org.e2immu.language.cst.api.expression.Expression> conditions = new ArrayList<>();
+        if (Token.TokenType._DEFAULT.equals(nsl.getFirst().getType())) {
+            conditions.add(runtime.newEmptyExpression());
+        } else if (!Token.TokenType.CASE.equals(nsl.getFirst().getType())) {
+            throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
+        }
+        int j = 1;
+        while (j < nsl.size() - 1) {
+            Node node = nsl.get(j);
+            if(node instanceof LocalVariableDeclaration lvd) {
+                RecordPattern recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(newContext, lvd);
+                entryBuilder.setPatternVariable(recordPattern);
+            } else if(node instanceof org.parsers.java.ast.RecordPattern rp) {
+                RecordPattern recordPattern = parsers.parseRecordPattern().parseRecordPattern(newContext, rp);
+                entryBuilder.setPatternVariable(recordPattern);
+            } else if(node instanceof WhenClause whenClause) {
+                ForwardType booleanTypeFwd = newContext.newForwardType(runtime.booleanParameterizedType());
+                whenExpression = parsers.parseExpression().parse(newContext, index, booleanTypeFwd, whenClause.get(1));
+            } else {
+                Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, node);
+                conditions.add(c);
+            }
+            Node next = nsl.get(j + 1);
+            if (Token.TokenType.COMMA.equals(next.getType())) {
+                j += 2;
+            } else if(Token.TokenType.LAMBDA.equals(next.getType())) {
+                break;
+            } else {
+                j++;
+            }
+        }
+        entryBuilder.addConditions(conditions);
+        entryBuilder.setWhenExpression(whenExpression);
+    }
+
 }

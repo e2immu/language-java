@@ -224,21 +224,7 @@ public class ParseExpression extends CommonParse {
                 SwitchEntry.Builder entryBuilder = runtime.newSwitchEntryBuilder()
                         .setSource(source(ncs)).addComments(comments(ncs));
                 if (ncs.get(0) instanceof NewSwitchLabel nsl) {
-                    List<Expression> conditions = new ArrayList<>();
-                    if (Token.TokenType._DEFAULT.equals(nsl.get(0).getType())) {
-                        conditions.add(runtime.newEmptyExpression());
-                    } else if (!Token.TokenType.CASE.equals(nsl.get(0).getType())) {
-                        throw new Summary.ParseException(newContext, "Expect 'case' or 'default'");
-                    }
-                    int j = 1;
-                    while (j < nsl.size() - 1) {
-                        Expression c = parsers.parseExpression().parse(newContext, index, selectorTypeFwd, nsl.get(j));
-                        conditions.add(c);
-                        Node next = nsl.get(j + 1);
-                        if (!Token.TokenType.COMMA.equals(next.getType())) break;
-                        j += 2;
-                    }
-                    entryBuilder.addConditions(conditions);
+                    parseNewSwitchLabel(index, nsl, newContext, entryBuilder, selectorTypeFwd);
                 } else throw new Summary.ParseException(newContext, "Expect NewCaseStatement");
                 Expression whenExpression = runtime.newEmptyExpression(); // FIXME
                 Node ncs1 = ncs.get(1);
