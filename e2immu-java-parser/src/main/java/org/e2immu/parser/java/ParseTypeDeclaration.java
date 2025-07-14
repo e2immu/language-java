@@ -99,7 +99,7 @@ public class ParseTypeDeclaration extends CommonParse {
                                                                       Either<CompilationUnit, TypeInfo> packageNameOrEnclosing,
                                                                       Function<String, TypeInfo> bySimpleName,
                                                                       TypeDeclaration td,
-                                                                    boolean  mustDelayForStaticStarImport) {
+                                                                      boolean mustDelayForStaticStarImport) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
         int i = 0;
@@ -241,9 +241,9 @@ public class ParseTypeDeclaration extends CommonParse {
                                                    List<Annotation> annotations,
                                                    List<RecordComponent> recordComponents) {
         List<RecordField> recordFields;
-        if(recordComponents != null) {
+        if (recordComponents != null) {
             recordFields = new ArrayList<>(recordComponents.size());
-            for(RecordComponent rc: recordComponents) {
+            for (RecordComponent rc : recordComponents) {
                 recordFields.add(parseRecordField(newContext, typeInfo, rc));
             }
         } else {
@@ -303,7 +303,7 @@ public class ParseTypeDeclaration extends CommonParse {
                             // FIXME pass on detailed sources
                             newContext.resolver().add(fieldInfo, fieldInfo.builder(),
                                     newContext.newForwardType(typeInfo.asSimpleParameterizedType()),
-                                    null, ia, newContext);
+                                    null, ia, newContext, null);
                         } else {
                             fieldInfo.builder().commit();
                         }
@@ -313,7 +313,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 builder.setParentClass(runtime.newParameterizedType(enumTypeInfo, List.of(typeInfo.asSimpleParameterizedType())));
                 new EnumSynthetics(runtime, typeInfo, builder).create(newContext, enumFields);
             }
-            parseBody(contextForBody, body, typeNature, typeInfo, builder);
+            parseBody(contextForBody, body, typeNature, typeInfo, builder, recordFields);
         } else if (body instanceof AnnotationTypeBody) {
             for (Node child : body.children()) {
                 if (child instanceof TypeDeclaration subTd) {
@@ -484,7 +484,8 @@ public class ParseTypeDeclaration extends CommonParse {
                    Node body,
                    TypeNature typeNature,
                    TypeInfo typeInfo,
-                   TypeInfo.Builder builder) {
+                   TypeInfo.Builder builder,
+                   List<RecordField> recordFields) {
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         int countNormalConstructors = 0;
@@ -513,12 +514,12 @@ public class ParseTypeDeclaration extends CommonParse {
         for (Node child : body.children()) {
             if (!(child instanceof EmptyDeclaration)) {
                 if (child instanceof MethodDeclaration md) {
-                    MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md);
+                    MethodInfo methodInfo = parsers.parseMethodDeclaration().parse(newContext, md, null);
                     if (methodInfo != null) {
                         builder.addMethod(methodInfo);
                     } // else error
                 } else if (child instanceof ConstructorDeclaration cd) {
-                    MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd);
+                    MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd, recordFields);
                     if (constructor != null) {
                         builder.addConstructor(constructor);
                     } // else error
@@ -536,7 +537,8 @@ public class ParseTypeDeclaration extends CommonParse {
                                     .setAccess(runtime.accessPrivate())
                                     .commitParameters();
                             newContext.resolver().add(staticMethod, staticMethod.builder(),
-                                    newContext.emptyForwardType(), null, cb, newContext);
+                                    newContext.emptyForwardType(), null, cb, newContext,
+                                    null);
                             builder.addMethod(staticMethod);
                         } else {
                             throw new Summary.ParseException(newContext, "Unknown node in static initializer");
@@ -550,7 +552,8 @@ public class ParseTypeDeclaration extends CommonParse {
                                 .commitParameters();
                         builder.addConstructor(constructor);
                         initializerContext.resolver().add(constructor, constructor.builder(),
-                                initializerContext.emptyForwardType(), null, cb, initializerContext);
+                                initializerContext.emptyForwardType(), null, cb, initializerContext,
+                                null);
                         countNormalConstructors++;
                     } else throw new Summary.ParseException(newContext, "Unknown initializer");
                 }

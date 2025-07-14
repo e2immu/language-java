@@ -2,12 +2,15 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.expression.Assignment;
+import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeParameter;
+import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -27,9 +30,9 @@ public class ParseMethodDeclaration extends CommonParse {
         super(runtime, parsers);
     }
 
-    public MethodInfo parse(Context context, Node md) {
+    public MethodInfo parse(Context context, Node md, List<ParseTypeDeclaration.RecordField> recordFields) {
         try {
-            return internalParse(context, md);
+            return internalParse(context, md, recordFields);
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
@@ -40,7 +43,7 @@ public class ParseMethodDeclaration extends CommonParse {
         }
     }
 
-    private MethodInfo internalParse(Context context, Node md) {
+    private MethodInfo internalParse(Context context, Node md, List<ParseTypeDeclaration.RecordField> recordFields) {
         int i = 0;
         List<Annotation> annotations = new ArrayList<>();
         List<MethodModifier> methodModifiers = new ArrayList<>();
@@ -109,7 +112,7 @@ public class ParseMethodDeclaration extends CommonParse {
         } else if (methodModifiers.contains(runtime.methodModifierStatic())) {
             methodType = runtime.methodTypeStaticMethod();
         } else if (methodModifiers.contains(runtime.methodModifierAbstract())
-                   || context.enclosingType().isInterface()) {
+                || context.enclosingType().isInterface()) {
             methodType = runtime.methodTypeAbstractMethod();
         } else {
             methodType = runtime.methodTypeMethod();
@@ -137,6 +140,7 @@ public class ParseMethodDeclaration extends CommonParse {
         ForwardType forwardType = contextWithTP.newForwardType(returnType);
         Context newContext = contextWithTP.newVariableContextForMethodBlock(methodInfo, forwardType);
 
+        List<org.e2immu.language.cst.api.statement.Statement> recordAssignments;
         if (md.get(i) instanceof FormalParameters fps) {
             for (Node child : fps.children()) {
                 if (child instanceof FormalParameter fp) {
@@ -148,7 +152,27 @@ public class ParseMethodDeclaration extends CommonParse {
                 detailedSourcesBuilder.put(DetailedSources.END_OF_PARAMETER_LIST, source(delimiter));
             }
             i++;
-        } else if (!compactConstructor) {
+            recordAssignments = null;
+        } else if (compactConstructor) {
+            LOGGER.debug("Adding synthetic parameters");
+            recordAssignments = new ArrayList<>(recordFields.size());
+            Source noSource = runtime.noSource();
+            for (ParseTypeDeclaration.RecordField recordField : recordFields) {
+                ParameterInfo pi = builder.addParameter(recordField.fieldInfo().name(), recordField.fieldInfo().type());
+                pi.builder().setVarArgs(recordField.varargs());
+                pi.builder().setIsFinal(false);
+                FieldReference fr = runtime.newFieldReference(recordField.fieldInfo());
+                Assignment assignment = runtime.newAssignmentBuilder()
+                        .setTarget(runtime.newVariableExpressionBuilder().setVariable(fr).setSource(noSource).build())
+                        .setValue(runtime.newVariableExpressionBuilder().setVariable(pi).setSource(noSource).build())
+                        .setSource(noSource)
+                        .build();
+                var statement = runtime.newExpressionAsStatementBuilder()
+                        .setSource(noSource)
+                        .setExpression(assignment).build();
+                recordAssignments.add(statement);
+            }
+        } else {
             throw new UnsupportedOperationException("Node " + md.get(i).getClass());
         } // a constructor can be a "compact" one in records
         if (md.get(i) instanceof ThrowsList throwsList) {
@@ -179,7 +203,7 @@ public class ParseMethodDeclaration extends CommonParse {
         if (toResolve != null || explicitConstructorInvocation != null) {
             Context resContext = context.newVariableContextForMethodBlock(methodInfo, null);
             resContext.resolver().add(methodInfo, builder, resContext.emptyForwardType(), explicitConstructorInvocation,
-                    toResolve, newContext);
+                    toResolve, newContext, recordAssignments);
         } else {
             builder.setMethodBody(runtime.emptyBlock());
         }

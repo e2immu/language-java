@@ -245,7 +245,7 @@ public class ParseConstructorCall extends CommonParse {
         // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
         // also those of the type we're extending:
         newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(concreteReturnType.typeInfo());
-        parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType, builder);
+        parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType, builder, null);
         newContext.resolver().resolve(false);
         builder.commit();
         return runtime.newConstructorCallBuilder()

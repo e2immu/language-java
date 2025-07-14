@@ -5,11 +5,13 @@ import org.e2immu.language.cst.api.element.Element;
 import org.e2immu.language.cst.api.element.JavaDoc;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
+import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
+import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
 import org.e2immu.language.cst.api.statement.Statement;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -24,6 +26,7 @@ import org.parsers.java.ast.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ParseHelperImpl implements ParseHelper {
     private final Parsers parsers;
@@ -90,7 +93,8 @@ public class ParseHelperImpl implements ParseHelper {
                                   Context context,
                                   ForwardType forwardType,
                                   Object unparsedEci,
-                                  Object expression) {
+                                  Object expression,
+                                  List<Statement> recordAssignments) {
         org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
         if (unparsedEci == null) {
             eci = null;
@@ -115,22 +119,43 @@ public class ParseHelperImpl implements ParseHelper {
         }
         if (e instanceof Block b) {
             Block bWithEci;
-            if (eci == null) {
-                bWithEci = b;
-            } else {
+            if (eci != null) {
                 bWithEci = runtime.newBlockBuilder().addStatement(eci).addStatements(b.statements()).build();
+            } else if (recordAssignments != null) {
+                bWithEci = runtime.newBlockBuilder()
+                        .addStatements(b.statements())
+                        .addStatements(addIndices(recordAssignments, b.statements().size()))
+                        .build();
+            } else {
+                bWithEci = b;
             }
             builder.setMethodBody(bWithEci);
         } else if (e instanceof Statement s) {
             Block.Builder bb = runtime.newBlockBuilder();
             if (eci != null) bb.addStatement(eci);
-            builder.setMethodBody(bb.addStatement(s).build());
+            bb.addStatement(s);
+            if (recordAssignments != null) {
+                bb.addStatements(addIndices(recordAssignments, bb.statements().size()));
+            }
+            builder.setMethodBody(bb.build());
         } else if (e == null && eci != null) {
             builder.setMethodBody(runtime.newBlockBuilder().addStatement(eci).build());
+        } else if (e == null && recordAssignments != null) {
+            builder.setMethodBody(runtime.newBlockBuilder()
+                    .addStatements(addIndices(recordAssignments, 0))
+                    .build());
         } else {
             // in Java, we must have a block
             throw new UnsupportedOperationException();
         }
+    }
+
+    // each statement must have an index
+    private List<Statement> addIndices(List<Statement> statements, int start) {
+        AtomicInteger count = new AtomicInteger(start);
+        return statements.stream().map(s -> (Statement) ((ExpressionAsStatement) s)
+                        .withSource(runtime.newParserSource("" + count.getAndIncrement(), 0, 0, 0, 0)))
+                .toList();
     }
 
     /*
