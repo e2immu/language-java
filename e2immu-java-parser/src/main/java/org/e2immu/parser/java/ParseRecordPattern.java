@@ -8,6 +8,7 @@ import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.parsers.java.Node;
+import org.parsers.java.Token;
 import org.parsers.java.ast.Identifier;
 import org.parsers.java.ast.KeyWord;
 import org.parsers.java.ast.LocalVariableDeclaration;
@@ -25,15 +26,17 @@ public class ParseRecordPattern extends CommonParse {
 
 
     public RecordPattern parseRecordPattern(Context context,
-                                             org.parsers.java.ast.RecordPattern rp) {
+                                            org.parsers.java.ast.RecordPattern rp) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         ParameterizedType recordType = parsers.parseType().parse(context, rp.getFirst(), detailedSourcesBuilder);
         List<RecordPattern> list = new ArrayList<>();
+        int recordFieldIndex = 0;
         for (int i = 2; i < rp.size(); i += 2) {
             Node node = rp.get(i);
             RecordPattern pattern = switch (node) {
                 case org.parsers.java.ast.RecordPattern subRp -> parseRecordPattern(context, subRp);
-                case LocalVariableDeclaration lvd -> parseLocalVariableDeclaration(context, lvd);
+                case LocalVariableDeclaration lvd ->
+                        parseLocalVariableDeclaration(context, lvd, recordFieldIndex, recordType);
                 case KeyWord kw when UNDERSCORE.equals(kw.getType()) -> runtime.newRecordPatternBuilder()
                         .setSource(source(kw))
                         .setUnnamedPattern(true).build();
@@ -43,6 +46,7 @@ public class ParseRecordPattern extends CommonParse {
             if (detailedSourcesBuilder != null) {
                 detailedSourcesBuilder.put(pattern, source(node));
             }
+            ++recordFieldIndex;
         }
         Source source = source(rp);
         return runtime.newRecordPatternBuilder()
@@ -53,12 +57,18 @@ public class ParseRecordPattern extends CommonParse {
     }
 
     public RecordPattern parseLocalVariableDeclaration(Context context,
-                                                        LocalVariableDeclaration lvd) {
+                                                       LocalVariableDeclaration lvd,
+                                                       int recordFieldIndex,
+                                                       ParameterizedType recordType) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         ParameterizedType pt;
         if (lvd.getFirst() instanceof Type type) {
             pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
-        } else throw new UnsupportedOperationException();
+        } else if (lvd.getFirst() instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
+            pt = runtime.booleanParameterizedType(); // FIXME
+        } else {
+            throw new UnsupportedOperationException();
+        }
         LocalVariable lv;
         if (lvd.get(1) instanceof Identifier identifier) {
             String name = identifier.getSource();

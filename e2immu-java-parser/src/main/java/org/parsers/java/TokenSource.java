@@ -51,6 +51,7 @@ abstract public class TokenSource implements CharSequence {
     // in 1-based line/column terms
     private int startingLine;
     private int startingColumn;
+    private int extraIndent;
 
     /**
     * Set the starting line/column for location reporting.
@@ -59,6 +60,14 @@ abstract public class TokenSource implements CharSequence {
     public void setStartingPos(int startingLine, int startingColumn) {
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
+    }
+
+    public void setExtraIndent(int extraIndent) {
+        this.extraIndent = extraIndent;
+    }
+
+    public int getExtraIndent() {
+        return this.extraIndent;
     }
 
     protected TokenSource(String inputSource, CharSequence input, int startingLine, int startingColumn, int tabSize, boolean preserveTabs, boolean preserveLineEndings, boolean javaUnicodeEscape, String terminatingString) {
@@ -342,6 +351,22 @@ abstract public class TokenSource implements CharSequence {
     */
     public String getText(int startOffset, int endOffset) {
         return subSequence(startOffset, endOffset).toString();
+    }
+
+    public boolean atLineStart(Node.TerminalNode tok) {
+        int offset = tok.getBeginOffset();
+        while (offset > 0) {
+            --offset;
+            char c = charAt(offset);
+            if (!Character.isWhitespace(c)) return false;
+            if (c == '\n') break;
+        }
+        return true;
+    }
+
+    public String getLine(Node.TerminalNode tok) {
+        int lineNum = tok.getBeginLine();
+        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
     }
 
     // The source of the raw characters that we are scanning

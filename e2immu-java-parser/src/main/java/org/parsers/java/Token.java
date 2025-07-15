@@ -68,7 +68,7 @@ public class Token implements CharSequence, Node.TerminalNode {
 
     }
 
-    private JavaLexer tokenSource;
+    private TokenSource tokenSource;
     private TokenType type = TokenType.DUMMY;
     private int beginOffset;
     private int endOffset;
@@ -99,11 +99,19 @@ public class Token implements CharSequence, Node.TerminalNode {
     }
 
     /**
-    * @return the JavaLexer object that handles
+    * @return the TokenSource object that handles
     * location info for the tokens.
     */
-    public JavaLexer getTokenSource() {
-        return this.tokenSource;
+    public TokenSource getTokenSource() {
+        return tokenSource;
+    }
+
+    /**
+    * @return the line of source which contains the token.
+    * This can be useful in error reporting.
+    */
+    public String getSourceLine() {
+        return tokenSource.getLine(this);
     }
 
     /**
@@ -111,7 +119,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * programmer needs to use this method.
     */
     public void setTokenSource(TokenSource tokenSource) {
-        this.tokenSource = (JavaLexer) tokenSource;
+        this.tokenSource = tokenSource;
     }
 
     public boolean isInvalid() {
@@ -153,13 +161,10 @@ public class Token implements CharSequence, Node.TerminalNode {
     }
 
     /**
-    * @return the string image of the token.
-    */
-    @Override
-    /**
     * @return the next _cached_ regular (i.e. parsed) token
     * or null
     */
+    @Override
     public final Token getNext() {
         return getNextParsedToken();
     }
@@ -192,7 +197,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     */
     public Token nextCachedToken() {
         if (getType() == TokenType.EOF) return null;
-        JavaLexer tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource != null ? (Token) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
@@ -206,6 +211,9 @@ public class Token implements CharSequence, Node.TerminalNode {
     }
 
     public Token replaceType(TokenType type) {
+        if (type == this.getType()) {
+            return this;
+        }
         Token result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
         getTokenSource().cacheToken(result);
         return result;
@@ -213,7 +221,7 @@ public class Token implements CharSequence, Node.TerminalNode {
 
     public String getSource() {
         if (type == TokenType.EOF) return "";
-        JavaLexer ts = getTokenSource();
+        TokenSource ts = getTokenSource();
         int beginOffset = getBeginOffset();
         int endOffset = getEndOffset();
         return ts == null || beginOffset <= 0 && endOffset <= 0 ? null : ts.getText(beginOffset, endOffset);
@@ -222,7 +230,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     protected Token() {
     }
 
-    public Token(TokenType type, JavaLexer tokenSource, int beginOffset, int endOffset) {
+    public Token(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -304,17 +312,17 @@ public class Token implements CharSequence, Node.TerminalNode {
         setEndOffset(end.getEndOffset());
     }
 
-    public static Token newToken(TokenType type, JavaLexer tokenSource) {
+    public static Token newToken(TokenType type, TokenSource tokenSource) {
         Token result = newToken(type, tokenSource, 0, 0);
         return result;
     }
 
-    public static Token newToken(TokenType type, String image, JavaLexer tokenSource) {
+    public static Token newToken(TokenType type, String image, TokenSource tokenSource) {
         Token newToken = newToken(type, tokenSource);
         return newToken;
     }
 
-    public static Token newToken(TokenType type, JavaLexer tokenSource, int beginOffset, int endOffset) {
+    public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         switch(type) {
             case TRANSITIVE : 
                 return new KeyWord(TokenType.TRANSITIVE, tokenSource, beginOffset, endOffset);
@@ -585,10 +593,6 @@ public class Token implements CharSequence, Node.TerminalNode {
             default : 
                 return new Token(type, tokenSource, beginOffset, endOffset);
         }
-    }
-
-    public String getLocation() {
-        return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
     }
 
     public Node getParent() {

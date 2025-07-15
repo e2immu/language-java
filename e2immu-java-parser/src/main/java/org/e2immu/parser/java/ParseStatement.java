@@ -540,7 +540,8 @@ public class ParseStatement extends CommonParse {
     private LocalVariableCreation forEachElementWithVar(Context context, VarDeclaration varDeclaration,
                                                         ParameterizedType elementType) {
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-        Identifier identifier = (Identifier) varDeclaration.get(1);
+        VariableDeclarator vd = (VariableDeclarator) varDeclaration.get(1);
+        Identifier identifier = (Identifier) vd.getFirst();
         String variableName = identifier.getSource();
         LocalVariable lv = runtime.newLocalVariable(variableName, elementType, runtime.newEmptyExpression());
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
@@ -559,9 +560,10 @@ public class ParseStatement extends CommonParse {
                                                                List<Comment> comments, String label,
                                                                List<AnnotationExpression> annotations) {
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-        Identifier identifier = (Identifier) varDeclaration.get(i);
+        VariableDeclarator vd = (VariableDeclarator) varDeclaration.get(i);
+        Identifier identifier = (Identifier) vd.get(0);
         ForwardType forwardType = context.emptyForwardType();
-        Expression expression = parsers.parseExpression().parse(context, index, forwardType, varDeclaration.get(i + 2));
+        Expression expression = parsers.parseExpression().parse(context, index, forwardType, vd.get(2));
         String variableName = identifier.getSource();
         ParameterizedType type = expression.parameterizedType();
         LocalVariable lv = runtime.newLocalVariable(variableName, type, expression);

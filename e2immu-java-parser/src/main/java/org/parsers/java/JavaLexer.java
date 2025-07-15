@@ -9,7 +9,7 @@ import java.util.*;
 public class JavaLexer extends TokenSource {
     private static MatcherHook MATCHER_HOOK;
 
-    // this cannot be initialize here, since hook must be set afterwards
+    // this cannot be initialized here, since hook must be set afterwards
     public enum LexicalState {
         JAVA
     }
@@ -64,11 +64,11 @@ public class JavaLexer extends TokenSource {
     * @param inputSource just the name of the input source (typically the filename) that
     * will be used in error messages and so on.
     * @param input the input
-    * @param lexicalState The starting lexical state, may be null to indicate the default
+    * @param lexState The starting lexical state, may be null to indicate the default
     * starting state
-    * @param line The line number at which we are starting for the purposes of location/error messages. In most
+    * @param startingLine The line number at which we are starting for the purposes of location/error messages. In most
     * normal usage, this is 1.
-    * @param column number at which we are starting for the purposes of location/error messages. In most normal
+    * @param startingColumn number at which we are starting for the purposes of location/error messages. In most normal
     * usages this is 1.
     */
     public JavaLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
@@ -277,12 +277,18 @@ public class JavaLexer extends TokenSource {
     private Token tokenLexicalActions(Token matchedToken, TokenType matchedType) {
         switch(matchedType) {
             case CTRL_Z : 
+                // Code action from JavaLexer.ccc:15:19
                 matchedToken.setType(TokenType.EOF);
                 break;
             default : 
                 break;
         }
         return matchedToken;
+    }
+
+    public String getLine(Token tok) {
+        int lineNum = tok.getBeginLine();
+        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
     }
 
 
@@ -312,242 +318,242 @@ public class JavaLexer extends TokenSource {
             TokenType type = null;
             if (ch == '!') {
                 if (validTypes == null || validTypes.contains(NE)) {
-                    nextStates.set(4);
+                    nextStates.set(93);
                 }
             } else if (ch == '"') {
                 if (validTypes == null || validTypes.contains(TEXT_BLOCK_LITERAL)) {
-                    nextStates.set(196);
+                    nextStates.set(200);
                 }
                 if (validTypes == null || validTypes.contains(STRING_LITERAL)) {
-                    nextStates.set(85);
+                    nextStates.set(29);
                 }
             } else if (ch == '%') {
                 if (validTypes == null || validTypes.contains(REMASSIGN)) {
-                    nextStates.set(118);
+                    nextStates.set(33);
                 }
             } else if (ch == '&') {
                 if (validTypes == null || validTypes.contains(ANDASSIGN)) {
-                    nextStates.set(27);
+                    nextStates.set(132);
                 }
                 if (validTypes == null || validTypes.contains(SC_AND)) {
-                    nextStates.set(51);
+                    nextStates.set(134);
                 }
             } else if (ch == '\'') {
                 if (validTypes == null || validTypes.contains(CHARACTER_LITERAL)) {
-                    nextStates.set(258);
+                    nextStates.set(244);
                 }
             } else if (ch == '*') {
                 if (validTypes == null || validTypes.contains(STARASSIGN)) {
-                    nextStates.set(97);
+                    nextStates.set(57);
                 }
             } else if (ch == '+') {
-                if (validTypes == null || validTypes.contains(INCR)) {
-                    nextStates.set(33);
-                }
                 if (validTypes == null || validTypes.contains(PLUSASSIGN)) {
-                    nextStates.set(70);
+                    nextStates.set(46);
+                }
+                if (validTypes == null || validTypes.contains(INCR)) {
+                    nextStates.set(66);
                 }
             } else if (ch == '-') {
                 if (validTypes == null || validTypes.contains(LAMBDA)) {
-                    nextStates.set(23);
-                }
-                if (validTypes == null || validTypes.contains(MINUSASSIGN)) {
-                    nextStates.set(125);
+                    nextStates.set(113);
                 }
                 if (validTypes == null || validTypes.contains(DECR)) {
                     nextStates.set(154);
                 }
+                if (validTypes == null || validTypes.contains(MINUSASSIGN)) {
+                    nextStates.set(155);
+                }
             } else if (ch == '.') {
                 if (validTypes == null || validTypes.contains(VAR_ARGS)) {
-                    nextStates.set(191);
+                    nextStates.set(257);
                 }
                 if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(39);
+                    nextStates.set(114);
                 }
             } else if (ch == '/') {
-                if (validTypes == null || validTypes.contains(SINGLE_LINE_COMMENT)) {
-                    nextStates.set(235);
-                }
                 if (validTypes == null || validTypes.contains(MULTI_LINE_COMMENT)) {
-                    nextStates.set(296);
+                    nextStates.set(294);
                 }
                 if (validTypes == null || validTypes.contains(SLASHASSIGN)) {
-                    nextStates.set(101);
+                    nextStates.set(68);
+                }
+                if (validTypes == null || validTypes.contains(SINGLE_LINE_COMMENT)) {
+                    nextStates.set(345);
                 }
             } else if (ch == '0') {
+                if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
+                    nextStates.set(194);
+                }
                 if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
-                    nextStates.set(179);
+                    nextStates.set(214);
+                }
+                if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
+                    nextStates.set(250);
                 }
                 if (validTypes == null || validTypes.contains(LONG_LITERAL)) {
-                    nextStates.set(228);
-                }
-                if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
-                    nextStates.set(304);
+                    nextStates.set(258);
                 }
                 if (validTypes == null || validTypes.contains(LONG_LITERAL)) {
-                    nextStates.set(368);
-                }
-                if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
-                    nextStates.set(98);
+                    nextStates.set(348);
                 }
                 if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(389);
+                    nextStates.set(376);
                 }
-                if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(424);
+                if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
+                    nextStates.set(123);
                 }
                 if (validTypes == null || validTypes.contains(LONG_LITERAL)) {
-                    nextStates.set(438);
+                    nextStates.set(466);
                 }
             }
             if (ch >= '0' && ch <= '9') {
                 if (validTypes == null || validTypes.contains(LONG_LITERAL)) {
-                    nextStates.set(82);
+                    nextStates.set(15);
                 }
                 if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(373);
+                    nextStates.set(226);
                 }
                 if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(126);
+                    nextStates.set(88);
                 }
                 if (validTypes == null || validTypes.contains(FLOATING_POINT_LITERAL)) {
-                    nextStates.set(137);
+                    nextStates.set(140);
                 }
             } else if (ch == ':') {
                 if (validTypes == null || validTypes.contains(DOUBLE_COLON)) {
-                    nextStates.set(69);
+                    nextStates.set(23);
                 }
             } else if (ch == '<') {
                 if (validTypes == null || validTypes.contains(LSHIFTASSIGN)) {
-                    nextStates.set(256);
+                    nextStates.set(350);
                 }
                 if (validTypes == null || validTypes.contains(LSHIFT)) {
-                    nextStates.set(61);
+                    nextStates.set(109);
                 }
                 if (validTypes == null || validTypes.contains(LE)) {
-                    nextStates.set(66);
+                    nextStates.set(136);
                 }
             } else if (ch == '=') {
                 if (validTypes == null || validTypes.contains(EQ)) {
-                    nextStates.set(87);
+                    nextStates.set(102);
                 }
             } else if (ch == '>') {
-                if (validTypes == null || validTypes.contains(RUNSIGNEDSHIFTASSIGN)) {
-                    nextStates.set(175);
+                if (validTypes == null || validTypes.contains(RSIGNEDSHIFTASSIGN)) {
+                    nextStates.set(186);
                 }
                 if (validTypes == null || validTypes.contains(RUNSIGNEDSHIFT)) {
-                    nextStates.set(388);
+                    nextStates.set(215);
+                }
+                if (validTypes == null || validTypes.contains(RUNSIGNEDSHIFTASSIGN)) {
+                    nextStates.set(248);
                 }
                 if (validTypes == null || validTypes.contains(RSIGNEDSHIFT)) {
-                    nextStates.set(109);
-                }
-                if (validTypes == null || validTypes.contains(RSIGNEDSHIFTASSIGN)) {
-                    nextStates.set(415);
+                    nextStates.set(52);
                 }
                 if (validTypes == null || validTypes.contains(GE)) {
-                    nextStates.set(124);
+                    nextStates.set(130);
                 }
             } else if (ch == '^') {
                 if (validTypes == null || validTypes.contains(XORASSIGN)) {
-                    nextStates.set(58);
+                    nextStates.set(105);
                 }
             } else if (ch == 'a') {
-                if (validTypes == null || validTypes.contains(_ASSERT)) {
-                    nextStates.set(292);
-                }
                 if (validTypes == null || validTypes.contains(ABSTRACT)) {
-                    nextStates.set(446);
+                    nextStates.set(438);
+                }
+                if (validTypes == null || validTypes.contains(_ASSERT)) {
+                    nextStates.set(469);
                 }
             } else if (ch == 'b') {
                 if (validTypes == null || validTypes.contains(BREAK)) {
-                    nextStates.set(262);
-                }
-                if (validTypes == null || validTypes.contains(BYTE)) {
-                    nextStates.set(282);
+                    nextStates.set(162);
                 }
                 if (validTypes == null || validTypes.contains(BOOLEAN)) {
-                    nextStates.set(419);
+                    nextStates.set(219);
+                }
+                if (validTypes == null || validTypes.contains(BYTE)) {
+                    nextStates.set(374);
                 }
             } else if (ch == 'c') {
-                if (validTypes == null || validTypes.contains(CATCH)) {
-                    nextStates.set(225);
-                }
-                if (validTypes == null || validTypes.contains(CHAR)) {
-                    nextStates.set(272);
-                }
-                if (validTypes == null || validTypes.contains(CASE)) {
-                    nextStates.set(302);
-                }
-                if (validTypes == null || validTypes.contains(CONST)) {
-                    nextStates.set(376);
+                if (validTypes == null || validTypes.contains(CLASS)) {
+                    nextStates.set(261);
                 }
                 if (validTypes == null || validTypes.contains(CONTINUE)) {
-                    nextStates.set(382);
+                    nextStates.set(276);
                 }
-                if (validTypes == null || validTypes.contains(CLASS)) {
-                    nextStates.set(412);
+                if (validTypes == null || validTypes.contains(CASE)) {
+                    nextStates.set(309);
                 }
-            } else if (ch == 'd') {
-                if (validTypes == null || validTypes.contains(_DEFAULT)) {
-                    nextStates.set(170);
+                if (validTypes == null || validTypes.contains(CHAR)) {
+                    nextStates.set(396);
                 }
-                if (validTypes == null || validTypes.contains(DO)) {
-                    nextStates.set(26);
+                if (validTypes == null || validTypes.contains(CATCH)) {
+                    nextStates.set(407);
                 }
-                if (validTypes == null || validTypes.contains(DOUBLE)) {
-                    nextStates.set(307);
-                }
-            } else if (ch == 'e') {
-                if (validTypes == null || validTypes.contains(EXTENDS)) {
-                    nextStates.set(344);
-                }
-                if (validTypes == null || validTypes.contains(ELSE)) {
-                    nextStates.set(398);
-                }
-                if (validTypes == null || validTypes.contains(ENUM)) {
+                if (validTypes == null || validTypes.contains(CONST)) {
                     nextStates.set(410);
                 }
+            } else if (ch == 'd') {
+                if (validTypes == null || validTypes.contains(DO)) {
+                    nextStates.set(74);
+                }
+                if (validTypes == null || validTypes.contains(DOUBLE)) {
+                    nextStates.set(338);
+                }
+                if (validTypes == null || validTypes.contains(_DEFAULT)) {
+                    nextStates.set(389);
+                }
+            } else if (ch == 'e') {
                 if (validTypes == null || validTypes.contains(EXPORTS)) {
-                    nextStates.set(452);
+                    nextStates.set(325);
+                }
+                if (validTypes == null || validTypes.contains(ELSE)) {
+                    nextStates.set(346);
+                }
+                if (validTypes == null || validTypes.contains(ENUM)) {
+                    nextStates.set(368);
+                }
+                if (validTypes == null || validTypes.contains(EXTENDS)) {
+                    nextStates.set(433);
                 }
             } else if (ch == 'f') {
-                if (validTypes == null || validTypes.contains(FINALLY)) {
-                    nextStates.set(236);
-                }
-                if (validTypes == null || validTypes.contains(FOR)) {
-                    nextStates.set(257);
-                }
-                if (validTypes == null || validTypes.contains(FLOAT)) {
-                    nextStates.set(279);
+                if (validTypes == null || validTypes.contains(FALSE)) {
+                    nextStates.set(159);
                 }
                 if (validTypes == null || validTypes.contains(FINAL)) {
-                    nextStates.set(298);
+                    nextStates.set(165);
                 }
-                if (validTypes == null || validTypes.contains(FALSE)) {
-                    nextStates.set(379);
+                if (validTypes == null || validTypes.contains(FLOAT)) {
+                    nextStates.set(229);
+                }
+                if (validTypes == null || validTypes.contains(FOR)) {
+                    nextStates.set(275);
+                }
+                if (validTypes == null || validTypes.contains(FINALLY)) {
+                    nextStates.set(302);
                 }
             } else if (ch == 'g') {
                 if (validTypes == null || validTypes.contains(GOTO)) {
-                    nextStates.set(328);
+                    nextStates.set(224);
                 }
             } else if (ch == 'i') {
-                if (validTypes == null || validTypes.contains(INSTANCEOF)) {
-                    nextStates.set(180);
+                if (validTypes == null || validTypes.contains(INT)) {
+                    nextStates.set(172);
                 }
                 if (validTypes == null || validTypes.contains(_IMPORT)) {
-                    nextStates.set(241);
-                }
-                if (validTypes == null || validTypes.contains(IMPLEMENTS)) {
-                    nextStates.set(284);
-                }
-                if (validTypes == null || validTypes.contains(INTERFACE)) {
-                    nextStates.set(349);
+                    nextStates.set(210);
                 }
                 if (validTypes == null || validTypes.contains(IF)) {
-                    nextStates.set(96);
+                    nextStates.set(42);
                 }
-                if (validTypes == null || validTypes.contains(INT)) {
-                    nextStates.set(435);
+                if (validTypes == null || validTypes.contains(IMPLEMENTS)) {
+                    nextStates.set(282);
+                }
+                if (validTypes == null || validTypes.contains(INTERFACE)) {
+                    nextStates.set(351);
+                }
+                if (validTypes == null || validTypes.contains(INSTANCEOF)) {
+                    nextStates.set(413);
                 }
             } else if (ch == 'l') {
                 if (validTypes == null || validTypes.contains(LONG)) {
@@ -555,173 +561,173 @@ public class JavaLexer extends TokenSource {
                 }
             } else if (ch == 'm') {
                 if (validTypes == null || validTypes.contains(MODULE)) {
-                    nextStates.set(459);
+                    nextStates.set(264);
                 }
             } else if (ch == 'n') {
-                if (validTypes == null || validTypes.contains(NATIVE)) {
-                    nextStates.set(156);
-                }
                 if (validTypes == null || validTypes.contains(NEW)) {
-                    nextStates.set(274);
+                    nextStates.set(238);
                 }
                 if (validTypes == null || validTypes.contains(NON_SEALED)) {
-                    nextStates.set(320);
+                    nextStates.set(311);
                 }
                 if (validTypes == null || validTypes.contains(NULL)) {
-                    nextStates.set(408);
+                    nextStates.set(394);
+                }
+                if (validTypes == null || validTypes.contains(NATIVE)) {
+                    nextStates.set(398);
                 }
             } else if (ch == 'o') {
                 if (validTypes == null || validTypes.contains(OPEN)) {
-                    nextStates.set(305);
+                    nextStates.set(307);
                 }
                 if (validTypes == null || validTypes.contains(OPENS)) {
-                    nextStates.set(416);
+                    nextStates.set(365);
                 }
             } else if (ch == 'p') {
-                if (validTypes == null || validTypes.contains(PERMITS)) {
-                    nextStates.set(160);
-                }
-                if (validTypes == null || validTypes.contains(PRIVATE)) {
-                    nextStates.set(165);
-                }
-                if (validTypes == null || validTypes.contains(PROVIDES)) {
-                    nextStates.set(245);
+                if (validTypes == null || validTypes.contains(PUBLIC)) {
+                    nextStates.set(177);
                 }
                 if (validTypes == null || validTypes.contains(PACKAGE)) {
-                    nextStates.set(251);
+                    nextStates.set(239);
+                }
+                if (validTypes == null || validTypes.contains(PROVIDES)) {
+                    nextStates.set(296);
+                }
+                if (validTypes == null || validTypes.contains(PRIVATE)) {
+                    nextStates.set(444);
+                }
+                if (validTypes == null || validTypes.contains(PERMITS)) {
+                    nextStates.set(449);
                 }
                 if (validTypes == null || validTypes.contains(PROTECTED)) {
-                    nextStates.set(265);
-                }
-                if (validTypes == null || validTypes.contains(PUBLIC)) {
-                    nextStates.set(330);
+                    nextStates.set(454);
                 }
             } else if (ch == 'r') {
+                if (validTypes == null || validTypes.contains(RECORD)) {
+                    nextStates.set(168);
+                }
                 if (validTypes == null || validTypes.contains(REQUIRES)) {
-                    nextStates.set(311);
+                    nextStates.set(232);
                 }
                 if (validTypes == null || validTypes.contains(RETURN)) {
-                    nextStates.set(356);
-                }
-                if (validTypes == null || validTypes.contains(RECORD)) {
-                    nextStates.set(400);
+                    nextStates.set(403);
                 }
             } else if (ch == 's') {
-                if (validTypes == null || validTypes.contains(STRICTFP)) {
-                    nextStates.set(212);
-                }
-                if (validTypes == null || validTypes.contains(SHORT)) {
-                    nextStates.set(317);
-                }
-                if (validTypes == null || validTypes.contains(SYNCHRONIZED)) {
-                    nextStates.set(334);
+                if (validTypes == null || validTypes.contains(SUPER)) {
+                    nextStates.set(191);
                 }
                 if (validTypes == null || validTypes.contains(SWITCH)) {
-                    nextStates.set(360);
+                    nextStates.set(268);
                 }
                 if (validTypes == null || validTypes.contains(SEALED)) {
-                    nextStates.set(404);
+                    nextStates.set(290);
                 }
-                if (validTypes == null || validTypes.contains(SUPER)) {
-                    nextStates.set(441);
+                if (validTypes == null || validTypes.contains(STRICTFP)) {
+                    nextStates.set(319);
+                }
+                if (validTypes == null || validTypes.contains(SHORT)) {
+                    nextStates.set(342);
+                }
+                if (validTypes == null || validTypes.contains(SYNCHRONIZED)) {
+                    nextStates.set(423);
                 }
                 if (validTypes == null || validTypes.contains(STATIC)) {
                     nextStates.set(473);
                 }
             } else if (ch == 't') {
-                if (validTypes == null || validTypes.contains(THIS)) {
-                    nextStates.set(177);
+                if (validTypes == null || validTypes.contains(THROWS)) {
+                    nextStates.set(181);
                 }
                 if (validTypes == null || validTypes.contains(THROW)) {
-                    nextStates.set(188);
-                }
-                if (validTypes == null || validTypes.contains(TRUE)) {
-                    nextStates.set(194);
-                }
-                if (validTypes == null || validTypes.contains(TRANSIENT)) {
-                    nextStates.set(218);
-                }
-                if (validTypes == null || validTypes.contains(THROWS)) {
-                    nextStates.set(231);
-                }
-                if (validTypes == null || validTypes.contains(TRY)) {
-                    nextStates.set(301);
+                    nextStates.set(272);
                 }
                 if (validTypes == null || validTypes.contains(TO)) {
-                    nextStates.set(93);
+                    nextStates.set(70);
                 }
                 if (validTypes == null || validTypes.contains(TRANSITIVE)) {
-                    nextStates.set(465);
+                    nextStates.set(330);
+                }
+                if (validTypes == null || validTypes.contains(TRANSIENT)) {
+                    nextStates.set(358);
+                }
+                if (validTypes == null || validTypes.contains(TRUE)) {
+                    nextStates.set(387);
+                }
+                if (validTypes == null || validTypes.contains(TRY)) {
+                    nextStates.set(402);
+                }
+                if (validTypes == null || validTypes.contains(THIS)) {
+                    nextStates.set(461);
                 }
             } else if (ch == 'u') {
                 if (validTypes == null || validTypes.contains(USES)) {
-                    nextStates.set(444);
+                    nextStates.set(175);
                 }
             } else if (ch == 'v') {
-                if (validTypes == null || validTypes.contains(VOID)) {
-                    nextStates.set(192);
+                if (validTypes == null || validTypes.contains(VAR)) {
+                    nextStates.set(185);
                 }
                 if (validTypes == null || validTypes.contains(VOLATILE)) {
-                    nextStates.set(206);
+                    nextStates.set(251);
                 }
-                if (validTypes == null || validTypes.contains(VAR)) {
-                    nextStates.set(278);
+                if (validTypes == null || validTypes.contains(VOID)) {
+                    nextStates.set(421);
                 }
             } else if (ch == 'w') {
-                if (validTypes == null || validTypes.contains(WHILE)) {
-                    nextStates.set(365);
-                }
                 if (validTypes == null || validTypes.contains(WHEN)) {
-                    nextStates.set(436);
+                    nextStates.set(173);
+                }
+                if (validTypes == null || validTypes.contains(WHILE)) {
+                    nextStates.set(187);
                 }
                 if (validTypes == null || validTypes.contains(WITH)) {
-                    nextStates.set(457);
+                    nextStates.set(385);
                 }
             } else if (ch == 'y') {
                 if (validTypes == null || validTypes.contains(YIELD)) {
-                    nextStates.set(275);
+                    nextStates.set(156);
                 }
             } else if (ch == '|') {
-                if (validTypes == null || validTypes.contains(ORASSIGN)) {
-                    nextStates.set(81);
-                }
                 if (validTypes == null || validTypes.contains(SC_OR)) {
-                    nextStates.set(152);
+                    nextStates.set(76);
+                }
+                if (validTypes == null || validTypes.contains(ORASSIGN)) {
+                    nextStates.set(100);
                 }
             }
-            if (((ch == '$') || ((ch >= 'A' && ch <= 'Z') || ((ch == '_') || (ch >= 'a' && ch <= 'z')))) || (ch >= 128 && checkIntervals(NFA_MOVES_JAVA_639, ch))) {
+            if ((ch == '$' || (ch >= 'A' && ch <= 'Z' || (ch == '_' || ch >= 'a' && ch <= 'z'))) || (ch >= 128 && checkIntervals(NFA_MOVES_JAVA_639, ch))) {
                 if (validTypes == null || validTypes.contains(IDENTIFIER)) {
-                    nextStates.set(145);
+                    nextStates.set(111);
                     type = IDENTIFIER;
                 }
             } else if (ch >= '0' && ch <= '9') {
                 if (validTypes == null || validTypes.contains(INTEGER_LITERAL)) {
-                    nextStates.set(49);
+                    nextStates.set(62);
                     type = INTEGER_LITERAL;
                 }
             } else if (ch == '\t') {
                 if (validTypes == null || validTypes.contains(WHITESPACE)) {
-                    nextStates.set(17);
+                    nextStates.set(5);
                     type = WHITESPACE;
                 }
             } else if (ch == '\n') {
                 if (validTypes == null || validTypes.contains(WHITESPACE)) {
-                    nextStates.set(17);
+                    nextStates.set(5);
                     type = WHITESPACE;
                 }
             } else if (ch == '\f') {
                 if (validTypes == null || validTypes.contains(WHITESPACE)) {
-                    nextStates.set(17);
+                    nextStates.set(5);
                     type = WHITESPACE;
                 }
             } else if (ch == '\r') {
                 if (validTypes == null || validTypes.contains(WHITESPACE)) {
-                    nextStates.set(17);
+                    nextStates.set(5);
                     type = WHITESPACE;
                 }
             } else if (ch == ' ') {
                 if (validTypes == null || validTypes.contains(WHITESPACE)) {
-                    nextStates.set(17);
+                    nextStates.set(5);
                     type = WHITESPACE;
                 }
             } else if (ch == '%') {
@@ -838,109 +844,204 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex1(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return NATIVE;
+            if (ch == 'd') {
+                return YIELD;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex2(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return PERMITS;
+            if (ch == 'e') {
+                return FALSE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex3(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return PRIVATE;
+            if (ch == 'k') {
+                return BREAK;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex4(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return NE;
+            if (ch == 'l') {
+                return FINAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex5(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return _DEFAULT;
+            TokenType type = null;
+            if (ch == '\t') {
+                nextStates.set(5);
+                type = WHITESPACE;
+            } else if (ch == '\n') {
+                nextStates.set(5);
+                type = WHITESPACE;
+            } else if (ch == '\f') {
+                nextStates.set(5);
+                type = WHITESPACE;
+            } else if (ch == '\r') {
+                nextStates.set(5);
+                type = WHITESPACE;
+            } else if (ch == ' ') {
+                nextStates.set(5);
+                type = WHITESPACE;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex6(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return RUNSIGNEDSHIFTASSIGN;
+            if (ch == 'd') {
+                return RECORD;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex7(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return THIS;
+            if (ch == 't') {
+                return INT;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex8(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '0' || ch == '1') {
-                nextStates.set(9);
-                return INTEGER_LITERAL;
+            if (ch == 'n') {
+                return WHEN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex9(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == '0' || ch == '1') || (ch == '_')) {
-                nextStates.set(9);
+            if (ch == 's') {
+                return USES;
             }
-            if (ch == '0' || ch == '1') {
-                type = INTEGER_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex10(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'f') {
-                return INSTANCEOF;
+            if (ch == 'c') {
+                return PUBLIC;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex11(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'w') {
-                return THROW;
+            if (ch == 's') {
+                return THROWS;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex12(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                return VAR_ARGS;
+            if (ch == 'r') {
+                return VAR;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex13(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                return VOID;
+            if (ch == '=') {
+                return RSIGNEDSHIFTASSIGN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex14(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'e') {
-                return TRUE;
+                return WHILE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex15(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(16);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(190);
+            } else if ((ch == 'L' || ch == 'l')) {
+                type = LONG_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex16(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if ((ch == 'L' || ch == 'l')) {
+                return LONG_LITERAL;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex17(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'r') {
+                return SUPER;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex18(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch == '+' || ch == '-')) {
+                nextStates.set(22);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(19);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex19(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(20);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(21);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex20(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(20);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(21);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex21(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                return FLOATING_POINT_LITERAL;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex22(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(19);
+                return FLOATING_POINT_LITERAL;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex23(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == ':') {
+                return DOUBLE_COLON;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex24(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
             if (ch == '"') {
                 return TEXT_BLOCK_LITERAL;
@@ -948,307 +1049,323 @@ public class JavaLexer extends TokenSource {
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex16(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return VOLATILE;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex17(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch == '\t') {
-                nextStates.set(17);
-                type = WHITESPACE;
-            } else if (ch == '\n') {
-                nextStates.set(17);
-                type = WHITESPACE;
-            } else if (ch == '\f') {
-                nextStates.set(17);
-                type = WHITESPACE;
-            } else if (ch == '\r') {
-                nextStates.set(17);
-                type = WHITESPACE;
-            } else if (ch == ' ') {
-                nextStates.set(17);
-                type = WHITESPACE;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex18(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
-                return STRICTFP;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex19(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return TRANSIENT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex20(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
-                return CATCH;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex21(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch == '0' || ch == '1') {
-                nextStates.set(22);
-            }
-            if ((ch == '0' || ch == '1') || (ch == '_')) {
-                nextStates.set(230);
-            } else if ((ch == 'L') || (ch == 'l')) {
-                type = LONG_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex22(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'L') || (ch == 'l')) {
-                return LONG_LITERAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex23(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                return LAMBDA;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex24(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return THROWS;
-            }
-            return null;
-        }
-
         private static TokenType getNfaNameJAVAIndex25(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= 0x0 && ch <= '\t') || (ch >= 0xb)) {
-                nextStates.set(25);
-            } else if (ch == '\n') {
-                type = SINGLE_LINE_COMMENT;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex26(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                return DO;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex27(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return ANDASSIGN;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex28(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'y') {
-                return FINALLY;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex29(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 't') {
                 return _IMPORT;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex30(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return PROVIDES;
+        private static TokenType getNfaNameJAVAIndex26(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(27);
+                return INTEGER_LITERAL;
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex27(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(27);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                type = INTEGER_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex28(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '>') {
+                return RUNSIGNEDSHIFT;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex29(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= 0x0 && ch <= '\t' || (ch == 0xb || ch == '\f' || (ch >= 0xe && ch <= '!' || (ch >= '#' && ch <= '[' || ch >= ']'))))) {
+                nextStates.set(29);
+            } else if (ch == '\\') {
+                nextStates.set(216);
+            } else if (ch == '"') {
+                type = STRING_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex30(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= 0x0 && ch <= '\t' || (ch == 0xb || ch == '\f' || (ch >= 0xe && ch <= '!' || (ch >= '#' && ch <= '[' || ch >= ']'))))) {
+                nextStates.set(29);
+            }
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(29);
+            } else if (ch == '\\') {
+                nextStates.set(216);
+            } else if (ch == '"') {
+                type = STRING_LITERAL;
+            }
+            return type;
+        }
+
         private static TokenType getNfaNameJAVAIndex31(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return PACKAGE;
+            if (ch == 'n') {
+                return BOOLEAN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex32(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return LSHIFTASSIGN;
+            if (ch == 'o') {
+                return GOTO;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex33(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '+') {
-                return INCR;
+            if (ch == '=') {
+                return REMASSIGN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex34(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                return FOR;
+            TokenType type = null;
+            if ((ch == '+' || ch == '-')) {
+                nextStates.set(35);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(36);
+                type = FLOATING_POINT_LITERAL;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex35(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '\'') {
-                return CHARACTER_LITERAL;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(36);
+                return FLOATING_POINT_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex36(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(35);
-            } else if (ch == '\'') {
-                type = CHARACTER_LITERAL;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(37);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(38);
+                nextStates.set(36);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex37(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'k') {
-                return BREAK;
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(37);
             }
-            return null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(38);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex38(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                return PROTECTED;
+            TokenType type = null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(36);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex39(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(40);
-                return FLOATING_POINT_LITERAL;
+            if (ch == 't') {
+                return FLOAT;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex40(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(47);
-            } else if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(42);
+            if (ch == 's') {
+                return REQUIRES;
             }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(41);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex41(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(42);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
+            if (ch == 'w') {
+                return NEW;
             }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex42(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(43);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(44);
-                type = FLOATING_POINT_LITERAL;
+            if (ch == 'f') {
+                return IF;
             }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex43(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(44);
-                return FLOATING_POINT_LITERAL;
+            if (ch == 'e') {
+                return PACKAGE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex44(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(46);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(44);
+            if (ch >= '0' && ch <= '7') {
                 nextStates.set(45);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
+            } else if (ch == '\'') {
+                type = CHARACTER_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex45(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(44);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
+            if (ch == '\'') {
+                return CHARACTER_LITERAL;
             }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex46(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(46);
+            if (ch == '=') {
+                return PLUSASSIGN;
             }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(45);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex47(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(47);
+            if (ch == '=') {
+                return RUNSIGNEDSHIFTASSIGN;
             }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(41);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex48(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                return CHAR;
+            if (ch == '0' || ch == '1') {
+                nextStates.set(49);
+                return INTEGER_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex49(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+            if ((ch == '0' || ch == '1' || ch == '_')) {
                 nextStates.set(49);
+            }
+            if (ch == '0' || ch == '1') {
+                type = INTEGER_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex50(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                return VOLATILE;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex51(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '.') {
+                return VAR_ARGS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex52(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '>') {
+                return RSIGNEDSHIFT;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex53(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(16);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(260);
+            } else if ((ch == 'L' || ch == 'l')) {
+                type = LONG_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex54(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                return CLASS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex55(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                return MODULE;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex56(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'h') {
+                return SWITCH;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex57(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '=') {
+                return STARASSIGN;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex58(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'w') {
+                return THROW;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex59(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'r') {
+                return FOR;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex60(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                return CONTINUE;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex61(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                return IMPLEMENTS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex62(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(62);
             }
             if (ch >= '0' && ch <= '9') {
                 type = INTEGER_LITERAL;
@@ -1256,70 +1373,14 @@ public class JavaLexer extends TokenSource {
             return type;
         }
 
-        private static TokenType getNfaNameJAVAIndex50(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'w') {
-                return NEW;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex51(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '&') {
-                return SC_AND;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex52(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+        private static TokenType getNfaNameJAVAIndex63(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'd') {
-                return YIELD;
+                return SEALED;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex53(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                return VAR;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex54(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return FLOAT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex55(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return BYTE;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex56(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return IMPLEMENTS;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex57(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return _ASSERT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex58(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return XORASSIGN;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex59(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+        private static TokenType getNfaNameJAVAIndex64(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(MULTI_LINE_COMMENT)) return null;
             if (ch == '/') {
                 return MULTI_LINE_COMMENT;
@@ -1327,238 +1388,186 @@ public class JavaLexer extends TokenSource {
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex60(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                return FINAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex61(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '<') {
-                return LSHIFT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex62(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'y') {
-                return TRY;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex63(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return CASE;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex64(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(65);
-                return INTEGER_LITERAL;
-            }
-            return null;
-        }
-
         private static TokenType getNfaNameJAVAIndex65(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(65);
+            if (ch == 's') {
+                return PROVIDES;
             }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                type = INTEGER_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex66(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return LE;
+            if (ch == '+') {
+                return INCR;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex67(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'y') {
+                return FINALLY;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex68(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '=') {
+                return SLASHASSIGN;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex69(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'n') {
                 return OPEN;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex68(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return DOUBLE;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex69(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == ':') {
-                return DOUBLE_COLON;
-            }
-            return null;
-        }
-
         private static TokenType getNfaNameJAVAIndex70(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return PLUSASSIGN;
+            if (ch == 'o') {
+                return TO;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex71(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return REQUIRES;
+            if (ch == 'e') {
+                return CASE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex72(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return SHORT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex73(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'd') {
                 return NON_SEALED;
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex73(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'p') {
+                return STRICTFP;
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex74(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'o') {
-                return GOTO;
+                return DO;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex75(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                return PUBLIC;
+            if (ch == 's') {
+                return EXPORTS;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex76(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                return SYNCHRONIZED;
+            if (ch == '|') {
+                return SC_OR;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex77(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return EXTENDS;
+            if (ch == 'e') {
+                return TRANSITIVE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex78(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'e') {
-                return INTERFACE;
+                return DOUBLE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex79(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                return RETURN;
+            if (ch == 't') {
+                return SHORT;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex80(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
-                return SWITCH;
+            TokenType type = null;
+            if ((ch >= 0x0 && ch <= '\t' || ch >= 0xb)) {
+                nextStates.set(80);
+            } else if (ch == '\n') {
+                type = SINGLE_LINE_COMMENT;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex81(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return ORASSIGN;
+            if (ch == 'e') {
+                return ELSE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex82(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(22);
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(16);
             }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(364);
-            } else if ((ch == 'L') || (ch == 'l')) {
+            if ((ch >= '0' && ch <= '7' || ch == '_')) {
+                nextStates.set(349);
+            } else if ((ch == 'L' || ch == 'l')) {
                 type = LONG_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex83(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return WHILE;
+            if (ch == '=') {
+                return LSHIFTASSIGN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex84(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(22);
+            if (ch == 'e') {
+                return INTERFACE;
             }
-            if ((ch >= '0' && ch <= '7') || (ch == '_')) {
-                nextStates.set(369);
-            } else if ((ch == 'L') || (ch == 'l')) {
-                type = LONG_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex85(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= 0x0 && ch <= '\t') || ((ch == 0xb || ch == '\f') || ((ch >= 0xe && ch <= '!') || ((ch >= '#' && ch <= '[') || (ch >= ']'))))) {
-                nextStates.set(85);
-            } else if (ch == '\\') {
-                nextStates.set(370);
-            } else if (ch == '"') {
-                type = STRING_LITERAL;
+            if (ch == 't') {
+                return TRANSIENT;
             }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex86(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= 0x0 && ch <= '\t') || ((ch == 0xb || ch == '\f') || ((ch >= 0xe && ch <= '!') || ((ch >= '#' && ch <= '[') || (ch >= ']'))))) {
-                nextStates.set(85);
+            if (ch == 's') {
+                return OPENS;
             }
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(85);
-            } else if (ch == '\\') {
-                nextStates.set(370);
-            } else if (ch == '"') {
-                type = STRING_LITERAL;
-            }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex87(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return EQ;
+            if (ch == 'm') {
+                return ENUM;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex88(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(92);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(89);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(91);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(373);
+            } else if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(370);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
@@ -1566,14 +1575,13 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex89(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(89);
                 nextStates.set(90);
             }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(91);
-                nextStates.set(89);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(371);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
@@ -1581,11 +1589,9 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex90(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(90);
-            }
             if (ch >= '0' && ch <= '9') {
-                nextStates.set(91);
+                nextStates.set(89);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
@@ -1593,233 +1599,252 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex91(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(89);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
+            if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(370);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex92(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(89);
-                return FLOATING_POINT_LITERAL;
+            if (ch == 'e') {
+                return BYTE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex93(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                return TO;
+            if (ch == '=') {
+                return NE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex94(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return CONST;
+            TokenType type = null;
+            if ((ch == '+' || ch == '-')) {
+                nextStates.set(95);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(96);
+                type = FLOATING_POINT_LITERAL;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex95(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return FALSE;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(96);
+                return FLOATING_POINT_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex96(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'f') {
-                return IF;
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(98);
             }
-            return null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(97);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex97(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return STARASSIGN;
+            if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                return FLOATING_POINT_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex98(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(99);
-                return INTEGER_LITERAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex99(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '7') || (ch == '_')) {
-                nextStates.set(99);
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(98);
             }
-            if (ch >= '0' && ch <= '7') {
-                type = INTEGER_LITERAL;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(97);
+                type = FLOATING_POINT_LITERAL;
             }
             return type;
         }
 
+        private static TokenType getNfaNameJAVAIndex99(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'h') {
+                return WITH;
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex100(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return CONTINUE;
+            if (ch == '=') {
+                return ORASSIGN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex101(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return SLASHASSIGN;
+            if (ch == 'e') {
+                return TRUE;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex102(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                return RUNSIGNEDSHIFT;
+            if (ch == '=') {
+                return EQ;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex103(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(104);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(105);
-                type = FLOATING_POINT_LITERAL;
+            if (ch == 't') {
+                return _DEFAULT;
             }
-            return type;
+            return null;
         }
 
         private static TokenType getNfaNameJAVAIndex104(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(105);
-                return FLOATING_POINT_LITERAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex105(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(106);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(107);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex106(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(106);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(107);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex107(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                return FLOATING_POINT_LITERAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex108(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return ELSE;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex109(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                return RSIGNEDSHIFT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex110(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                return RECORD;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex111(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                return SEALED;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex112(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'l') {
                 return NULL;
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex105(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '=') {
+                return XORASSIGN;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex106(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'r') {
+                return CHAR;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex107(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                return NATIVE;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex108(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'y') {
+                return TRY;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex109(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '<') {
+                return LSHIFT;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex110(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'n') {
+                return RETURN;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex111(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if ((ch >= 0x0 && ch <= 0x8 || (ch >= 0xe && ch <= 0x1b || (ch == '$' || (ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'Z' || (ch == '_' || (ch >= 'a' && ch <= 'z' || ch >= 0x7f && ch <= 0x9f))))))) || (ch >= 128 && checkIntervals(NFA_MOVES_JAVA_640, ch))) {
+                nextStates.set(111);
+                return IDENTIFIER;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex112(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'h') {
+                return CATCH;
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex113(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'm') {
-                return ENUM;
+            if (ch == '>') {
+                return LAMBDA;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex114(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return CLASS;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(115);
+                return FLOATING_POINT_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex115(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return RSIGNEDSHIFTASSIGN;
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(122);
+            } else if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(117);
             }
-            return null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(116);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex116(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return OPENS;
+            TokenType type = null;
+            if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(117);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex117(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                return BOOLEAN;
+            TokenType type = null;
+            if ((ch == '+' || ch == '-')) {
+                nextStates.set(121);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(118);
+                type = FLOATING_POINT_LITERAL;
             }
-            return null;
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex118(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return REMASSIGN;
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(120);
             }
-            return null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(118);
+                nextStates.set(119);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
         }
 
         private static TokenType getNfaNameJAVAIndex119(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(123);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(120);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(118);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
@@ -1827,20 +1852,19 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex120(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(122);
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(120);
             }
             if (ch >= '0' && ch <= '9') {
-                nextStates.set(121);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
+                nextStates.set(119);
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex121(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(118);
                 return FLOATING_POINT_LITERAL;
             }
             return null;
@@ -1848,311 +1872,293 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex122(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
                 nextStates.set(122);
             }
             if (ch >= '0' && ch <= '9') {
-                nextStates.set(121);
+                nextStates.set(116);
                 type = FLOATING_POINT_LITERAL;
             }
             return type;
         }
 
         private static TokenType getNfaNameJAVAIndex123(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(120);
-                return FLOATING_POINT_LITERAL;
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(124);
+                return INTEGER_LITERAL;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex124(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '7' || ch == '_')) {
+                nextStates.set(124);
+            }
+            if (ch >= '0' && ch <= '7') {
+                type = INTEGER_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex125(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 't') {
+                return CONST;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex126(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'f') {
+                return INSTANCEOF;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex127(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'd') {
+                return VOID;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex128(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'd') {
+                return SYNCHRONIZED;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex129(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                return EXTENDS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex130(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == '=') {
                 return GE;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex125(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '=') {
-                return MINUSASSIGN;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex126(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(127);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(430);
-            } else if (ch == '.') {
-                nextStates.set(128);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex127(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                nextStates.set(128);
-                return FLOATING_POINT_LITERAL;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex128(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(129);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(134);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex129(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(130);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(131);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex130(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(131);
-                return FLOATING_POINT_LITERAL;
-            }
-            return null;
-        }
-
         private static TokenType getNfaNameJAVAIndex131(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(132);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(131);
-                nextStates.set(133);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex132(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(132);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(133);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex133(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(131);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex134(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(135);
-            } else if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(129);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(136);
-                type = FLOATING_POINT_LITERAL;
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex135(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(135);
-            }
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(136);
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex136(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(129);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex137(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(140);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(434);
-            } else if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(431);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex138(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(138);
-                nextStates.set(139);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(432);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex139(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(138);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex140(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(431);
-            } else if ((ch == 'D') || ((ch == 'F') || ((ch == 'd') || (ch == 'f')))) {
-                type = FLOATING_POINT_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex141(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                return INT;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex142(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                return WHEN;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex143(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            TokenType type = null;
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(22);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(440);
-            } else if ((ch == 'L') || (ch == 'l')) {
-                type = LONG_LITERAL;
-            }
-            return type;
-        }
-
-        private static TokenType getNfaNameJAVAIndex144(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                return SUPER;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex145(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (((ch >= 0x0 && ch <= 0x8) || ((ch >= 0xe && ch <= 0x1b) || ((ch == '$') || ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'Z') || ((ch == '_') || ((ch >= 'a' && ch <= 'z') || (ch >= 0x7f && ch <= 0x9f)))))))) || (ch >= 128 && checkIntervals(NFA_MOVES_JAVA_640, ch))) {
-                nextStates.set(145);
-                return IDENTIFIER;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex146(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return USES;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex147(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 't') {
                 return ABSTRACT;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex148(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                return EXPORTS;
+        private static TokenType getNfaNameJAVAIndex132(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '=') {
+                return ANDASSIGN;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex149(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
-                return WITH;
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex150(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+        private static TokenType getNfaNameJAVAIndex133(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'e') {
-                return MODULE;
+                return PRIVATE;
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex151(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+        private static TokenType getNfaNameJAVAIndex134(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '&') {
+                return SC_AND;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex135(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                return PERMITS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex136(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '=') {
+                return LE;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex137(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'd') {
+                return PROTECTED;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex138(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                return THIS;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex139(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'g') {
                 return LONG;
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex140(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(150);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(465);
+            } else if (ch == '.') {
+                nextStates.set(141);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex141(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(143);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(142);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex142(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(148);
+            } else if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(143);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(149);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex143(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch == '+' || ch == '-')) {
+                nextStates.set(147);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(144);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex144(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(146);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(145);
+                nextStates.set(144);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex145(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(144);
+                type = FLOATING_POINT_LITERAL;
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex146(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(146);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(145);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex147(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(144);
+                return FLOATING_POINT_LITERAL;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex148(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(148);
+            }
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(149);
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex149(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(143);
+            } else if ((ch == 'D' || (ch == 'F' || (ch == 'd' || ch == 'f')))) {
+                type = FLOATING_POINT_LITERAL;
+            }
+            return type;
+        }
+
+        private static TokenType getNfaNameJAVAIndex150(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '.') {
+                nextStates.set(141);
+                return FLOATING_POINT_LITERAL;
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex151(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            TokenType type = null;
+            if (ch == '0' || ch == '1') {
+                nextStates.set(16);
+            }
+            if ((ch == '0' || ch == '1' || ch == '_')) {
+                nextStates.set(468);
+            } else if ((ch == 'L' || ch == 'l')) {
+                type = LONG_LITERAL;
+            }
+            return type;
+        }
+
         private static TokenType getNfaNameJAVAIndex152(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '|') {
-                return SC_OR;
+            if (ch == 't') {
+                return _ASSERT;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex153(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                return TRANSITIVE;
+            if (ch == 'c') {
+                return STATIC;
             }
             return null;
         }
@@ -2165,348 +2171,346 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex155(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                return STATIC;
+            if (ch == '=') {
+                return MINUSASSIGN;
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex156(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'i') {
                 nextStates.set(157);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex157(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch == 'e') {
                 nextStates.set(158);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex158(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(159);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex159(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'v') {
+            if (ch == 'l') {
                 nextStates.set(1);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex159(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'a') {
+                nextStates.set(160);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex160(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'l') {
                 nextStates.set(161);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex161(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(162);
+            if (ch == 's') {
+                nextStates.set(2);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex162(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'm') {
+            if (ch == 'r') {
                 nextStates.set(163);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex163(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'e') {
                 nextStates.set(164);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex164(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(2);
+            if (ch == 'a') {
+                nextStates.set(3);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex165(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'i') {
                 nextStates.set(166);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex166(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'n') {
                 nextStates.set(167);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex167(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'v') {
-                nextStates.set(168);
+            if (ch == 'a') {
+                nextStates.set(4);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex168(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'e') {
                 nextStates.set(169);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex169(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(3);
+            if (ch == 'c') {
+                nextStates.set(170);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex170(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'o') {
                 nextStates.set(171);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex171(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'f') {
-                nextStates.set(172);
+            if (ch == 'r') {
+                nextStates.set(6);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex172(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(173);
+            if (ch == 'n') {
+                nextStates.set(7);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex173(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == 'h') {
                 nextStates.set(174);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex174(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(5);
+            if (ch == 'e') {
+                nextStates.set(8);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex175(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
+            if (ch == 's') {
                 nextStates.set(176);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex176(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                nextStates.set(6);
+            if (ch == 'e') {
+                nextStates.set(9);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex177(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
+            if (ch == 'u') {
                 nextStates.set(178);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex178(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(7);
+            if (ch == 'b') {
+                nextStates.set(179);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex179(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'B') || (ch == 'b')) {
-                nextStates.set(8);
+            if (ch == 'l') {
+                nextStates.set(180);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex180(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(181);
+            if (ch == 'i') {
+                nextStates.set(10);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex181(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 'h') {
                 nextStates.set(182);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex182(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch == 'r') {
                 nextStates.set(183);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex183(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'o') {
                 nextStates.set(184);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex184(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(185);
+            if (ch == 'w') {
+                nextStates.set(11);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex185(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(186);
+            if (ch == 'a') {
+                nextStates.set(12);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex186(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(187);
+            if (ch == '>') {
+                nextStates.set(13);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex187(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(10);
+            if (ch == 'h') {
+                nextStates.set(188);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex188(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
+            if (ch == 'i') {
                 nextStates.set(189);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex189(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(190);
+            if (ch == 'l') {
+                nextStates.set(14);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex190(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(11);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(16);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(190);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex191(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                nextStates.set(12);
+            if (ch == 'u') {
+                nextStates.set(192);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex192(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'p') {
                 nextStates.set(193);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex193(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(13);
+            if (ch == 'e') {
+                nextStates.set(17);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex194(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if ((ch == 'X' || ch == 'x')) {
                 nextStates.set(195);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex195(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
-                nextStates.set(14);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(196);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex196(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch == '"') {
+            if (ch == '.') {
                 nextStates.set(197);
+            } else if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(198);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(199);
+            } else if ((ch == 'P' || ch == 'p')) {
+                nextStates.set(18);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex197(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch == '"') {
-                nextStates.set(198);
+            if ((ch == 'P' || ch == 'p')) {
+                nextStates.set(18);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex198(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if ((ch == '\t') || ((ch == '\f') || (ch == ' '))) {
-                nextStates.set(198);
-            } else if (ch == '\n') {
-                nextStates.set(199);
+            if (ch == '.') {
+                nextStates.set(197);
+            } else if ((ch == 'P' || ch == 'p')) {
+                nextStates.set(18);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex199(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if ((ch >= 0x0 && ch <= '[') || (ch >= ']')) {
-                nextStates.set(199);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(198);
             }
-            if (ch == '"') {
-                nextStates.set(204);
-            } else if (ch == '\\') {
-                nextStates.set(200);
-                nextStates.set(205);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(199);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex200(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if ((ch == '"') || ((ch == '\'') || ((ch == '\\') || ((ch == 'b') || ((ch == 'f') || ((ch == 'n') || (ch >= 'r' && ch <= 't'))))))) {
-                nextStates.set(199);
-            } else if (ch >= '0' && ch <= '3') {
+            if (ch == '"') {
                 nextStates.set(201);
-            }
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(203);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex201(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch >= '0' && ch <= '7') {
+            if (ch == '"') {
                 nextStates.set(202);
             }
             return null;
@@ -2514,88 +2518,105 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex202(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(199);
+            if ((ch == '\t' || (ch == '\f' || ch == ' '))) {
+                nextStates.set(202);
+            } else if (ch == '\n') {
+                nextStates.set(203);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex203(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if ((ch >= 0x0 && ch <= '[') || (ch >= ']')) {
-                nextStates.set(199);
+            if ((ch >= 0x0 && ch <= '[' || ch >= ']')) {
+                nextStates.set(203);
             }
             if (ch == '"') {
-                nextStates.set(204);
-            } else if (ch >= '0' && ch <= '7') {
-                nextStates.set(199);
+                nextStates.set(209);
             } else if (ch == '\\') {
-                nextStates.set(200);
-                nextStates.set(205);
+                nextStates.set(204);
+                nextStates.set(208);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex204(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch == '"') {
-                nextStates.set(15);
+            if ((ch == '"' || (ch == '\'' || (ch == '\\' || (ch == 'b' || (ch == 'f' || (ch == 'n' || ch >= 'r' && ch <= 't'))))))) {
+                nextStates.set(203);
+            } else if (ch >= '0' && ch <= '3') {
+                nextStates.set(205);
+            }
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(207);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex205(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
-            if (ch == '\n') {
-                nextStates.set(199);
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(206);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex206(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(207);
+            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(203);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex207(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
+            if ((ch >= 0x0 && ch <= '[' || ch >= ']')) {
+                nextStates.set(203);
+            }
+            if (ch == '"') {
+                nextStates.set(209);
+            } else if (ch >= '0' && ch <= '7') {
+                nextStates.set(203);
+            } else if (ch == '\\') {
+                nextStates.set(204);
                 nextStates.set(208);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex208(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(209);
+            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
+            if (ch == '\n') {
+                nextStates.set(203);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex209(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(210);
+            if (alreadyMatchedTypes.contains(TEXT_BLOCK_LITERAL)) return null;
+            if (ch == '"') {
+                nextStates.set(24);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex210(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'm') {
                 nextStates.set(211);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex211(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(16);
+            if (ch == 'p') {
+                nextStates.set(212);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex212(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch == 'o') {
                 nextStates.set(213);
             }
             return null;
@@ -2603,408 +2624,421 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex213(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'r') {
-                nextStates.set(214);
+                nextStates.set(25);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex214(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(215);
+            if ((ch == 'X' || ch == 'x')) {
+                nextStates.set(26);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex215(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(216);
+            if (ch == '>') {
+                nextStates.set(28);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex216(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if ((ch == '"' || (ch == '\'' || (ch == '\\' || (ch == 'b' || (ch == 'f' || (ch == 'n' || ch >= 'r' && ch <= 't'))))))) {
+                nextStates.set(29);
+            } else if (ch >= '0' && ch <= '3') {
                 nextStates.set(217);
+            }
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(30);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex217(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'f') {
-                nextStates.set(18);
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(218);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex218(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(219);
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(29);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex219(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'o') {
                 nextStates.set(220);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex220(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'o') {
                 nextStates.set(221);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex221(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 'l') {
                 nextStates.set(222);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex222(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'e') {
                 nextStates.set(223);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex223(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(224);
+            if (ch == 'a') {
+                nextStates.set(31);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex224(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(19);
+            if (ch == 'o') {
+                nextStates.set(225);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex225(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(226);
+            if (ch == 't') {
+                nextStates.set(32);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex226(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch >= '0' && ch <= '9') {
                 nextStates.set(227);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(228);
+            } else if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(34);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex227(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(20);
+            if ((ch == 'E' || ch == 'e')) {
+                nextStates.set(34);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex228(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'B') || (ch == 'b')) {
-                nextStates.set(229);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(227);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(228);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex229(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '0' || ch == '1') {
-                nextStates.set(21);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex230(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '0' || ch == '1') {
-                nextStates.set(22);
-            }
-            if ((ch == '0' || ch == '1') || (ch == '_')) {
+            if (ch == 'l') {
                 nextStates.set(230);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex230(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'o') {
+                nextStates.set(231);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex231(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
-                nextStates.set(232);
+            if (ch == 'a') {
+                nextStates.set(39);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex232(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'e') {
                 nextStates.set(233);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex233(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'q') {
                 nextStates.set(234);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex234(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'w') {
-                nextStates.set(24);
+            if (ch == 'u') {
+                nextStates.set(235);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex235(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '/') {
-                nextStates.set(25);
+            if (ch == 'i') {
+                nextStates.set(236);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex236(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'r') {
                 nextStates.set(237);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex237(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(238);
+            if (ch == 'e') {
+                nextStates.set(40);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex238(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(239);
+            if (ch == 'e') {
+                nextStates.set(41);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex239(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'a') {
                 nextStates.set(240);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex240(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(28);
+            if (ch == 'c') {
+                nextStates.set(241);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex241(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'm') {
+            if (ch == 'k') {
                 nextStates.set(242);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex242(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
+            if (ch == 'a') {
                 nextStates.set(243);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex243(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(244);
+            if (ch == 'g') {
+                nextStates.set(43);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex244(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(29);
+            if ((ch >= 0x0 && ch <= '\t' || (ch == 0xb || ch == '\f' || (ch >= 0xe && ch <= '&' || (ch >= '(' && ch <= '[' || ch >= ']'))))) {
+                nextStates.set(45);
+            } else if (ch == '\\') {
+                nextStates.set(245);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex245(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if ((ch == '"' || (ch == '\'' || (ch == '\\' || (ch == 'b' || (ch == 'f' || (ch == 'n' || ch >= 'r' && ch <= 't'))))))) {
+                nextStates.set(45);
+            } else if (ch >= '0' && ch <= '3') {
                 nextStates.set(246);
+            }
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(44);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex246(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch >= '0' && ch <= '7') {
                 nextStates.set(247);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex247(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'v') {
-                nextStates.set(248);
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(45);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex248(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == '>') {
                 nextStates.set(249);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex249(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                nextStates.set(250);
+            if (ch == '>') {
+                nextStates.set(47);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex250(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(30);
+            if ((ch == 'B' || ch == 'b')) {
+                nextStates.set(48);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex251(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'o') {
                 nextStates.set(252);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex252(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
+            if (ch == 'l') {
                 nextStates.set(253);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex253(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'k') {
+            if (ch == 'a') {
                 nextStates.set(254);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex254(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 't') {
                 nextStates.set(255);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex255(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'g') {
-                nextStates.set(31);
+            if (ch == 'i') {
+                nextStates.set(256);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex256(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '<') {
-                nextStates.set(32);
+            if (ch == 'l') {
+                nextStates.set(50);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex257(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(34);
+            if (ch == '.') {
+                nextStates.set(51);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex258(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= 0x0 && ch <= '\t') || ((ch == 0xb || ch == '\f') || ((ch >= 0xe && ch <= '&') || ((ch >= '(' && ch <= '[') || (ch >= ']'))))) {
-                nextStates.set(35);
-            } else if (ch == '\\') {
+            if ((ch == 'X' || ch == 'x')) {
                 nextStates.set(259);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex259(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == '"') || ((ch == '\'') || ((ch == '\\') || ((ch == 'b') || ((ch == 'f') || ((ch == 'n') || (ch >= 'r' && ch <= 't'))))))) {
-                nextStates.set(35);
-            } else if (ch >= '0' && ch <= '3') {
-                nextStates.set(260);
-            }
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(36);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(53);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex260(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(261);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(16);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(260);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex261(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(35);
+            if (ch == 'l') {
+                nextStates.set(262);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex262(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'a') {
                 nextStates.set(263);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex263(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(264);
+            if (ch == 's') {
+                nextStates.set(54);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex264(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(37);
+            if (ch == 'o') {
+                nextStates.set(265);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex265(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'd') {
                 nextStates.set(266);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex266(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'u') {
                 nextStates.set(267);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex267(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(268);
+            if (ch == 'l') {
+                nextStates.set(55);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex268(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'w') {
                 nextStates.set(269);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex269(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
+            if (ch == 'i') {
                 nextStates.set(270);
             }
             return null;
@@ -3018,8 +3052,8 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex271(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(38);
+            if (ch == 'c') {
+                nextStates.set(56);
             }
             return null;
         }
@@ -3032,98 +3066,98 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex273(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(48);
+            if (ch == 'r') {
+                nextStates.set(274);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex274(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(50);
+            if (ch == 'o') {
+                nextStates.set(58);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex275(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(276);
+            if (ch == 'o') {
+                nextStates.set(59);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex276(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'o') {
                 nextStates.set(277);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex277(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(52);
+            if (ch == 'n') {
+                nextStates.set(278);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex278(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(53);
+            if (ch == 't') {
+                nextStates.set(279);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex279(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'i') {
                 nextStates.set(280);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex280(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'n') {
                 nextStates.set(281);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex281(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(54);
+            if (ch == 'u') {
+                nextStates.set(60);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex282(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'y') {
+            if (ch == 'm') {
                 nextStates.set(283);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex283(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(55);
+            if (ch == 'p') {
+                nextStates.set(284);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex284(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'm') {
+            if (ch == 'l') {
                 nextStates.set(285);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex285(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
+            if (ch == 'e') {
                 nextStates.set(286);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex286(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'm') {
                 nextStates.set(287);
             }
             return null;
@@ -3137,292 +3171,292 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex288(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'm') {
+            if (ch == 'n') {
                 nextStates.set(289);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex289(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(290);
+            if (ch == 't') {
+                nextStates.set(61);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex290(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'e') {
                 nextStates.set(291);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex291(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(56);
+            if (ch == 'a') {
+                nextStates.set(292);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex292(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 'l') {
                 nextStates.set(293);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex293(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(294);
+            if (ch == 'e') {
+                nextStates.set(63);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex294(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (alreadyMatchedTypes.contains(MULTI_LINE_COMMENT)) return null;
+            if (ch == '*') {
                 nextStates.set(295);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex295(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(57);
+            if (alreadyMatchedTypes.contains(MULTI_LINE_COMMENT)) return null;
+            if (ch >= 0x0) {
+                nextStates.set(295);
+            }
+            if (ch == '*') {
+                nextStates.set(64);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex296(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(MULTI_LINE_COMMENT)) return null;
-            if (ch == '*') {
+            if (ch == 'r') {
                 nextStates.set(297);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex297(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (alreadyMatchedTypes.contains(MULTI_LINE_COMMENT)) return null;
-            if (ch >= 0x0) {
-                nextStates.set(297);
-            }
-            if (ch == '*') {
-                nextStates.set(59);
+            if (ch == 'o') {
+                nextStates.set(298);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex298(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'v') {
                 nextStates.set(299);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex299(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'i') {
                 nextStates.set(300);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex300(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(60);
+            if (ch == 'd') {
+                nextStates.set(301);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex301(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(62);
+            if (ch == 'e') {
+                nextStates.set(65);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex302(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'i') {
                 nextStates.set(303);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex303(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(63);
+            if (ch == 'n') {
+                nextStates.set(304);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex304(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'X') || (ch == 'x')) {
-                nextStates.set(64);
+            if (ch == 'a') {
+                nextStates.set(305);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex305(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
+            if (ch == 'l') {
                 nextStates.set(306);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex306(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'l') {
                 nextStates.set(67);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex307(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'p') {
                 nextStates.set(308);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex308(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
-                nextStates.set(309);
+            if (ch == 'e') {
+                nextStates.set(69);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex309(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'b') {
+            if (ch == 'a') {
                 nextStates.set(310);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex310(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(68);
+            if (ch == 's') {
+                nextStates.set(71);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex311(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'o') {
                 nextStates.set(312);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex312(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'q') {
+            if (ch == 'n') {
                 nextStates.set(313);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex313(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == '-') {
                 nextStates.set(314);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex314(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 's') {
                 nextStates.set(315);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex315(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'e') {
                 nextStates.set(316);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex316(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(71);
+            if (ch == 'a') {
+                nextStates.set(317);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex317(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
+            if (ch == 'l') {
                 nextStates.set(318);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex318(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(319);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex319(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'e') {
                 nextStates.set(72);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex319(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 't') {
+                nextStates.set(320);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex320(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'r') {
                 nextStates.set(321);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex321(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'i') {
                 nextStates.set(322);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex322(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '-') {
+            if (ch == 'c') {
                 nextStates.set(323);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex323(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 't') {
                 nextStates.set(324);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex324(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(325);
+            if (ch == 'f') {
+                nextStates.set(73);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex325(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'x') {
                 nextStates.set(326);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex326(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'p') {
                 nextStates.set(327);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex327(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(73);
+            if (ch == 'o') {
+                nextStates.set(328);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex328(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'r') {
                 nextStates.set(329);
             }
             return null;
@@ -3430,411 +3464,421 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex329(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 't') {
-                nextStates.set(74);
+                nextStates.set(75);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex330(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == 'r') {
                 nextStates.set(331);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex331(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'b') {
+            if (ch == 'a') {
                 nextStates.set(332);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex332(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'n') {
                 nextStates.set(333);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex333(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(75);
+            if (ch == 's') {
+                nextStates.set(334);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex334(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'y') {
+            if (ch == 'i') {
                 nextStates.set(335);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex335(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 't') {
                 nextStates.set(336);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex336(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
+            if (ch == 'i') {
                 nextStates.set(337);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex337(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
-                nextStates.set(338);
+            if (ch == 'v') {
+                nextStates.set(77);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex338(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'o') {
                 nextStates.set(339);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex339(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'u') {
                 nextStates.set(340);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex340(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'b') {
                 nextStates.set(341);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex341(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
-                nextStates.set(342);
+            if (ch == 'l') {
+                nextStates.set(78);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex342(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'z') {
+            if (ch == 'h') {
                 nextStates.set(343);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex343(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(76);
+            if (ch == 'o') {
+                nextStates.set(344);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex344(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'x') {
-                nextStates.set(345);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex345(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(346);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex346(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(347);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex347(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(348);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex348(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                nextStates.set(77);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex349(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(350);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex350(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(351);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex351(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(352);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex352(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(353);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex353(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'f') {
-                nextStates.set(354);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex354(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(355);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex355(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(78);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex356(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(357);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex357(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(358);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex358(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
-                nextStates.set(359);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex359(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'r') {
                 nextStates.set(79);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex345(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '/') {
+                nextStates.set(80);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex346(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'l') {
+                nextStates.set(347);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex347(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 's') {
+                nextStates.set(81);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex348(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(82);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex349(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch >= '0' && ch <= '7') {
+                nextStates.set(16);
+            }
+            if ((ch >= '0' && ch <= '7' || ch == '_')) {
+                nextStates.set(349);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex350(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == '<') {
+                nextStates.set(83);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex351(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'n') {
+                nextStates.set(352);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex352(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 't') {
+                nextStates.set(353);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex353(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                nextStates.set(354);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex354(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'r') {
+                nextStates.set(355);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex355(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'f') {
+                nextStates.set(356);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex356(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'a') {
+                nextStates.set(357);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex357(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'c') {
+                nextStates.set(84);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex358(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'r') {
+                nextStates.set(359);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex359(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'a') {
+                nextStates.set(360);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex360(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'w') {
+            if (ch == 'n') {
                 nextStates.set(361);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex361(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 's') {
                 nextStates.set(362);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex362(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch == 'i') {
                 nextStates.set(363);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex363(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(80);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex364(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(22);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+            if (ch == 'e') {
                 nextStates.set(364);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex364(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'n') {
+                nextStates.set(85);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex365(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
+            if (ch == 'p') {
                 nextStates.set(366);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex366(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'e') {
                 nextStates.set(367);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex367(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(83);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex368(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(84);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex369(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(22);
-            }
-            if ((ch >= '0' && ch <= '7') || (ch == '_')) {
-                nextStates.set(369);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex370(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == '"') || ((ch == '\'') || ((ch == '\\') || ((ch == 'b') || ((ch == 'f') || ((ch == 'n') || (ch >= 'r' && ch <= 't'))))))) {
-                nextStates.set(85);
-            } else if (ch >= '0' && ch <= '3') {
-                nextStates.set(371);
-            }
-            if (ch >= '0' && ch <= '7') {
+            if (ch == 'n') {
                 nextStates.set(86);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex371(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
+        private static TokenType getNfaNameJAVAIndex368(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'n') {
+                nextStates.set(369);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex369(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'u') {
+                nextStates.set(87);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex370(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if ((ch == '+' || ch == '-')) {
                 nextStates.set(372);
+            } else if (ch >= '0' && ch <= '9') {
+                nextStates.set(89);
+            }
+            return null;
+        }
+
+        private static TokenType getNfaNameJAVAIndex371(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(90);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(371);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex372(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '7') {
-                nextStates.set(85);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(89);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex373(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch >= '0' && ch <= '9') {
-                nextStates.set(375);
+                nextStates.set(91);
             }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(374);
-            } else if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(88);
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(373);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex374(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
+            if (ch == 'y') {
                 nextStates.set(375);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
-                nextStates.set(374);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex375(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'E') || (ch == 'e')) {
-                nextStates.set(88);
+            if (ch == 't') {
+                nextStates.set(92);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex376(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if ((ch == 'X' || ch == 'x')) {
                 nextStates.set(377);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex377(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == '.') {
                 nextStates.set(378);
+            } else if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(382);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex378(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(94);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(379);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex379(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
                 nextStates.set(380);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(381);
+            } else if ((ch == 'P' || ch == 'p')) {
+                nextStates.set(94);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex380(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(381);
+            if ((ch == 'P' || ch == 'p')) {
+                nextStates.set(94);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex381(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(95);
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(380);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(381);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex382(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == '.') {
+                nextStates.set(378);
+            } else if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
+                nextStates.set(384);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
                 nextStates.set(383);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex383(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'))) {
                 nextStates.set(384);
+            }
+            if ((ch >= '0' && ch <= '9' || (ch >= 'A' && ch <= 'F' || (ch == '_' || ch >= 'a' && ch <= 'f')))) {
+                nextStates.set(383);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex384(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(385);
+            if (ch == '.') {
+                nextStates.set(378);
             }
             return null;
         }
@@ -3847,214 +3891,196 @@ public class JavaLexer extends TokenSource {
         }
 
         private static TokenType getNfaNameJAVAIndex386(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(387);
+            if (ch == 't') {
+                nextStates.set(99);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex387(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
-                nextStates.set(100);
+            if (ch == 'r') {
+                nextStates.set(388);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex388(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                nextStates.set(102);
+            if (ch == 'u') {
+                nextStates.set(101);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex389(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'X') || (ch == 'x')) {
+            if (ch == 'e') {
                 nextStates.set(390);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex390(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
+            if (ch == 'f') {
                 nextStates.set(391);
-            } else if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(395);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex391(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
+            if (ch == 'a') {
                 nextStates.set(392);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex392(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
+            if (ch == 'u') {
                 nextStates.set(393);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(394);
-            } else if ((ch == 'P') || (ch == 'p')) {
-                nextStates.set(103);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex393(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'P') || (ch == 'p')) {
+            if (ch == 'l') {
                 nextStates.set(103);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex394(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(393);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(394);
+            if (ch == 'u') {
+                nextStates.set(395);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex395(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                nextStates.set(391);
-            } else if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(396);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(397);
+            if (ch == 'l') {
+                nextStates.set(104);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex396(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                nextStates.set(391);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex397(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(396);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
+            if (ch == 'h') {
                 nextStates.set(397);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex397(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'a') {
+                nextStates.set(106);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex398(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'a') {
                 nextStates.set(399);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex399(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(108);
+            if (ch == 't') {
+                nextStates.set(400);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex400(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'i') {
                 nextStates.set(401);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex401(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(402);
+            if (ch == 'v') {
+                nextStates.set(107);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex402(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
-                nextStates.set(403);
+            if (ch == 'r') {
+                nextStates.set(108);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex403(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(110);
+            if (ch == 'e') {
+                nextStates.set(404);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex404(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 't') {
                 nextStates.set(405);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex405(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'u') {
                 nextStates.set(406);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex406(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(407);
+            if (ch == 'r') {
+                nextStates.set(110);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex407(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(111);
+            if (ch == 'a') {
+                nextStates.set(408);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex408(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == 't') {
                 nextStates.set(409);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex409(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'c') {
                 nextStates.set(112);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex410(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
+            if (ch == 'o') {
                 nextStates.set(411);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex411(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
-                nextStates.set(113);
+            if (ch == 'n') {
+                nextStates.set(412);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex412(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(413);
+            if (ch == 's') {
+                nextStates.set(125);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex413(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'n') {
                 nextStates.set(414);
             }
             return null;
@@ -4062,41 +4088,41 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex414(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 's') {
-                nextStates.set(114);
+                nextStates.set(415);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex415(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '>') {
-                nextStates.set(115);
+            if (ch == 't') {
+                nextStates.set(416);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex416(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
+            if (ch == 'a') {
                 nextStates.set(417);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex417(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
+            if (ch == 'n') {
                 nextStates.set(418);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex418(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(116);
+            if (ch == 'c') {
+                nextStates.set(419);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex419(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'e') {
                 nextStates.set(420);
             }
             return null;
@@ -4104,221 +4130,195 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex420(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'o') {
-                nextStates.set(421);
+                nextStates.set(126);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex421(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
+            if (ch == 'o') {
                 nextStates.set(422);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex422(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(423);
+            if (ch == 'i') {
+                nextStates.set(127);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex423(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
-                nextStates.set(117);
+            if (ch == 'y') {
+                nextStates.set(424);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex424(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'X') || (ch == 'x')) {
+            if (ch == 'n') {
                 nextStates.set(425);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex425(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
+            if (ch == 'c') {
                 nextStates.set(426);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex426(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
-                nextStates.set(428);
-            } else if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
+            if (ch == 'h') {
                 nextStates.set(427);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
-                nextStates.set(429);
-            } else if ((ch == 'P') || (ch == 'p')) {
-                nextStates.set(119);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex427(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == '.') {
+            if (ch == 'r') {
                 nextStates.set(428);
-            } else if ((ch == 'P') || (ch == 'p')) {
-                nextStates.set(119);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex428(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'P') || (ch == 'p')) {
-                nextStates.set(119);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex429(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(427);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
+            if (ch == 'o') {
                 nextStates.set(429);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex430(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(127);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+        private static TokenType getNfaNameJAVAIndex429(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'n') {
                 nextStates.set(430);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex431(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == '+') || (ch == '-')) {
-                nextStates.set(433);
-            } else if (ch >= '0' && ch <= '9') {
-                nextStates.set(138);
+        private static TokenType getNfaNameJAVAIndex430(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'i') {
+                nextStates.set(431);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex432(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(139);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+        private static TokenType getNfaNameJAVAIndex431(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'z') {
                 nextStates.set(432);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex433(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(138);
+        private static TokenType getNfaNameJAVAIndex432(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'e') {
+                nextStates.set(128);
             }
             return null;
         }
 
-        private static TokenType getNfaNameJAVAIndex434(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch >= '0' && ch <= '9') {
-                nextStates.set(140);
-            }
-            if ((ch >= '0' && ch <= '9') || (ch == '_')) {
+        private static TokenType getNfaNameJAVAIndex433(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 'x') {
                 nextStates.set(434);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex434(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 't') {
+                nextStates.set(435);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex435(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(141);
+            if (ch == 'e') {
+                nextStates.set(436);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex436(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'h') {
+            if (ch == 'n') {
                 nextStates.set(437);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex437(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(142);
+            if (ch == 'd') {
+                nextStates.set(129);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex438(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch == 'X') || (ch == 'x')) {
+            if (ch == 'b') {
                 nextStates.set(439);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex439(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(143);
-            }
-            return null;
-        }
-
-        private static TokenType getNfaNameJAVAIndex440(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))) {
-                nextStates.set(22);
-            }
-            if ((ch >= '0' && ch <= '9') || ((ch >= 'A' && ch <= 'F') || ((ch == '_') || (ch >= 'a' && ch <= 'f')))) {
+            if (ch == 's') {
                 nextStates.set(440);
             }
             return null;
         }
 
+        private static TokenType getNfaNameJAVAIndex440(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+            if (ch == 't') {
+                nextStates.set(441);
+            }
+            return null;
+        }
+
         private static TokenType getNfaNameJAVAIndex441(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == 'r') {
                 nextStates.set(442);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex442(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
+            if (ch == 'a') {
                 nextStates.set(443);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex443(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(144);
+            if (ch == 'c') {
+                nextStates.set(131);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex444(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 'r') {
                 nextStates.set(445);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex445(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'e') {
-                nextStates.set(146);
+            if (ch == 'i') {
+                nextStates.set(446);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex446(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'b') {
+            if (ch == 'v') {
                 nextStates.set(447);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex447(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
+            if (ch == 'a') {
                 nextStates.set(448);
             }
             return null;
@@ -4326,55 +4326,55 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex448(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 't') {
-                nextStates.set(449);
+                nextStates.set(133);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex449(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'e') {
                 nextStates.set(450);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex450(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if (ch == 'r') {
                 nextStates.set(451);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex451(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'c') {
-                nextStates.set(147);
+            if (ch == 'm') {
+                nextStates.set(452);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex452(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'x') {
+            if (ch == 'i') {
                 nextStates.set(453);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex453(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'p') {
-                nextStates.set(454);
+            if (ch == 't') {
+                nextStates.set(135);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex454(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 'r') {
                 nextStates.set(455);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex455(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
+            if (ch == 'o') {
                 nextStates.set(456);
             }
             return null;
@@ -4382,49 +4382,49 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex456(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 't') {
-                nextStates.set(148);
+                nextStates.set(457);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex457(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'e') {
                 nextStates.set(458);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex458(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
-                nextStates.set(149);
+            if (ch == 'c') {
+                nextStates.set(459);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex459(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'o') {
+            if (ch == 't') {
                 nextStates.set(460);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex460(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'd') {
-                nextStates.set(461);
+            if (ch == 'e') {
+                nextStates.set(137);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex461(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'u') {
+            if (ch == 'h') {
                 nextStates.set(462);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex462(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'l') {
-                nextStates.set(150);
+            if (ch == 'i') {
+                nextStates.set(138);
             }
             return null;
         }
@@ -4438,63 +4438,69 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex464(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'n') {
-                nextStates.set(151);
+                nextStates.set(139);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex465(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'r') {
-                nextStates.set(466);
+            if (ch >= '0' && ch <= '9') {
+                nextStates.set(150);
+            }
+            if ((ch >= '0' && ch <= '9' || ch == '_')) {
+                nextStates.set(465);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex466(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'a') {
+            if ((ch == 'B' || ch == 'b')) {
                 nextStates.set(467);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex467(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'n') {
-                nextStates.set(468);
+            if (ch == '0' || ch == '1') {
+                nextStates.set(151);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex468(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 's') {
-                nextStates.set(469);
+            if (ch == '0' || ch == '1') {
+                nextStates.set(16);
+            }
+            if ((ch == '0' || ch == '1' || ch == '_')) {
+                nextStates.set(468);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex469(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 's') {
                 nextStates.set(470);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex470(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 't') {
+            if (ch == 's') {
                 nextStates.set(471);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex471(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'i') {
+            if (ch == 'e') {
                 nextStates.set(472);
             }
             return null;
         }
 
         private static TokenType getNfaNameJAVAIndex472(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-            if (ch == 'v') {
-                nextStates.set(153);
+            if (ch == 'r') {
+                nextStates.set(152);
             }
             return null;
         }
@@ -4522,7 +4528,7 @@ public class JavaLexer extends TokenSource {
 
         private static TokenType getNfaNameJAVAIndex476(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
             if (ch == 'i') {
-                nextStates.set(155);
+                nextStates.set(153);
             }
             return null;
         }
@@ -4637,52 +4643,55 @@ public class JavaLexer extends TokenSource {
             0x11083, 0x110af, 0x110d0, 0x110e8, 0x11103, 0x11126, 0x11144, 0x11144,
             0x11147, 0x11147, 0x11150, 0x11172, 0x11176, 0x11176, 0x11183, 0x111b2,
             0x111c1, 0x111c4, 0x111da, 0x111da, 0x111dc, 0x111dc, 0x11200, 0x11211,
-            0x11213, 0x1122b, 0x11280, 0x11286, 0x11288, 0x11288, 0x1128a, 0x1128d,
-            0x1128f, 0x1129d, 0x1129f, 0x112a8, 0x112b0, 0x112de, 0x11305, 0x1130c,
-            0x1130f, 0x11310, 0x11313, 0x11328, 0x1132a, 0x11330, 0x11332, 0x11333,
-            0x11335, 0x11339, 0x1133d, 0x1133d, 0x11350, 0x11350, 0x1135d, 0x11361,
-            0x11400, 0x11434, 0x11447, 0x1144a, 0x1145f, 0x11461, 0x11480, 0x114af,
-            0x114c4, 0x114c5, 0x114c7, 0x114c7, 0x11580, 0x115ae, 0x115d8, 0x115db,
-            0x11600, 0x1162f, 0x11644, 0x11644, 0x11680, 0x116aa, 0x116b8, 0x116b8,
-            0x11700, 0x1171a, 0x11740, 0x11746, 0x11800, 0x1182b, 0x118a0, 0x118df,
-            0x118ff, 0x11906, 0x11909, 0x11909, 0x1190c, 0x11913, 0x11915, 0x11916,
-            0x11918, 0x1192f, 0x1193f, 0x1193f, 0x11941, 0x11941, 0x119a0, 0x119a7,
-            0x119aa, 0x119d0, 0x119e1, 0x119e1, 0x119e3, 0x119e3, 0x11a00, 0x11a00,
-            0x11a0b, 0x11a32, 0x11a3a, 0x11a3a, 0x11a50, 0x11a50, 0x11a5c, 0x11a89,
-            0x11a9d, 0x11a9d, 0x11ab0, 0x11af8, 0x11c00, 0x11c08, 0x11c0a, 0x11c2e,
-            0x11c40, 0x11c40, 0x11c72, 0x11c8f, 0x11d00, 0x11d06, 0x11d08, 0x11d09,
-            0x11d0b, 0x11d30, 0x11d46, 0x11d46, 0x11d60, 0x11d65, 0x11d67, 0x11d68,
-            0x11d6a, 0x11d89, 0x11d98, 0x11d98, 0x11ee0, 0x11ef2, 0x11fb0, 0x11fb0,
+            0x11213, 0x1122b, 0x1123f, 0x11240, 0x11280, 0x11286, 0x11288, 0x11288,
+            0x1128a, 0x1128d, 0x1128f, 0x1129d, 0x1129f, 0x112a8, 0x112b0, 0x112de,
+            0x11305, 0x1130c, 0x1130f, 0x11310, 0x11313, 0x11328, 0x1132a, 0x11330,
+            0x11332, 0x11333, 0x11335, 0x11339, 0x1133d, 0x1133d, 0x11350, 0x11350,
+            0x1135d, 0x11361, 0x11400, 0x11434, 0x11447, 0x1144a, 0x1145f, 0x11461,
+            0x11480, 0x114af, 0x114c4, 0x114c5, 0x114c7, 0x114c7, 0x11580, 0x115ae,
+            0x115d8, 0x115db, 0x11600, 0x1162f, 0x11644, 0x11644, 0x11680, 0x116aa,
+            0x116b8, 0x116b8, 0x11700, 0x1171a, 0x11740, 0x11746, 0x11800, 0x1182b,
+            0x118a0, 0x118df, 0x118ff, 0x11906, 0x11909, 0x11909, 0x1190c, 0x11913,
+            0x11915, 0x11916, 0x11918, 0x1192f, 0x1193f, 0x1193f, 0x11941, 0x11941,
+            0x119a0, 0x119a7, 0x119aa, 0x119d0, 0x119e1, 0x119e1, 0x119e3, 0x119e3,
+            0x11a00, 0x11a00, 0x11a0b, 0x11a32, 0x11a3a, 0x11a3a, 0x11a50, 0x11a50,
+            0x11a5c, 0x11a89, 0x11a9d, 0x11a9d, 0x11ab0, 0x11af8, 0x11c00, 0x11c08,
+            0x11c0a, 0x11c2e, 0x11c40, 0x11c40, 0x11c72, 0x11c8f, 0x11d00, 0x11d06,
+            0x11d08, 0x11d09, 0x11d0b, 0x11d30, 0x11d46, 0x11d46, 0x11d60, 0x11d65,
+            0x11d67, 0x11d68, 0x11d6a, 0x11d89, 0x11d98, 0x11d98, 0x11ee0, 0x11ef2,
+            0x11f02, 0x11f02, 0x11f04, 0x11f10, 0x11f12, 0x11f33, 0x11fb0, 0x11fb0,
             0x11fdd, 0x11fe0, 0x12000, 0x12399, 0x12400, 0x1246e, 0x12480, 0x12543,
-            0x12f90, 0x12ff0, 0x13000, 0x1342e, 0x14400, 0x14646, 0x16800, 0x16a38,
-            0x16a40, 0x16a5e, 0x16a70, 0x16abe, 0x16ad0, 0x16aed, 0x16b00, 0x16b2f,
-            0x16b40, 0x16b43, 0x16b63, 0x16b77, 0x16b7d, 0x16b8f, 0x16e40, 0x16e7f,
-            0x16f00, 0x16f4a, 0x16f50, 0x16f50, 0x16f93, 0x16f9f, 0x16fe0, 0x16fe1,
-            0x16fe3, 0x16fe3, 0x17000, 0x187f7, 0x18800, 0x18cd5, 0x18d00, 0x18d08,
-            0x1aff0, 0x1aff3, 0x1aff5, 0x1affb, 0x1affd, 0x1affe, 0x1b000, 0x1b122,
-            0x1b150, 0x1b152, 0x1b164, 0x1b167, 0x1b170, 0x1b2fb, 0x1bc00, 0x1bc6a,
-            0x1bc70, 0x1bc7c, 0x1bc80, 0x1bc88, 0x1bc90, 0x1bc99, 0x1d400, 0x1d454,
-            0x1d456, 0x1d49c, 0x1d49e, 0x1d49f, 0x1d4a2, 0x1d4a2, 0x1d4a5, 0x1d4a6,
-            0x1d4a9, 0x1d4ac, 0x1d4ae, 0x1d4b9, 0x1d4bb, 0x1d4bb, 0x1d4bd, 0x1d4c3,
-            0x1d4c5, 0x1d505, 0x1d507, 0x1d50a, 0x1d50d, 0x1d514, 0x1d516, 0x1d51c,
-            0x1d51e, 0x1d539, 0x1d53b, 0x1d53e, 0x1d540, 0x1d544, 0x1d546, 0x1d546,
-            0x1d54a, 0x1d550, 0x1d552, 0x1d6a5, 0x1d6a8, 0x1d6c0, 0x1d6c2, 0x1d6da,
-            0x1d6dc, 0x1d6fa, 0x1d6fc, 0x1d714, 0x1d716, 0x1d734, 0x1d736, 0x1d74e,
-            0x1d750, 0x1d76e, 0x1d770, 0x1d788, 0x1d78a, 0x1d7a8, 0x1d7aa, 0x1d7c2,
-            0x1d7c4, 0x1d7cb, 0x1df00, 0x1df1e, 0x1e100, 0x1e12c, 0x1e137, 0x1e13d,
-            0x1e14e, 0x1e14e, 0x1e290, 0x1e2ad, 0x1e2c0, 0x1e2eb, 0x1e2ff, 0x1e2ff,
-            0x1e7e0, 0x1e7e6, 0x1e7e8, 0x1e7eb, 0x1e7ed, 0x1e7ee, 0x1e7f0, 0x1e7fe,
-            0x1e800, 0x1e8c4, 0x1e900, 0x1e943, 0x1e94b, 0x1e94b, 0x1ecb0, 0x1ecb0,
-            0x1ee00, 0x1ee03, 0x1ee05, 0x1ee1f, 0x1ee21, 0x1ee22, 0x1ee24, 0x1ee24,
-            0x1ee27, 0x1ee27, 0x1ee29, 0x1ee32, 0x1ee34, 0x1ee37, 0x1ee39, 0x1ee39,
-            0x1ee3b, 0x1ee3b, 0x1ee42, 0x1ee42, 0x1ee47, 0x1ee47, 0x1ee49, 0x1ee49,
-            0x1ee4b, 0x1ee4b, 0x1ee4d, 0x1ee4f, 0x1ee51, 0x1ee52, 0x1ee54, 0x1ee54,
-            0x1ee57, 0x1ee57, 0x1ee59, 0x1ee59, 0x1ee5b, 0x1ee5b, 0x1ee5d, 0x1ee5d,
-            0x1ee5f, 0x1ee5f, 0x1ee61, 0x1ee62, 0x1ee64, 0x1ee64, 0x1ee67, 0x1ee6a,
-            0x1ee6c, 0x1ee72, 0x1ee74, 0x1ee77, 0x1ee79, 0x1ee7c, 0x1ee7e, 0x1ee7e,
-            0x1ee80, 0x1ee89, 0x1ee8b, 0x1ee9b, 0x1eea1, 0x1eea3, 0x1eea5, 0x1eea9,
-            0x1eeab, 0x1eebb, 0x20000, 0x2a6df, 0x2a700, 0x2b738, 0x2b740, 0x2b81d,
-            0x2b820, 0x2cea1, 0x2ceb0, 0x2ebe0, 0x2f800, 0x2fa1d, 0x30000, 0x3134a};
+            0x12f90, 0x12ff0, 0x13000, 0x1342f, 0x13441, 0x13446, 0x14400, 0x14646,
+            0x16800, 0x16a38, 0x16a40, 0x16a5e, 0x16a70, 0x16abe, 0x16ad0, 0x16aed,
+            0x16b00, 0x16b2f, 0x16b40, 0x16b43, 0x16b63, 0x16b77, 0x16b7d, 0x16b8f,
+            0x16e40, 0x16e7f, 0x16f00, 0x16f4a, 0x16f50, 0x16f50, 0x16f93, 0x16f9f,
+            0x16fe0, 0x16fe1, 0x16fe3, 0x16fe3, 0x17000, 0x187f7, 0x18800, 0x18cd5,
+            0x18d00, 0x18d08, 0x1aff0, 0x1aff3, 0x1aff5, 0x1affb, 0x1affd, 0x1affe,
+            0x1b000, 0x1b122, 0x1b132, 0x1b132, 0x1b150, 0x1b152, 0x1b155, 0x1b155,
+            0x1b164, 0x1b167, 0x1b170, 0x1b2fb, 0x1bc00, 0x1bc6a, 0x1bc70, 0x1bc7c,
+            0x1bc80, 0x1bc88, 0x1bc90, 0x1bc99, 0x1d400, 0x1d454, 0x1d456, 0x1d49c,
+            0x1d49e, 0x1d49f, 0x1d4a2, 0x1d4a2, 0x1d4a5, 0x1d4a6, 0x1d4a9, 0x1d4ac,
+            0x1d4ae, 0x1d4b9, 0x1d4bb, 0x1d4bb, 0x1d4bd, 0x1d4c3, 0x1d4c5, 0x1d505,
+            0x1d507, 0x1d50a, 0x1d50d, 0x1d514, 0x1d516, 0x1d51c, 0x1d51e, 0x1d539,
+            0x1d53b, 0x1d53e, 0x1d540, 0x1d544, 0x1d546, 0x1d546, 0x1d54a, 0x1d550,
+            0x1d552, 0x1d6a5, 0x1d6a8, 0x1d6c0, 0x1d6c2, 0x1d6da, 0x1d6dc, 0x1d6fa,
+            0x1d6fc, 0x1d714, 0x1d716, 0x1d734, 0x1d736, 0x1d74e, 0x1d750, 0x1d76e,
+            0x1d770, 0x1d788, 0x1d78a, 0x1d7a8, 0x1d7aa, 0x1d7c2, 0x1d7c4, 0x1d7cb,
+            0x1df00, 0x1df1e, 0x1df25, 0x1df2a, 0x1e030, 0x1e06d, 0x1e100, 0x1e12c,
+            0x1e137, 0x1e13d, 0x1e14e, 0x1e14e, 0x1e290, 0x1e2ad, 0x1e2c0, 0x1e2eb,
+            0x1e2ff, 0x1e2ff, 0x1e4d0, 0x1e4eb, 0x1e7e0, 0x1e7e6, 0x1e7e8, 0x1e7eb,
+            0x1e7ed, 0x1e7ee, 0x1e7f0, 0x1e7fe, 0x1e800, 0x1e8c4, 0x1e900, 0x1e943,
+            0x1e94b, 0x1e94b, 0x1ecb0, 0x1ecb0, 0x1ee00, 0x1ee03, 0x1ee05, 0x1ee1f,
+            0x1ee21, 0x1ee22, 0x1ee24, 0x1ee24, 0x1ee27, 0x1ee27, 0x1ee29, 0x1ee32,
+            0x1ee34, 0x1ee37, 0x1ee39, 0x1ee39, 0x1ee3b, 0x1ee3b, 0x1ee42, 0x1ee42,
+            0x1ee47, 0x1ee47, 0x1ee49, 0x1ee49, 0x1ee4b, 0x1ee4b, 0x1ee4d, 0x1ee4f,
+            0x1ee51, 0x1ee52, 0x1ee54, 0x1ee54, 0x1ee57, 0x1ee57, 0x1ee59, 0x1ee59,
+            0x1ee5b, 0x1ee5b, 0x1ee5d, 0x1ee5d, 0x1ee5f, 0x1ee5f, 0x1ee61, 0x1ee62,
+            0x1ee64, 0x1ee64, 0x1ee67, 0x1ee6a, 0x1ee6c, 0x1ee72, 0x1ee74, 0x1ee77,
+            0x1ee79, 0x1ee7c, 0x1ee7e, 0x1ee7e, 0x1ee80, 0x1ee89, 0x1ee8b, 0x1ee9b,
+            0x1eea1, 0x1eea3, 0x1eea5, 0x1eea9, 0x1eeab, 0x1eebb, 0x20000, 0x2a6df,
+            0x2a700, 0x2b739, 0x2b740, 0x2b81d, 0x2b820, 0x2cea1, 0x2ceb0, 0x2ebe0,
+            0x2f800, 0x2fa1d, 0x30000, 0x3134a, 0x31350, 0x323af};
         }
 
         private static final int[] NFA_MOVES_JAVA_640 = NFA_MOVES_JAVA_640_init();
@@ -4721,14 +4730,14 @@ public class JavaLexer extends TokenSource {
             0xc5a, 0xc5d, 0xc5d, 0xc60, 0xc63, 0xc66, 0xc6f, 0xc80, 0xc83, 0xc85,
             0xc8c, 0xc8e, 0xc90, 0xc92, 0xca8, 0xcaa, 0xcb3, 0xcb5, 0xcb9, 0xcbc,
             0xcc4, 0xcc6, 0xcc8, 0xcca, 0xccd, 0xcd5, 0xcd6, 0xcdd, 0xcde, 0xce0,
-            0xce3, 0xce6, 0xcef, 0xcf1, 0xcf2, 0xd00, 0xd0c, 0xd0e, 0xd10, 0xd12,
+            0xce3, 0xce6, 0xcef, 0xcf1, 0xcf3, 0xd00, 0xd0c, 0xd0e, 0xd10, 0xd12,
             0xd44, 0xd46, 0xd48, 0xd4a, 0xd4e, 0xd54, 0xd57, 0xd5f, 0xd63, 0xd66,
             0xd6f, 0xd7a, 0xd7f, 0xd81, 0xd83, 0xd85, 0xd96, 0xd9a, 0xdb1, 0xdb3,
             0xdbb, 0xdbd, 0xdbd, 0xdc0, 0xdc6, 0xdca, 0xdca, 0xdcf, 0xdd4, 0xdd6,
             0xdd6, 0xdd8, 0xddf, 0xde6, 0xdef, 0xdf2, 0xdf3, 0xe01, 0xe3a, 0xe3f,
             0xe4e, 0xe50, 0xe59, 0xe81, 0xe82, 0xe84, 0xe84, 0xe86, 0xe8a, 0xe8c,
             0xea3, 0xea5, 0xea5, 0xea7, 0xebd, 0xec0, 0xec4, 0xec6, 0xec6, 0xec8,
-            0xecd, 0xed0, 0xed9, 0xedc, 0xedf, 0xf00, 0xf00, 0xf18, 0xf19, 0xf20,
+            0xece, 0xed0, 0xed9, 0xedc, 0xedf, 0xf00, 0xf00, 0xf18, 0xf19, 0xf20,
             0xf29, 0xf35, 0xf35, 0xf37, 0xf37, 0xf39, 0xf39, 0xf3e, 0xf47, 0xf49,
             0xf6c, 0xf71, 0xf84, 0xf86, 0xf97, 0xf99, 0xfbc, 0xfc6, 0xfc6, 0x1000,
             0x1049, 0x1050, 0x109d, 0x10a0, 0x10c5, 0x10c7, 0x10c7, 0x10cd, 0x10cd,
@@ -4802,13 +4811,13 @@ public class JavaLexer extends TokenSource {
             0x10ae6, 0x10b00, 0x10b35, 0x10b40, 0x10b55, 0x10b60, 0x10b72, 0x10b80,
             0x10b91, 0x10c00, 0x10c48, 0x10c80, 0x10cb2, 0x10cc0, 0x10cf2, 0x10d00,
             0x10d27, 0x10d30, 0x10d39, 0x10e80, 0x10ea9, 0x10eab, 0x10eac, 0x10eb0,
-            0x10eb1, 0x10f00, 0x10f1c, 0x10f27, 0x10f27, 0x10f30, 0x10f50, 0x10f70,
+            0x10eb1, 0x10efd, 0x10f1c, 0x10f27, 0x10f27, 0x10f30, 0x10f50, 0x10f70,
             0x10f85, 0x10fb0, 0x10fc4, 0x10fe0, 0x10ff6, 0x11000, 0x11046, 0x11066,
             0x11075, 0x1107f, 0x110ba, 0x110bd, 0x110bd, 0x110c2, 0x110c2, 0x110cd,
             0x110cd, 0x110d0, 0x110e8, 0x110f0, 0x110f9, 0x11100, 0x11134, 0x11136,
             0x1113f, 0x11144, 0x11147, 0x11150, 0x11173, 0x11176, 0x11176, 0x11180,
             0x111c4, 0x111c9, 0x111cc, 0x111ce, 0x111da, 0x111dc, 0x111dc, 0x11200,
-            0x11211, 0x11213, 0x11237, 0x1123e, 0x1123e, 0x11280, 0x11286, 0x11288,
+            0x11211, 0x11213, 0x11237, 0x1123e, 0x11241, 0x11280, 0x11286, 0x11288,
             0x11288, 0x1128a, 0x1128d, 0x1128f, 0x1129d, 0x1129f, 0x112a8, 0x112b0,
             0x112ea, 0x112f0, 0x112f9, 0x11300, 0x11303, 0x11305, 0x1130c, 0x1130f,
             0x11310, 0x11313, 0x11328, 0x1132a, 0x11330, 0x11332, 0x11333, 0x11335,
@@ -4828,209 +4837,212 @@ public class JavaLexer extends TokenSource {
             0x11cb6, 0x11d00, 0x11d06, 0x11d08, 0x11d09, 0x11d0b, 0x11d36, 0x11d3a,
             0x11d3a, 0x11d3c, 0x11d3d, 0x11d3f, 0x11d47, 0x11d50, 0x11d59, 0x11d60,
             0x11d65, 0x11d67, 0x11d68, 0x11d6a, 0x11d8e, 0x11d90, 0x11d91, 0x11d93,
-            0x11d98, 0x11da0, 0x11da9, 0x11ee0, 0x11ef6, 0x11fb0, 0x11fb0, 0x11fdd,
+            0x11d98, 0x11da0, 0x11da9, 0x11ee0, 0x11ef6, 0x11f00, 0x11f10, 0x11f12,
+            0x11f3a, 0x11f3e, 0x11f42, 0x11f50, 0x11f59, 0x11fb0, 0x11fb0, 0x11fdd,
             0x11fe0, 0x12000, 0x12399, 0x12400, 0x1246e, 0x12480, 0x12543, 0x12f90,
-            0x12ff0, 0x13000, 0x1342e, 0x13430, 0x13438, 0x14400, 0x14646, 0x16800,
-            0x16a38, 0x16a40, 0x16a5e, 0x16a60, 0x16a69, 0x16a70, 0x16abe, 0x16ac0,
-            0x16ac9, 0x16ad0, 0x16aed, 0x16af0, 0x16af4, 0x16b00, 0x16b36, 0x16b40,
-            0x16b43, 0x16b50, 0x16b59, 0x16b63, 0x16b77, 0x16b7d, 0x16b8f, 0x16e40,
-            0x16e7f, 0x16f00, 0x16f4a, 0x16f4f, 0x16f87, 0x16f8f, 0x16f9f, 0x16fe0,
-            0x16fe1, 0x16fe3, 0x16fe4, 0x16ff0, 0x16ff1, 0x17000, 0x187f7, 0x18800,
-            0x18cd5, 0x18d00, 0x18d08, 0x1aff0, 0x1aff3, 0x1aff5, 0x1affb, 0x1affd,
-            0x1affe, 0x1b000, 0x1b122, 0x1b150, 0x1b152, 0x1b164, 0x1b167, 0x1b170,
-            0x1b2fb, 0x1bc00, 0x1bc6a, 0x1bc70, 0x1bc7c, 0x1bc80, 0x1bc88, 0x1bc90,
-            0x1bc99, 0x1bc9d, 0x1bc9e, 0x1bca0, 0x1bca3, 0x1cf00, 0x1cf2d, 0x1cf30,
-            0x1cf46, 0x1d165, 0x1d169, 0x1d16d, 0x1d182, 0x1d185, 0x1d18b, 0x1d1aa,
-            0x1d1ad, 0x1d242, 0x1d244, 0x1d400, 0x1d454, 0x1d456, 0x1d49c, 0x1d49e,
-            0x1d49f, 0x1d4a2, 0x1d4a2, 0x1d4a5, 0x1d4a6, 0x1d4a9, 0x1d4ac, 0x1d4ae,
-            0x1d4b9, 0x1d4bb, 0x1d4bb, 0x1d4bd, 0x1d4c3, 0x1d4c5, 0x1d505, 0x1d507,
-            0x1d50a, 0x1d50d, 0x1d514, 0x1d516, 0x1d51c, 0x1d51e, 0x1d539, 0x1d53b,
-            0x1d53e, 0x1d540, 0x1d544, 0x1d546, 0x1d546, 0x1d54a, 0x1d550, 0x1d552,
-            0x1d6a5, 0x1d6a8, 0x1d6c0, 0x1d6c2, 0x1d6da, 0x1d6dc, 0x1d6fa, 0x1d6fc,
-            0x1d714, 0x1d716, 0x1d734, 0x1d736, 0x1d74e, 0x1d750, 0x1d76e, 0x1d770,
-            0x1d788, 0x1d78a, 0x1d7a8, 0x1d7aa, 0x1d7c2, 0x1d7c4, 0x1d7cb, 0x1d7ce,
-            0x1d7ff, 0x1da00, 0x1da36, 0x1da3b, 0x1da6c, 0x1da75, 0x1da75, 0x1da84,
-            0x1da84, 0x1da9b, 0x1da9f, 0x1daa1, 0x1daaf, 0x1df00, 0x1df1e, 0x1e000,
-            0x1e006, 0x1e008, 0x1e018, 0x1e01b, 0x1e021, 0x1e023, 0x1e024, 0x1e026,
-            0x1e02a, 0x1e100, 0x1e12c, 0x1e130, 0x1e13d, 0x1e140, 0x1e149, 0x1e14e,
-            0x1e14e, 0x1e290, 0x1e2ae, 0x1e2c0, 0x1e2f9, 0x1e2ff, 0x1e2ff, 0x1e7e0,
-            0x1e7e6, 0x1e7e8, 0x1e7eb, 0x1e7ed, 0x1e7ee, 0x1e7f0, 0x1e7fe, 0x1e800,
-            0x1e8c4, 0x1e8d0, 0x1e8d6, 0x1e900, 0x1e94b, 0x1e950, 0x1e959, 0x1ecb0,
-            0x1ecb0, 0x1ee00, 0x1ee03, 0x1ee05, 0x1ee1f, 0x1ee21, 0x1ee22, 0x1ee24,
-            0x1ee24, 0x1ee27, 0x1ee27, 0x1ee29, 0x1ee32, 0x1ee34, 0x1ee37, 0x1ee39,
-            0x1ee39, 0x1ee3b, 0x1ee3b, 0x1ee42, 0x1ee42, 0x1ee47, 0x1ee47, 0x1ee49,
-            0x1ee49, 0x1ee4b, 0x1ee4b, 0x1ee4d, 0x1ee4f, 0x1ee51, 0x1ee52, 0x1ee54,
-            0x1ee54, 0x1ee57, 0x1ee57, 0x1ee59, 0x1ee59, 0x1ee5b, 0x1ee5b, 0x1ee5d,
-            0x1ee5d, 0x1ee5f, 0x1ee5f, 0x1ee61, 0x1ee62, 0x1ee64, 0x1ee64, 0x1ee67,
-            0x1ee6a, 0x1ee6c, 0x1ee72, 0x1ee74, 0x1ee77, 0x1ee79, 0x1ee7c, 0x1ee7e,
-            0x1ee7e, 0x1ee80, 0x1ee89, 0x1ee8b, 0x1ee9b, 0x1eea1, 0x1eea3, 0x1eea5,
-            0x1eea9, 0x1eeab, 0x1eebb, 0x1fbf0, 0x1fbf9, 0x20000, 0x2a6df, 0x2a700,
-            0x2b738, 0x2b740, 0x2b81d, 0x2b820, 0x2cea1, 0x2ceb0, 0x2ebe0, 0x2f800,
-            0x2fa1d, 0x30000, 0x3134a, 0xe0001, 0xe0001, 0xe0020, 0xe007f, 0xe0100,
-            0xe01ef};
+            0x12ff0, 0x13000, 0x13455, 0x14400, 0x14646, 0x16800, 0x16a38, 0x16a40,
+            0x16a5e, 0x16a60, 0x16a69, 0x16a70, 0x16abe, 0x16ac0, 0x16ac9, 0x16ad0,
+            0x16aed, 0x16af0, 0x16af4, 0x16b00, 0x16b36, 0x16b40, 0x16b43, 0x16b50,
+            0x16b59, 0x16b63, 0x16b77, 0x16b7d, 0x16b8f, 0x16e40, 0x16e7f, 0x16f00,
+            0x16f4a, 0x16f4f, 0x16f87, 0x16f8f, 0x16f9f, 0x16fe0, 0x16fe1, 0x16fe3,
+            0x16fe4, 0x16ff0, 0x16ff1, 0x17000, 0x187f7, 0x18800, 0x18cd5, 0x18d00,
+            0x18d08, 0x1aff0, 0x1aff3, 0x1aff5, 0x1affb, 0x1affd, 0x1affe, 0x1b000,
+            0x1b122, 0x1b132, 0x1b132, 0x1b150, 0x1b152, 0x1b155, 0x1b155, 0x1b164,
+            0x1b167, 0x1b170, 0x1b2fb, 0x1bc00, 0x1bc6a, 0x1bc70, 0x1bc7c, 0x1bc80,
+            0x1bc88, 0x1bc90, 0x1bc99, 0x1bc9d, 0x1bc9e, 0x1bca0, 0x1bca3, 0x1cf00,
+            0x1cf2d, 0x1cf30, 0x1cf46, 0x1d165, 0x1d169, 0x1d16d, 0x1d182, 0x1d185,
+            0x1d18b, 0x1d1aa, 0x1d1ad, 0x1d242, 0x1d244, 0x1d400, 0x1d454, 0x1d456,
+            0x1d49c, 0x1d49e, 0x1d49f, 0x1d4a2, 0x1d4a2, 0x1d4a5, 0x1d4a6, 0x1d4a9,
+            0x1d4ac, 0x1d4ae, 0x1d4b9, 0x1d4bb, 0x1d4bb, 0x1d4bd, 0x1d4c3, 0x1d4c5,
+            0x1d505, 0x1d507, 0x1d50a, 0x1d50d, 0x1d514, 0x1d516, 0x1d51c, 0x1d51e,
+            0x1d539, 0x1d53b, 0x1d53e, 0x1d540, 0x1d544, 0x1d546, 0x1d546, 0x1d54a,
+            0x1d550, 0x1d552, 0x1d6a5, 0x1d6a8, 0x1d6c0, 0x1d6c2, 0x1d6da, 0x1d6dc,
+            0x1d6fa, 0x1d6fc, 0x1d714, 0x1d716, 0x1d734, 0x1d736, 0x1d74e, 0x1d750,
+            0x1d76e, 0x1d770, 0x1d788, 0x1d78a, 0x1d7a8, 0x1d7aa, 0x1d7c2, 0x1d7c4,
+            0x1d7cb, 0x1d7ce, 0x1d7ff, 0x1da00, 0x1da36, 0x1da3b, 0x1da6c, 0x1da75,
+            0x1da75, 0x1da84, 0x1da84, 0x1da9b, 0x1da9f, 0x1daa1, 0x1daaf, 0x1df00,
+            0x1df1e, 0x1df25, 0x1df2a, 0x1e000, 0x1e006, 0x1e008, 0x1e018, 0x1e01b,
+            0x1e021, 0x1e023, 0x1e024, 0x1e026, 0x1e02a, 0x1e030, 0x1e06d, 0x1e08f,
+            0x1e08f, 0x1e100, 0x1e12c, 0x1e130, 0x1e13d, 0x1e140, 0x1e149, 0x1e14e,
+            0x1e14e, 0x1e290, 0x1e2ae, 0x1e2c0, 0x1e2f9, 0x1e2ff, 0x1e2ff, 0x1e4d0,
+            0x1e4f9, 0x1e7e0, 0x1e7e6, 0x1e7e8, 0x1e7eb, 0x1e7ed, 0x1e7ee, 0x1e7f0,
+            0x1e7fe, 0x1e800, 0x1e8c4, 0x1e8d0, 0x1e8d6, 0x1e900, 0x1e94b, 0x1e950,
+            0x1e959, 0x1ecb0, 0x1ecb0, 0x1ee00, 0x1ee03, 0x1ee05, 0x1ee1f, 0x1ee21,
+            0x1ee22, 0x1ee24, 0x1ee24, 0x1ee27, 0x1ee27, 0x1ee29, 0x1ee32, 0x1ee34,
+            0x1ee37, 0x1ee39, 0x1ee39, 0x1ee3b, 0x1ee3b, 0x1ee42, 0x1ee42, 0x1ee47,
+            0x1ee47, 0x1ee49, 0x1ee49, 0x1ee4b, 0x1ee4b, 0x1ee4d, 0x1ee4f, 0x1ee51,
+            0x1ee52, 0x1ee54, 0x1ee54, 0x1ee57, 0x1ee57, 0x1ee59, 0x1ee59, 0x1ee5b,
+            0x1ee5b, 0x1ee5d, 0x1ee5d, 0x1ee5f, 0x1ee5f, 0x1ee61, 0x1ee62, 0x1ee64,
+            0x1ee64, 0x1ee67, 0x1ee6a, 0x1ee6c, 0x1ee72, 0x1ee74, 0x1ee77, 0x1ee79,
+            0x1ee7c, 0x1ee7e, 0x1ee7e, 0x1ee80, 0x1ee89, 0x1ee8b, 0x1ee9b, 0x1eea1,
+            0x1eea3, 0x1eea5, 0x1eea9, 0x1eeab, 0x1eebb, 0x1fbf0, 0x1fbf9, 0x20000,
+            0x2a6df, 0x2a700, 0x2b739, 0x2b740, 0x2b81d, 0x2b820, 0x2cea1, 0x2ceb0,
+            0x2ebe0, 0x2f800, 0x2fa1d, 0x30000, 0x3134a, 0x31350, 0x323af, 0xe0001,
+            0xe0001, 0xe0020, 0xe007f, 0xe0100, 0xe01ef};
         }
 
         private static void NFA_FUNCTIONS_init() {
-            nfaFunctions = new NfaFunction[] {JAVA::getNfaNameJAVAIndex0, JAVA::getNfaNameJAVAIndex1,
-            JAVA::getNfaNameJAVAIndex2, JAVA::getNfaNameJAVAIndex3, JAVA::getNfaNameJAVAIndex4,
-            JAVA::getNfaNameJAVAIndex5, JAVA::getNfaNameJAVAIndex6, JAVA::getNfaNameJAVAIndex7,
-            JAVA::getNfaNameJAVAIndex8, JAVA::getNfaNameJAVAIndex9, JAVA::getNfaNameJAVAIndex10,
-            JAVA::getNfaNameJAVAIndex11, JAVA::getNfaNameJAVAIndex12, JAVA::getNfaNameJAVAIndex13,
-            JAVA::getNfaNameJAVAIndex14, JAVA::getNfaNameJAVAIndex15, JAVA::getNfaNameJAVAIndex16,
-            JAVA::getNfaNameJAVAIndex17, JAVA::getNfaNameJAVAIndex18, JAVA::getNfaNameJAVAIndex19,
-            JAVA::getNfaNameJAVAIndex20, JAVA::getNfaNameJAVAIndex21, JAVA::getNfaNameJAVAIndex22,
-            JAVA::getNfaNameJAVAIndex23, JAVA::getNfaNameJAVAIndex24, JAVA::getNfaNameJAVAIndex25,
-            JAVA::getNfaNameJAVAIndex26, JAVA::getNfaNameJAVAIndex27, JAVA::getNfaNameJAVAIndex28,
-            JAVA::getNfaNameJAVAIndex29, JAVA::getNfaNameJAVAIndex30, JAVA::getNfaNameJAVAIndex31,
-            JAVA::getNfaNameJAVAIndex32, JAVA::getNfaNameJAVAIndex33, JAVA::getNfaNameJAVAIndex34,
-            JAVA::getNfaNameJAVAIndex35, JAVA::getNfaNameJAVAIndex36, JAVA::getNfaNameJAVAIndex37,
-            JAVA::getNfaNameJAVAIndex38, JAVA::getNfaNameJAVAIndex39, JAVA::getNfaNameJAVAIndex40,
-            JAVA::getNfaNameJAVAIndex41, JAVA::getNfaNameJAVAIndex42, JAVA::getNfaNameJAVAIndex43,
-            JAVA::getNfaNameJAVAIndex44, JAVA::getNfaNameJAVAIndex45, JAVA::getNfaNameJAVAIndex46,
-            JAVA::getNfaNameJAVAIndex47, JAVA::getNfaNameJAVAIndex48, JAVA::getNfaNameJAVAIndex49,
-            JAVA::getNfaNameJAVAIndex50, JAVA::getNfaNameJAVAIndex51, JAVA::getNfaNameJAVAIndex52,
-            JAVA::getNfaNameJAVAIndex53, JAVA::getNfaNameJAVAIndex54, JAVA::getNfaNameJAVAIndex55,
-            JAVA::getNfaNameJAVAIndex56, JAVA::getNfaNameJAVAIndex57, JAVA::getNfaNameJAVAIndex58,
-            JAVA::getNfaNameJAVAIndex59, JAVA::getNfaNameJAVAIndex60, JAVA::getNfaNameJAVAIndex61,
-            JAVA::getNfaNameJAVAIndex62, JAVA::getNfaNameJAVAIndex63, JAVA::getNfaNameJAVAIndex64,
-            JAVA::getNfaNameJAVAIndex65, JAVA::getNfaNameJAVAIndex66, JAVA::getNfaNameJAVAIndex67,
-            JAVA::getNfaNameJAVAIndex68, JAVA::getNfaNameJAVAIndex69, JAVA::getNfaNameJAVAIndex70,
-            JAVA::getNfaNameJAVAIndex71, JAVA::getNfaNameJAVAIndex72, JAVA::getNfaNameJAVAIndex73,
-            JAVA::getNfaNameJAVAIndex74, JAVA::getNfaNameJAVAIndex75, JAVA::getNfaNameJAVAIndex76,
-            JAVA::getNfaNameJAVAIndex77, JAVA::getNfaNameJAVAIndex78, JAVA::getNfaNameJAVAIndex79,
-            JAVA::getNfaNameJAVAIndex80, JAVA::getNfaNameJAVAIndex81, JAVA::getNfaNameJAVAIndex82,
-            JAVA::getNfaNameJAVAIndex83, JAVA::getNfaNameJAVAIndex84, JAVA::getNfaNameJAVAIndex85,
-            JAVA::getNfaNameJAVAIndex86, JAVA::getNfaNameJAVAIndex87, JAVA::getNfaNameJAVAIndex88,
-            JAVA::getNfaNameJAVAIndex89, JAVA::getNfaNameJAVAIndex90, JAVA::getNfaNameJAVAIndex91,
-            JAVA::getNfaNameJAVAIndex92, JAVA::getNfaNameJAVAIndex93, JAVA::getNfaNameJAVAIndex94,
-            JAVA::getNfaNameJAVAIndex95, JAVA::getNfaNameJAVAIndex96, JAVA::getNfaNameJAVAIndex97,
-            JAVA::getNfaNameJAVAIndex98, JAVA::getNfaNameJAVAIndex99, JAVA::getNfaNameJAVAIndex100,
-            JAVA::getNfaNameJAVAIndex101, JAVA::getNfaNameJAVAIndex102, JAVA::getNfaNameJAVAIndex103,
-            JAVA::getNfaNameJAVAIndex104, JAVA::getNfaNameJAVAIndex105, JAVA::getNfaNameJAVAIndex106,
-            JAVA::getNfaNameJAVAIndex107, JAVA::getNfaNameJAVAIndex108, JAVA::getNfaNameJAVAIndex109,
-            JAVA::getNfaNameJAVAIndex110, JAVA::getNfaNameJAVAIndex111, JAVA::getNfaNameJAVAIndex112,
-            JAVA::getNfaNameJAVAIndex113, JAVA::getNfaNameJAVAIndex114, JAVA::getNfaNameJAVAIndex115,
-            JAVA::getNfaNameJAVAIndex116, JAVA::getNfaNameJAVAIndex117, JAVA::getNfaNameJAVAIndex118,
-            JAVA::getNfaNameJAVAIndex119, JAVA::getNfaNameJAVAIndex120, JAVA::getNfaNameJAVAIndex121,
-            JAVA::getNfaNameJAVAIndex122, JAVA::getNfaNameJAVAIndex123, JAVA::getNfaNameJAVAIndex124,
-            JAVA::getNfaNameJAVAIndex125, JAVA::getNfaNameJAVAIndex126, JAVA::getNfaNameJAVAIndex127,
-            JAVA::getNfaNameJAVAIndex128, JAVA::getNfaNameJAVAIndex129, JAVA::getNfaNameJAVAIndex130,
-            JAVA::getNfaNameJAVAIndex131, JAVA::getNfaNameJAVAIndex132, JAVA::getNfaNameJAVAIndex133,
-            JAVA::getNfaNameJAVAIndex134, JAVA::getNfaNameJAVAIndex135, JAVA::getNfaNameJAVAIndex136,
-            JAVA::getNfaNameJAVAIndex137, JAVA::getNfaNameJAVAIndex138, JAVA::getNfaNameJAVAIndex139,
-            JAVA::getNfaNameJAVAIndex140, JAVA::getNfaNameJAVAIndex141, JAVA::getNfaNameJAVAIndex142,
-            JAVA::getNfaNameJAVAIndex143, JAVA::getNfaNameJAVAIndex144, JAVA::getNfaNameJAVAIndex145,
-            JAVA::getNfaNameJAVAIndex146, JAVA::getNfaNameJAVAIndex147, JAVA::getNfaNameJAVAIndex148,
-            JAVA::getNfaNameJAVAIndex149, JAVA::getNfaNameJAVAIndex150, JAVA::getNfaNameJAVAIndex151,
-            JAVA::getNfaNameJAVAIndex152, JAVA::getNfaNameJAVAIndex153, JAVA::getNfaNameJAVAIndex154,
-            JAVA::getNfaNameJAVAIndex155, JAVA::getNfaNameJAVAIndex156, JAVA::getNfaNameJAVAIndex157,
-            JAVA::getNfaNameJAVAIndex158, JAVA::getNfaNameJAVAIndex159, JAVA::getNfaNameJAVAIndex160,
-            JAVA::getNfaNameJAVAIndex161, JAVA::getNfaNameJAVAIndex162, JAVA::getNfaNameJAVAIndex163,
-            JAVA::getNfaNameJAVAIndex164, JAVA::getNfaNameJAVAIndex165, JAVA::getNfaNameJAVAIndex166,
-            JAVA::getNfaNameJAVAIndex167, JAVA::getNfaNameJAVAIndex168, JAVA::getNfaNameJAVAIndex169,
-            JAVA::getNfaNameJAVAIndex170, JAVA::getNfaNameJAVAIndex171, JAVA::getNfaNameJAVAIndex172,
-            JAVA::getNfaNameJAVAIndex173, JAVA::getNfaNameJAVAIndex174, JAVA::getNfaNameJAVAIndex175,
-            JAVA::getNfaNameJAVAIndex176, JAVA::getNfaNameJAVAIndex177, JAVA::getNfaNameJAVAIndex178,
-            JAVA::getNfaNameJAVAIndex179, JAVA::getNfaNameJAVAIndex180, JAVA::getNfaNameJAVAIndex181,
-            JAVA::getNfaNameJAVAIndex182, JAVA::getNfaNameJAVAIndex183, JAVA::getNfaNameJAVAIndex184,
-            JAVA::getNfaNameJAVAIndex185, JAVA::getNfaNameJAVAIndex186, JAVA::getNfaNameJAVAIndex187,
-            JAVA::getNfaNameJAVAIndex188, JAVA::getNfaNameJAVAIndex189, JAVA::getNfaNameJAVAIndex190,
-            JAVA::getNfaNameJAVAIndex191, JAVA::getNfaNameJAVAIndex192, JAVA::getNfaNameJAVAIndex193,
-            JAVA::getNfaNameJAVAIndex194, JAVA::getNfaNameJAVAIndex195, JAVA::getNfaNameJAVAIndex196,
-            JAVA::getNfaNameJAVAIndex197, JAVA::getNfaNameJAVAIndex198, JAVA::getNfaNameJAVAIndex199,
-            JAVA::getNfaNameJAVAIndex200, JAVA::getNfaNameJAVAIndex201, JAVA::getNfaNameJAVAIndex202,
-            JAVA::getNfaNameJAVAIndex203, JAVA::getNfaNameJAVAIndex204, JAVA::getNfaNameJAVAIndex205,
-            JAVA::getNfaNameJAVAIndex206, JAVA::getNfaNameJAVAIndex207, JAVA::getNfaNameJAVAIndex208,
-            JAVA::getNfaNameJAVAIndex209, JAVA::getNfaNameJAVAIndex210, JAVA::getNfaNameJAVAIndex211,
-            JAVA::getNfaNameJAVAIndex212, JAVA::getNfaNameJAVAIndex213, JAVA::getNfaNameJAVAIndex214,
-            JAVA::getNfaNameJAVAIndex215, JAVA::getNfaNameJAVAIndex216, JAVA::getNfaNameJAVAIndex217,
-            JAVA::getNfaNameJAVAIndex218, JAVA::getNfaNameJAVAIndex219, JAVA::getNfaNameJAVAIndex220,
-            JAVA::getNfaNameJAVAIndex221, JAVA::getNfaNameJAVAIndex222, JAVA::getNfaNameJAVAIndex223,
-            JAVA::getNfaNameJAVAIndex224, JAVA::getNfaNameJAVAIndex225, JAVA::getNfaNameJAVAIndex226,
-            JAVA::getNfaNameJAVAIndex227, JAVA::getNfaNameJAVAIndex228, JAVA::getNfaNameJAVAIndex229,
-            JAVA::getNfaNameJAVAIndex230, JAVA::getNfaNameJAVAIndex231, JAVA::getNfaNameJAVAIndex232,
-            JAVA::getNfaNameJAVAIndex233, JAVA::getNfaNameJAVAIndex234, JAVA::getNfaNameJAVAIndex235,
-            JAVA::getNfaNameJAVAIndex236, JAVA::getNfaNameJAVAIndex237, JAVA::getNfaNameJAVAIndex238,
-            JAVA::getNfaNameJAVAIndex239, JAVA::getNfaNameJAVAIndex240, JAVA::getNfaNameJAVAIndex241,
-            JAVA::getNfaNameJAVAIndex242, JAVA::getNfaNameJAVAIndex243, JAVA::getNfaNameJAVAIndex244,
-            JAVA::getNfaNameJAVAIndex245, JAVA::getNfaNameJAVAIndex246, JAVA::getNfaNameJAVAIndex247,
-            JAVA::getNfaNameJAVAIndex248, JAVA::getNfaNameJAVAIndex249, JAVA::getNfaNameJAVAIndex250,
-            JAVA::getNfaNameJAVAIndex251, JAVA::getNfaNameJAVAIndex252, JAVA::getNfaNameJAVAIndex253,
-            JAVA::getNfaNameJAVAIndex254, JAVA::getNfaNameJAVAIndex255, JAVA::getNfaNameJAVAIndex256,
-            JAVA::getNfaNameJAVAIndex257, JAVA::getNfaNameJAVAIndex258, JAVA::getNfaNameJAVAIndex259,
-            JAVA::getNfaNameJAVAIndex260, JAVA::getNfaNameJAVAIndex261, JAVA::getNfaNameJAVAIndex262,
-            JAVA::getNfaNameJAVAIndex263, JAVA::getNfaNameJAVAIndex264, JAVA::getNfaNameJAVAIndex265,
-            JAVA::getNfaNameJAVAIndex266, JAVA::getNfaNameJAVAIndex267, JAVA::getNfaNameJAVAIndex268,
-            JAVA::getNfaNameJAVAIndex269, JAVA::getNfaNameJAVAIndex270, JAVA::getNfaNameJAVAIndex271,
-            JAVA::getNfaNameJAVAIndex272, JAVA::getNfaNameJAVAIndex273, JAVA::getNfaNameJAVAIndex274,
-            JAVA::getNfaNameJAVAIndex275, JAVA::getNfaNameJAVAIndex276, JAVA::getNfaNameJAVAIndex277,
-            JAVA::getNfaNameJAVAIndex278, JAVA::getNfaNameJAVAIndex279, JAVA::getNfaNameJAVAIndex280,
-            JAVA::getNfaNameJAVAIndex281, JAVA::getNfaNameJAVAIndex282, JAVA::getNfaNameJAVAIndex283,
-            JAVA::getNfaNameJAVAIndex284, JAVA::getNfaNameJAVAIndex285, JAVA::getNfaNameJAVAIndex286,
-            JAVA::getNfaNameJAVAIndex287, JAVA::getNfaNameJAVAIndex288, JAVA::getNfaNameJAVAIndex289,
-            JAVA::getNfaNameJAVAIndex290, JAVA::getNfaNameJAVAIndex291, JAVA::getNfaNameJAVAIndex292,
-            JAVA::getNfaNameJAVAIndex293, JAVA::getNfaNameJAVAIndex294, JAVA::getNfaNameJAVAIndex295,
-            JAVA::getNfaNameJAVAIndex296, JAVA::getNfaNameJAVAIndex297, JAVA::getNfaNameJAVAIndex298,
-            JAVA::getNfaNameJAVAIndex299, JAVA::getNfaNameJAVAIndex300, JAVA::getNfaNameJAVAIndex301,
-            JAVA::getNfaNameJAVAIndex302, JAVA::getNfaNameJAVAIndex303, JAVA::getNfaNameJAVAIndex304,
-            JAVA::getNfaNameJAVAIndex305, JAVA::getNfaNameJAVAIndex306, JAVA::getNfaNameJAVAIndex307,
-            JAVA::getNfaNameJAVAIndex308, JAVA::getNfaNameJAVAIndex309, JAVA::getNfaNameJAVAIndex310,
-            JAVA::getNfaNameJAVAIndex311, JAVA::getNfaNameJAVAIndex312, JAVA::getNfaNameJAVAIndex313,
-            JAVA::getNfaNameJAVAIndex314, JAVA::getNfaNameJAVAIndex315, JAVA::getNfaNameJAVAIndex316,
-            JAVA::getNfaNameJAVAIndex317, JAVA::getNfaNameJAVAIndex318, JAVA::getNfaNameJAVAIndex319,
-            JAVA::getNfaNameJAVAIndex320, JAVA::getNfaNameJAVAIndex321, JAVA::getNfaNameJAVAIndex322,
-            JAVA::getNfaNameJAVAIndex323, JAVA::getNfaNameJAVAIndex324, JAVA::getNfaNameJAVAIndex325,
-            JAVA::getNfaNameJAVAIndex326, JAVA::getNfaNameJAVAIndex327, JAVA::getNfaNameJAVAIndex328,
-            JAVA::getNfaNameJAVAIndex329, JAVA::getNfaNameJAVAIndex330, JAVA::getNfaNameJAVAIndex331,
-            JAVA::getNfaNameJAVAIndex332, JAVA::getNfaNameJAVAIndex333, JAVA::getNfaNameJAVAIndex334,
-            JAVA::getNfaNameJAVAIndex335, JAVA::getNfaNameJAVAIndex336, JAVA::getNfaNameJAVAIndex337,
-            JAVA::getNfaNameJAVAIndex338, JAVA::getNfaNameJAVAIndex339, JAVA::getNfaNameJAVAIndex340,
-            JAVA::getNfaNameJAVAIndex341, JAVA::getNfaNameJAVAIndex342, JAVA::getNfaNameJAVAIndex343,
-            JAVA::getNfaNameJAVAIndex344, JAVA::getNfaNameJAVAIndex345, JAVA::getNfaNameJAVAIndex346,
-            JAVA::getNfaNameJAVAIndex347, JAVA::getNfaNameJAVAIndex348, JAVA::getNfaNameJAVAIndex349,
-            JAVA::getNfaNameJAVAIndex350, JAVA::getNfaNameJAVAIndex351, JAVA::getNfaNameJAVAIndex352,
-            JAVA::getNfaNameJAVAIndex353, JAVA::getNfaNameJAVAIndex354, JAVA::getNfaNameJAVAIndex355,
-            JAVA::getNfaNameJAVAIndex356, JAVA::getNfaNameJAVAIndex357, JAVA::getNfaNameJAVAIndex358,
-            JAVA::getNfaNameJAVAIndex359, JAVA::getNfaNameJAVAIndex360, JAVA::getNfaNameJAVAIndex361,
-            JAVA::getNfaNameJAVAIndex362, JAVA::getNfaNameJAVAIndex363, JAVA::getNfaNameJAVAIndex364,
-            JAVA::getNfaNameJAVAIndex365, JAVA::getNfaNameJAVAIndex366, JAVA::getNfaNameJAVAIndex367,
-            JAVA::getNfaNameJAVAIndex368, JAVA::getNfaNameJAVAIndex369, JAVA::getNfaNameJAVAIndex370,
-            JAVA::getNfaNameJAVAIndex371, JAVA::getNfaNameJAVAIndex372, JAVA::getNfaNameJAVAIndex373,
-            JAVA::getNfaNameJAVAIndex374, JAVA::getNfaNameJAVAIndex375, JAVA::getNfaNameJAVAIndex376,
-            JAVA::getNfaNameJAVAIndex377, JAVA::getNfaNameJAVAIndex378, JAVA::getNfaNameJAVAIndex379,
-            JAVA::getNfaNameJAVAIndex380, JAVA::getNfaNameJAVAIndex381, JAVA::getNfaNameJAVAIndex382,
-            JAVA::getNfaNameJAVAIndex383, JAVA::getNfaNameJAVAIndex384, JAVA::getNfaNameJAVAIndex385,
-            JAVA::getNfaNameJAVAIndex386, JAVA::getNfaNameJAVAIndex387, JAVA::getNfaNameJAVAIndex388,
-            JAVA::getNfaNameJAVAIndex389, JAVA::getNfaNameJAVAIndex390, JAVA::getNfaNameJAVAIndex391,
-            JAVA::getNfaNameJAVAIndex392, JAVA::getNfaNameJAVAIndex393, JAVA::getNfaNameJAVAIndex394,
-            JAVA::getNfaNameJAVAIndex395, JAVA::getNfaNameJAVAIndex396, JAVA::getNfaNameJAVAIndex397,
-            JAVA::getNfaNameJAVAIndex398, JAVA::getNfaNameJAVAIndex399, JAVA::getNfaNameJAVAIndex400,
-            JAVA::getNfaNameJAVAIndex401, JAVA::getNfaNameJAVAIndex402, JAVA::getNfaNameJAVAIndex403,
-            JAVA::getNfaNameJAVAIndex404, JAVA::getNfaNameJAVAIndex405, JAVA::getNfaNameJAVAIndex406,
-            JAVA::getNfaNameJAVAIndex407, JAVA::getNfaNameJAVAIndex408, JAVA::getNfaNameJAVAIndex409,
-            JAVA::getNfaNameJAVAIndex410, JAVA::getNfaNameJAVAIndex411, JAVA::getNfaNameJAVAIndex412,
-            JAVA::getNfaNameJAVAIndex413, JAVA::getNfaNameJAVAIndex414, JAVA::getNfaNameJAVAIndex415,
-            JAVA::getNfaNameJAVAIndex416, JAVA::getNfaNameJAVAIndex417, JAVA::getNfaNameJAVAIndex418,
-            JAVA::getNfaNameJAVAIndex419, JAVA::getNfaNameJAVAIndex420, JAVA::getNfaNameJAVAIndex421,
-            JAVA::getNfaNameJAVAIndex422, JAVA::getNfaNameJAVAIndex423, JAVA::getNfaNameJAVAIndex424,
-            JAVA::getNfaNameJAVAIndex425, JAVA::getNfaNameJAVAIndex426, JAVA::getNfaNameJAVAIndex427,
-            JAVA::getNfaNameJAVAIndex428, JAVA::getNfaNameJAVAIndex429, JAVA::getNfaNameJAVAIndex430,
-            JAVA::getNfaNameJAVAIndex431, JAVA::getNfaNameJAVAIndex432, JAVA::getNfaNameJAVAIndex433,
-            JAVA::getNfaNameJAVAIndex434, JAVA::getNfaNameJAVAIndex435, JAVA::getNfaNameJAVAIndex436,
-            JAVA::getNfaNameJAVAIndex437, JAVA::getNfaNameJAVAIndex438, JAVA::getNfaNameJAVAIndex439,
-            JAVA::getNfaNameJAVAIndex440, JAVA::getNfaNameJAVAIndex441, JAVA::getNfaNameJAVAIndex442,
-            JAVA::getNfaNameJAVAIndex443, JAVA::getNfaNameJAVAIndex444, JAVA::getNfaNameJAVAIndex445,
-            JAVA::getNfaNameJAVAIndex446, JAVA::getNfaNameJAVAIndex447, JAVA::getNfaNameJAVAIndex448,
-            JAVA::getNfaNameJAVAIndex449, JAVA::getNfaNameJAVAIndex450, JAVA::getNfaNameJAVAIndex451,
-            JAVA::getNfaNameJAVAIndex452, JAVA::getNfaNameJAVAIndex453, JAVA::getNfaNameJAVAIndex454,
-            JAVA::getNfaNameJAVAIndex455, JAVA::getNfaNameJAVAIndex456, JAVA::getNfaNameJAVAIndex457,
-            JAVA::getNfaNameJAVAIndex458, JAVA::getNfaNameJAVAIndex459, JAVA::getNfaNameJAVAIndex460,
-            JAVA::getNfaNameJAVAIndex461, JAVA::getNfaNameJAVAIndex462, JAVA::getNfaNameJAVAIndex463,
-            JAVA::getNfaNameJAVAIndex464, JAVA::getNfaNameJAVAIndex465, JAVA::getNfaNameJAVAIndex466,
-            JAVA::getNfaNameJAVAIndex467, JAVA::getNfaNameJAVAIndex468, JAVA::getNfaNameJAVAIndex469,
-            JAVA::getNfaNameJAVAIndex470, JAVA::getNfaNameJAVAIndex471, JAVA::getNfaNameJAVAIndex472,
-            JAVA::getNfaNameJAVAIndex473, JAVA::getNfaNameJAVAIndex474, JAVA::getNfaNameJAVAIndex475,
-            JAVA::getNfaNameJAVAIndex476};
+            NfaFunction[] functions = new NfaFunction[] {JAVA::getNfaNameJAVAIndex0,
+            JAVA::getNfaNameJAVAIndex1, JAVA::getNfaNameJAVAIndex2, JAVA::getNfaNameJAVAIndex3,
+            JAVA::getNfaNameJAVAIndex4, JAVA::getNfaNameJAVAIndex5, JAVA::getNfaNameJAVAIndex6,
+            JAVA::getNfaNameJAVAIndex7, JAVA::getNfaNameJAVAIndex8, JAVA::getNfaNameJAVAIndex9,
+            JAVA::getNfaNameJAVAIndex10, JAVA::getNfaNameJAVAIndex11, JAVA::getNfaNameJAVAIndex12,
+            JAVA::getNfaNameJAVAIndex13, JAVA::getNfaNameJAVAIndex14, JAVA::getNfaNameJAVAIndex15,
+            JAVA::getNfaNameJAVAIndex16, JAVA::getNfaNameJAVAIndex17, JAVA::getNfaNameJAVAIndex18,
+            JAVA::getNfaNameJAVAIndex19, JAVA::getNfaNameJAVAIndex20, JAVA::getNfaNameJAVAIndex21,
+            JAVA::getNfaNameJAVAIndex22, JAVA::getNfaNameJAVAIndex23, JAVA::getNfaNameJAVAIndex24,
+            JAVA::getNfaNameJAVAIndex25, JAVA::getNfaNameJAVAIndex26, JAVA::getNfaNameJAVAIndex27,
+            JAVA::getNfaNameJAVAIndex28, JAVA::getNfaNameJAVAIndex29, JAVA::getNfaNameJAVAIndex30,
+            JAVA::getNfaNameJAVAIndex31, JAVA::getNfaNameJAVAIndex32, JAVA::getNfaNameJAVAIndex33,
+            JAVA::getNfaNameJAVAIndex34, JAVA::getNfaNameJAVAIndex35, JAVA::getNfaNameJAVAIndex36,
+            JAVA::getNfaNameJAVAIndex37, JAVA::getNfaNameJAVAIndex38, JAVA::getNfaNameJAVAIndex39,
+            JAVA::getNfaNameJAVAIndex40, JAVA::getNfaNameJAVAIndex41, JAVA::getNfaNameJAVAIndex42,
+            JAVA::getNfaNameJAVAIndex43, JAVA::getNfaNameJAVAIndex44, JAVA::getNfaNameJAVAIndex45,
+            JAVA::getNfaNameJAVAIndex46, JAVA::getNfaNameJAVAIndex47, JAVA::getNfaNameJAVAIndex48,
+            JAVA::getNfaNameJAVAIndex49, JAVA::getNfaNameJAVAIndex50, JAVA::getNfaNameJAVAIndex51,
+            JAVA::getNfaNameJAVAIndex52, JAVA::getNfaNameJAVAIndex53, JAVA::getNfaNameJAVAIndex54,
+            JAVA::getNfaNameJAVAIndex55, JAVA::getNfaNameJAVAIndex56, JAVA::getNfaNameJAVAIndex57,
+            JAVA::getNfaNameJAVAIndex58, JAVA::getNfaNameJAVAIndex59, JAVA::getNfaNameJAVAIndex60,
+            JAVA::getNfaNameJAVAIndex61, JAVA::getNfaNameJAVAIndex62, JAVA::getNfaNameJAVAIndex63,
+            JAVA::getNfaNameJAVAIndex64, JAVA::getNfaNameJAVAIndex65, JAVA::getNfaNameJAVAIndex66,
+            JAVA::getNfaNameJAVAIndex67, JAVA::getNfaNameJAVAIndex68, JAVA::getNfaNameJAVAIndex69,
+            JAVA::getNfaNameJAVAIndex70, JAVA::getNfaNameJAVAIndex71, JAVA::getNfaNameJAVAIndex72,
+            JAVA::getNfaNameJAVAIndex73, JAVA::getNfaNameJAVAIndex74, JAVA::getNfaNameJAVAIndex75,
+            JAVA::getNfaNameJAVAIndex76, JAVA::getNfaNameJAVAIndex77, JAVA::getNfaNameJAVAIndex78,
+            JAVA::getNfaNameJAVAIndex79, JAVA::getNfaNameJAVAIndex80, JAVA::getNfaNameJAVAIndex81,
+            JAVA::getNfaNameJAVAIndex82, JAVA::getNfaNameJAVAIndex83, JAVA::getNfaNameJAVAIndex84,
+            JAVA::getNfaNameJAVAIndex85, JAVA::getNfaNameJAVAIndex86, JAVA::getNfaNameJAVAIndex87,
+            JAVA::getNfaNameJAVAIndex88, JAVA::getNfaNameJAVAIndex89, JAVA::getNfaNameJAVAIndex90,
+            JAVA::getNfaNameJAVAIndex91, JAVA::getNfaNameJAVAIndex92, JAVA::getNfaNameJAVAIndex93,
+            JAVA::getNfaNameJAVAIndex94, JAVA::getNfaNameJAVAIndex95, JAVA::getNfaNameJAVAIndex96,
+            JAVA::getNfaNameJAVAIndex97, JAVA::getNfaNameJAVAIndex98, JAVA::getNfaNameJAVAIndex99,
+            JAVA::getNfaNameJAVAIndex100, JAVA::getNfaNameJAVAIndex101, JAVA::getNfaNameJAVAIndex102,
+            JAVA::getNfaNameJAVAIndex103, JAVA::getNfaNameJAVAIndex104, JAVA::getNfaNameJAVAIndex105,
+            JAVA::getNfaNameJAVAIndex106, JAVA::getNfaNameJAVAIndex107, JAVA::getNfaNameJAVAIndex108,
+            JAVA::getNfaNameJAVAIndex109, JAVA::getNfaNameJAVAIndex110, JAVA::getNfaNameJAVAIndex111,
+            JAVA::getNfaNameJAVAIndex112, JAVA::getNfaNameJAVAIndex113, JAVA::getNfaNameJAVAIndex114,
+            JAVA::getNfaNameJAVAIndex115, JAVA::getNfaNameJAVAIndex116, JAVA::getNfaNameJAVAIndex117,
+            JAVA::getNfaNameJAVAIndex118, JAVA::getNfaNameJAVAIndex119, JAVA::getNfaNameJAVAIndex120,
+            JAVA::getNfaNameJAVAIndex121, JAVA::getNfaNameJAVAIndex122, JAVA::getNfaNameJAVAIndex123,
+            JAVA::getNfaNameJAVAIndex124, JAVA::getNfaNameJAVAIndex125, JAVA::getNfaNameJAVAIndex126,
+            JAVA::getNfaNameJAVAIndex127, JAVA::getNfaNameJAVAIndex128, JAVA::getNfaNameJAVAIndex129,
+            JAVA::getNfaNameJAVAIndex130, JAVA::getNfaNameJAVAIndex131, JAVA::getNfaNameJAVAIndex132,
+            JAVA::getNfaNameJAVAIndex133, JAVA::getNfaNameJAVAIndex134, JAVA::getNfaNameJAVAIndex135,
+            JAVA::getNfaNameJAVAIndex136, JAVA::getNfaNameJAVAIndex137, JAVA::getNfaNameJAVAIndex138,
+            JAVA::getNfaNameJAVAIndex139, JAVA::getNfaNameJAVAIndex140, JAVA::getNfaNameJAVAIndex141,
+            JAVA::getNfaNameJAVAIndex142, JAVA::getNfaNameJAVAIndex143, JAVA::getNfaNameJAVAIndex144,
+            JAVA::getNfaNameJAVAIndex145, JAVA::getNfaNameJAVAIndex146, JAVA::getNfaNameJAVAIndex147,
+            JAVA::getNfaNameJAVAIndex148, JAVA::getNfaNameJAVAIndex149, JAVA::getNfaNameJAVAIndex150,
+            JAVA::getNfaNameJAVAIndex151, JAVA::getNfaNameJAVAIndex152, JAVA::getNfaNameJAVAIndex153,
+            JAVA::getNfaNameJAVAIndex154, JAVA::getNfaNameJAVAIndex155, JAVA::getNfaNameJAVAIndex156,
+            JAVA::getNfaNameJAVAIndex157, JAVA::getNfaNameJAVAIndex158, JAVA::getNfaNameJAVAIndex159,
+            JAVA::getNfaNameJAVAIndex160, JAVA::getNfaNameJAVAIndex161, JAVA::getNfaNameJAVAIndex162,
+            JAVA::getNfaNameJAVAIndex163, JAVA::getNfaNameJAVAIndex164, JAVA::getNfaNameJAVAIndex165,
+            JAVA::getNfaNameJAVAIndex166, JAVA::getNfaNameJAVAIndex167, JAVA::getNfaNameJAVAIndex168,
+            JAVA::getNfaNameJAVAIndex169, JAVA::getNfaNameJAVAIndex170, JAVA::getNfaNameJAVAIndex171,
+            JAVA::getNfaNameJAVAIndex172, JAVA::getNfaNameJAVAIndex173, JAVA::getNfaNameJAVAIndex174,
+            JAVA::getNfaNameJAVAIndex175, JAVA::getNfaNameJAVAIndex176, JAVA::getNfaNameJAVAIndex177,
+            JAVA::getNfaNameJAVAIndex178, JAVA::getNfaNameJAVAIndex179, JAVA::getNfaNameJAVAIndex180,
+            JAVA::getNfaNameJAVAIndex181, JAVA::getNfaNameJAVAIndex182, JAVA::getNfaNameJAVAIndex183,
+            JAVA::getNfaNameJAVAIndex184, JAVA::getNfaNameJAVAIndex185, JAVA::getNfaNameJAVAIndex186,
+            JAVA::getNfaNameJAVAIndex187, JAVA::getNfaNameJAVAIndex188, JAVA::getNfaNameJAVAIndex189,
+            JAVA::getNfaNameJAVAIndex190, JAVA::getNfaNameJAVAIndex191, JAVA::getNfaNameJAVAIndex192,
+            JAVA::getNfaNameJAVAIndex193, JAVA::getNfaNameJAVAIndex194, JAVA::getNfaNameJAVAIndex195,
+            JAVA::getNfaNameJAVAIndex196, JAVA::getNfaNameJAVAIndex197, JAVA::getNfaNameJAVAIndex198,
+            JAVA::getNfaNameJAVAIndex199, JAVA::getNfaNameJAVAIndex200, JAVA::getNfaNameJAVAIndex201,
+            JAVA::getNfaNameJAVAIndex202, JAVA::getNfaNameJAVAIndex203, JAVA::getNfaNameJAVAIndex204,
+            JAVA::getNfaNameJAVAIndex205, JAVA::getNfaNameJAVAIndex206, JAVA::getNfaNameJAVAIndex207,
+            JAVA::getNfaNameJAVAIndex208, JAVA::getNfaNameJAVAIndex209, JAVA::getNfaNameJAVAIndex210,
+            JAVA::getNfaNameJAVAIndex211, JAVA::getNfaNameJAVAIndex212, JAVA::getNfaNameJAVAIndex213,
+            JAVA::getNfaNameJAVAIndex214, JAVA::getNfaNameJAVAIndex215, JAVA::getNfaNameJAVAIndex216,
+            JAVA::getNfaNameJAVAIndex217, JAVA::getNfaNameJAVAIndex218, JAVA::getNfaNameJAVAIndex219,
+            JAVA::getNfaNameJAVAIndex220, JAVA::getNfaNameJAVAIndex221, JAVA::getNfaNameJAVAIndex222,
+            JAVA::getNfaNameJAVAIndex223, JAVA::getNfaNameJAVAIndex224, JAVA::getNfaNameJAVAIndex225,
+            JAVA::getNfaNameJAVAIndex226, JAVA::getNfaNameJAVAIndex227, JAVA::getNfaNameJAVAIndex228,
+            JAVA::getNfaNameJAVAIndex229, JAVA::getNfaNameJAVAIndex230, JAVA::getNfaNameJAVAIndex231,
+            JAVA::getNfaNameJAVAIndex232, JAVA::getNfaNameJAVAIndex233, JAVA::getNfaNameJAVAIndex234,
+            JAVA::getNfaNameJAVAIndex235, JAVA::getNfaNameJAVAIndex236, JAVA::getNfaNameJAVAIndex237,
+            JAVA::getNfaNameJAVAIndex238, JAVA::getNfaNameJAVAIndex239, JAVA::getNfaNameJAVAIndex240,
+            JAVA::getNfaNameJAVAIndex241, JAVA::getNfaNameJAVAIndex242, JAVA::getNfaNameJAVAIndex243,
+            JAVA::getNfaNameJAVAIndex244, JAVA::getNfaNameJAVAIndex245, JAVA::getNfaNameJAVAIndex246,
+            JAVA::getNfaNameJAVAIndex247, JAVA::getNfaNameJAVAIndex248, JAVA::getNfaNameJAVAIndex249,
+            JAVA::getNfaNameJAVAIndex250, JAVA::getNfaNameJAVAIndex251, JAVA::getNfaNameJAVAIndex252,
+            JAVA::getNfaNameJAVAIndex253, JAVA::getNfaNameJAVAIndex254, JAVA::getNfaNameJAVAIndex255,
+            JAVA::getNfaNameJAVAIndex256, JAVA::getNfaNameJAVAIndex257, JAVA::getNfaNameJAVAIndex258,
+            JAVA::getNfaNameJAVAIndex259, JAVA::getNfaNameJAVAIndex260, JAVA::getNfaNameJAVAIndex261,
+            JAVA::getNfaNameJAVAIndex262, JAVA::getNfaNameJAVAIndex263, JAVA::getNfaNameJAVAIndex264,
+            JAVA::getNfaNameJAVAIndex265, JAVA::getNfaNameJAVAIndex266, JAVA::getNfaNameJAVAIndex267,
+            JAVA::getNfaNameJAVAIndex268, JAVA::getNfaNameJAVAIndex269, JAVA::getNfaNameJAVAIndex270,
+            JAVA::getNfaNameJAVAIndex271, JAVA::getNfaNameJAVAIndex272, JAVA::getNfaNameJAVAIndex273,
+            JAVA::getNfaNameJAVAIndex274, JAVA::getNfaNameJAVAIndex275, JAVA::getNfaNameJAVAIndex276,
+            JAVA::getNfaNameJAVAIndex277, JAVA::getNfaNameJAVAIndex278, JAVA::getNfaNameJAVAIndex279,
+            JAVA::getNfaNameJAVAIndex280, JAVA::getNfaNameJAVAIndex281, JAVA::getNfaNameJAVAIndex282,
+            JAVA::getNfaNameJAVAIndex283, JAVA::getNfaNameJAVAIndex284, JAVA::getNfaNameJAVAIndex285,
+            JAVA::getNfaNameJAVAIndex286, JAVA::getNfaNameJAVAIndex287, JAVA::getNfaNameJAVAIndex288,
+            JAVA::getNfaNameJAVAIndex289, JAVA::getNfaNameJAVAIndex290, JAVA::getNfaNameJAVAIndex291,
+            JAVA::getNfaNameJAVAIndex292, JAVA::getNfaNameJAVAIndex293, JAVA::getNfaNameJAVAIndex294,
+            JAVA::getNfaNameJAVAIndex295, JAVA::getNfaNameJAVAIndex296, JAVA::getNfaNameJAVAIndex297,
+            JAVA::getNfaNameJAVAIndex298, JAVA::getNfaNameJAVAIndex299, JAVA::getNfaNameJAVAIndex300,
+            JAVA::getNfaNameJAVAIndex301, JAVA::getNfaNameJAVAIndex302, JAVA::getNfaNameJAVAIndex303,
+            JAVA::getNfaNameJAVAIndex304, JAVA::getNfaNameJAVAIndex305, JAVA::getNfaNameJAVAIndex306,
+            JAVA::getNfaNameJAVAIndex307, JAVA::getNfaNameJAVAIndex308, JAVA::getNfaNameJAVAIndex309,
+            JAVA::getNfaNameJAVAIndex310, JAVA::getNfaNameJAVAIndex311, JAVA::getNfaNameJAVAIndex312,
+            JAVA::getNfaNameJAVAIndex313, JAVA::getNfaNameJAVAIndex314, JAVA::getNfaNameJAVAIndex315,
+            JAVA::getNfaNameJAVAIndex316, JAVA::getNfaNameJAVAIndex317, JAVA::getNfaNameJAVAIndex318,
+            JAVA::getNfaNameJAVAIndex319, JAVA::getNfaNameJAVAIndex320, JAVA::getNfaNameJAVAIndex321,
+            JAVA::getNfaNameJAVAIndex322, JAVA::getNfaNameJAVAIndex323, JAVA::getNfaNameJAVAIndex324,
+            JAVA::getNfaNameJAVAIndex325, JAVA::getNfaNameJAVAIndex326, JAVA::getNfaNameJAVAIndex327,
+            JAVA::getNfaNameJAVAIndex328, JAVA::getNfaNameJAVAIndex329, JAVA::getNfaNameJAVAIndex330,
+            JAVA::getNfaNameJAVAIndex331, JAVA::getNfaNameJAVAIndex332, JAVA::getNfaNameJAVAIndex333,
+            JAVA::getNfaNameJAVAIndex334, JAVA::getNfaNameJAVAIndex335, JAVA::getNfaNameJAVAIndex336,
+            JAVA::getNfaNameJAVAIndex337, JAVA::getNfaNameJAVAIndex338, JAVA::getNfaNameJAVAIndex339,
+            JAVA::getNfaNameJAVAIndex340, JAVA::getNfaNameJAVAIndex341, JAVA::getNfaNameJAVAIndex342,
+            JAVA::getNfaNameJAVAIndex343, JAVA::getNfaNameJAVAIndex344, JAVA::getNfaNameJAVAIndex345,
+            JAVA::getNfaNameJAVAIndex346, JAVA::getNfaNameJAVAIndex347, JAVA::getNfaNameJAVAIndex348,
+            JAVA::getNfaNameJAVAIndex349, JAVA::getNfaNameJAVAIndex350, JAVA::getNfaNameJAVAIndex351,
+            JAVA::getNfaNameJAVAIndex352, JAVA::getNfaNameJAVAIndex353, JAVA::getNfaNameJAVAIndex354,
+            JAVA::getNfaNameJAVAIndex355, JAVA::getNfaNameJAVAIndex356, JAVA::getNfaNameJAVAIndex357,
+            JAVA::getNfaNameJAVAIndex358, JAVA::getNfaNameJAVAIndex359, JAVA::getNfaNameJAVAIndex360,
+            JAVA::getNfaNameJAVAIndex361, JAVA::getNfaNameJAVAIndex362, JAVA::getNfaNameJAVAIndex363,
+            JAVA::getNfaNameJAVAIndex364, JAVA::getNfaNameJAVAIndex365, JAVA::getNfaNameJAVAIndex366,
+            JAVA::getNfaNameJAVAIndex367, JAVA::getNfaNameJAVAIndex368, JAVA::getNfaNameJAVAIndex369,
+            JAVA::getNfaNameJAVAIndex370, JAVA::getNfaNameJAVAIndex371, JAVA::getNfaNameJAVAIndex372,
+            JAVA::getNfaNameJAVAIndex373, JAVA::getNfaNameJAVAIndex374, JAVA::getNfaNameJAVAIndex375,
+            JAVA::getNfaNameJAVAIndex376, JAVA::getNfaNameJAVAIndex377, JAVA::getNfaNameJAVAIndex378,
+            JAVA::getNfaNameJAVAIndex379, JAVA::getNfaNameJAVAIndex380, JAVA::getNfaNameJAVAIndex381,
+            JAVA::getNfaNameJAVAIndex382, JAVA::getNfaNameJAVAIndex383, JAVA::getNfaNameJAVAIndex384,
+            JAVA::getNfaNameJAVAIndex385, JAVA::getNfaNameJAVAIndex386, JAVA::getNfaNameJAVAIndex387,
+            JAVA::getNfaNameJAVAIndex388, JAVA::getNfaNameJAVAIndex389, JAVA::getNfaNameJAVAIndex390,
+            JAVA::getNfaNameJAVAIndex391, JAVA::getNfaNameJAVAIndex392, JAVA::getNfaNameJAVAIndex393,
+            JAVA::getNfaNameJAVAIndex394, JAVA::getNfaNameJAVAIndex395, JAVA::getNfaNameJAVAIndex396,
+            JAVA::getNfaNameJAVAIndex397, JAVA::getNfaNameJAVAIndex398, JAVA::getNfaNameJAVAIndex399,
+            JAVA::getNfaNameJAVAIndex400, JAVA::getNfaNameJAVAIndex401, JAVA::getNfaNameJAVAIndex402,
+            JAVA::getNfaNameJAVAIndex403, JAVA::getNfaNameJAVAIndex404, JAVA::getNfaNameJAVAIndex405,
+            JAVA::getNfaNameJAVAIndex406, JAVA::getNfaNameJAVAIndex407, JAVA::getNfaNameJAVAIndex408,
+            JAVA::getNfaNameJAVAIndex409, JAVA::getNfaNameJAVAIndex410, JAVA::getNfaNameJAVAIndex411,
+            JAVA::getNfaNameJAVAIndex412, JAVA::getNfaNameJAVAIndex413, JAVA::getNfaNameJAVAIndex414,
+            JAVA::getNfaNameJAVAIndex415, JAVA::getNfaNameJAVAIndex416, JAVA::getNfaNameJAVAIndex417,
+            JAVA::getNfaNameJAVAIndex418, JAVA::getNfaNameJAVAIndex419, JAVA::getNfaNameJAVAIndex420,
+            JAVA::getNfaNameJAVAIndex421, JAVA::getNfaNameJAVAIndex422, JAVA::getNfaNameJAVAIndex423,
+            JAVA::getNfaNameJAVAIndex424, JAVA::getNfaNameJAVAIndex425, JAVA::getNfaNameJAVAIndex426,
+            JAVA::getNfaNameJAVAIndex427, JAVA::getNfaNameJAVAIndex428, JAVA::getNfaNameJAVAIndex429,
+            JAVA::getNfaNameJAVAIndex430, JAVA::getNfaNameJAVAIndex431, JAVA::getNfaNameJAVAIndex432,
+            JAVA::getNfaNameJAVAIndex433, JAVA::getNfaNameJAVAIndex434, JAVA::getNfaNameJAVAIndex435,
+            JAVA::getNfaNameJAVAIndex436, JAVA::getNfaNameJAVAIndex437, JAVA::getNfaNameJAVAIndex438,
+            JAVA::getNfaNameJAVAIndex439, JAVA::getNfaNameJAVAIndex440, JAVA::getNfaNameJAVAIndex441,
+            JAVA::getNfaNameJAVAIndex442, JAVA::getNfaNameJAVAIndex443, JAVA::getNfaNameJAVAIndex444,
+            JAVA::getNfaNameJAVAIndex445, JAVA::getNfaNameJAVAIndex446, JAVA::getNfaNameJAVAIndex447,
+            JAVA::getNfaNameJAVAIndex448, JAVA::getNfaNameJAVAIndex449, JAVA::getNfaNameJAVAIndex450,
+            JAVA::getNfaNameJAVAIndex451, JAVA::getNfaNameJAVAIndex452, JAVA::getNfaNameJAVAIndex453,
+            JAVA::getNfaNameJAVAIndex454, JAVA::getNfaNameJAVAIndex455, JAVA::getNfaNameJAVAIndex456,
+            JAVA::getNfaNameJAVAIndex457, JAVA::getNfaNameJAVAIndex458, JAVA::getNfaNameJAVAIndex459,
+            JAVA::getNfaNameJAVAIndex460, JAVA::getNfaNameJAVAIndex461, JAVA::getNfaNameJAVAIndex462,
+            JAVA::getNfaNameJAVAIndex463, JAVA::getNfaNameJAVAIndex464, JAVA::getNfaNameJAVAIndex465,
+            JAVA::getNfaNameJAVAIndex466, JAVA::getNfaNameJAVAIndex467, JAVA::getNfaNameJAVAIndex468,
+            JAVA::getNfaNameJAVAIndex469, JAVA::getNfaNameJAVAIndex470, JAVA::getNfaNameJAVAIndex471,
+            JAVA::getNfaNameJAVAIndex472, JAVA::getNfaNameJAVAIndex473, JAVA::getNfaNameJAVAIndex474,
+            JAVA::getNfaNameJAVAIndex475, JAVA::getNfaNameJAVAIndex476};
+            nfaFunctions = functions;
         }
 
     }

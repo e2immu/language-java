@@ -7,7 +7,7 @@ package org.parsers.java;
 */
 public class InvalidToken extends Token {
 
-    public InvalidToken(JavaLexer tokenSource, int beginOffset, int endOffset) {
+    public InvalidToken(TokenSource tokenSource, int beginOffset, int endOffset) {
         super(TokenType.INVALID, tokenSource, beginOffset, endOffset);
     }
 
