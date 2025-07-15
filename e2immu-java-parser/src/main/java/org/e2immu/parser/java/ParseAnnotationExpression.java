@@ -128,10 +128,15 @@ public class ParseAnnotationExpression extends CommonParse {
 
     public AnnotationExpression parseDirectly(Context context, Annotation a) {
         String name = a.get(1).getSource();
-        TypeInfo typeInfo = (TypeInfo) context.typeContext().get(name, true);
+        List<? extends NamedType> nts = context.typeContext().getWithQualification(name, true);
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        TypeInfo typeInfo = (TypeInfo) nts.getLast();
         if (detailedSourcesBuilder != null) {
             detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+            if (nts.size() > 1 && !typeInfo.isPrimaryType()) {
+                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a.get(1));
+                detailedSourcesBuilder.putTypeQualification(typeInfo, typeInfoSources);
+            }
         }
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo);
         if (a instanceof SingleMemberAnnotation) {
