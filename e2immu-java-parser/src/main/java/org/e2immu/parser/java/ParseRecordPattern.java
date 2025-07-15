@@ -3,10 +3,13 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.element.Source;
+import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.Identifier;
@@ -16,6 +19,7 @@ import org.parsers.java.ast.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.parsers.java.Token.TokenType.UNDERSCORE;
 
@@ -65,7 +69,12 @@ public class ParseRecordPattern extends CommonParse {
         if (lvd.getFirst() instanceof Type type) {
             pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
         } else if (lvd.getFirst() instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
-            pt = runtime.booleanParameterizedType(); // FIXME
+            FieldInfo fieldInfo = recordType.typeInfo().fields().get(recordFieldIndex);
+            if (fieldInfo.type().hasTypeParameters()) {
+                pt = handleTypeParameters(fieldInfo, recordType);
+            } else {
+                pt = fieldInfo.type();
+            }
         } else {
             throw new UnsupportedOperationException();
         }
@@ -87,5 +96,11 @@ public class ParseRecordPattern extends CommonParse {
                 .setLocalVariable(lv)
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .build();
+    }
+
+    private ParameterizedType handleTypeParameters(FieldInfo fieldInfo, ParameterizedType recordType) {
+        // FIXME do we need recursion here, up the record hierarchy?
+        Map<NamedType, ParameterizedType> map = recordType.initialTypeParameterMap();
+        return fieldInfo.type().applyTranslation(runtime, map);
     }
 }

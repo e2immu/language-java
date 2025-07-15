@@ -661,7 +661,8 @@ public class ParseStatement extends CommonParse {
                             if (node instanceof LocalVariableDeclaration || node instanceof RecordPattern) {
                                 org.e2immu.language.cst.api.element.RecordPattern recordPattern;
                                 if (node instanceof LocalVariableDeclaration lvd) {
-                                    recordPattern = parsers.parseRecordPattern().parseLocalVariableDeclaration(context, lvd);
+                                    recordPattern = parsers.parseRecordPattern()
+                                            .parseLocalVariableDeclaration(context, lvd, 0, null);
                                 } else {
                                     recordPattern = parsers.parseRecordPattern().parseRecordPattern(context, (RecordPattern) node);
                                 }
