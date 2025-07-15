@@ -7,11 +7,15 @@ import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /*
 IMPORTANT: there are three variants of the parsing code.
@@ -27,10 +31,15 @@ public class ParseAnnotationExpression extends CommonParse {
 
     public AnnotationExpression parse(Context context, Info.Builder<?> infoBuilder, Annotation a, int index) {
         String name = a.get(1).getSource();
-        TypeInfo typeInfo = (TypeInfo) context.typeContext().get(name, true);
+        List<? extends NamedType> nts = context.typeContext().getWithQualification(name, true);
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        TypeInfo typeInfo = (TypeInfo) nts.getLast();
         if (detailedSourcesBuilder != null) {
             detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+            if (nts.size() > 1 && !typeInfo.isPrimaryType()) {
+                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a.get(1));
+                detailedSourcesBuilder.putTypeQualification(typeInfo, typeInfoSources);
+            }
         }
         Source source = source(a);
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder()
@@ -49,6 +58,22 @@ public class ParseAnnotationExpression extends CommonParse {
         rely on the presence of @GetSet, @Modified.
          */
         return builder.build();
+    }
+
+    // code structurally similar to code in ParseType.parseObjectType
+    private List<DetailedSources.Builder.TypeInfoSource> computeTypeInfoSources(List<? extends NamedType> nts, Node node) {
+        List<DetailedSources.Builder.TypeInfoSource> list = new ArrayList<>(nts.size());
+        int i = nts.size() - 2; // last one is the type itself, not a qualified type
+        int j = node.size() - 3; // last one is the simple name of the type itself, then a delimiter
+        while (i >= 0) {
+            TypeInfo typeInfo = (TypeInfo) nts.get(i);
+            Source source = source(node, 0, j);
+            list.add(new DetailedSources.Builder.TypeInfoSource(typeInfo, source));
+            if (typeInfo.isPrimaryType()) break;
+            i--;
+            j -= 2;
+        }
+        return List.copyOf(list);
     }
 
 
@@ -89,7 +114,7 @@ public class ParseAnnotationExpression extends CommonParse {
                         }
                     } else {
                         throw new Summary.ParseException(context, "Expected mvp, but got "
-                                                                  + pairs.get(j).getClass() + ", src '" + pairs.get(j).getSource() + "'");
+                                + pairs.get(j).getClass() + ", src '" + pairs.get(j).getSource() + "'");
                     }
                 }
             } else if (!(na3 instanceof Delimiter d && Token.TokenType.RPAREN.equals(d.getType()))) {
