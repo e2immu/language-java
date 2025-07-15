@@ -142,9 +142,8 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setEnclosingMethod(context.enclosingMethod());
 
         Context newContext = context.newSubType(typeInfo);
-        newContext.typeContext().addToContext(typeInfo);
-
         collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo.primaryType());
+        newContext.typeContext().addToContext(typeInfo); // our own type has priority over the subtypes
 
         List<Node> typeParametersToParse = new ArrayList<>();
 
