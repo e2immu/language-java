@@ -60,23 +60,6 @@ public class ParseAnnotationExpression extends CommonParse {
         return builder.build();
     }
 
-    // code structurally similar to code in ParseType.parseObjectType
-    private List<DetailedSources.Builder.TypeInfoSource> computeTypeInfoSources(List<? extends NamedType> nts, Node node) {
-        List<DetailedSources.Builder.TypeInfoSource> list = new ArrayList<>(nts.size());
-        int i = nts.size() - 2; // last one is the type itself, not a qualified type
-        int j = node.size() - 3; // last one is the simple name of the type itself, then a delimiter
-        while (i >= 0) {
-            TypeInfo typeInfo = (TypeInfo) nts.get(i);
-            Source source = source(node, 0, j);
-            list.add(new DetailedSources.Builder.TypeInfoSource(typeInfo, source));
-            if (typeInfo.isPrimaryType()) break;
-            i--;
-            j -= 2;
-        }
-        return List.copyOf(list);
-    }
-
-
     private boolean onlyLiterals(Context context, Annotation a, AnnotationExpression.Builder builder) {
 
         if (a instanceof SingleMemberAnnotation) {

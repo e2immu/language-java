@@ -250,8 +250,7 @@ public class ParseExpression extends CommonParse {
                         commonType = commonType == null ? pe.parameterizedType()
                                 : runtime.commonType(commonType, pe.parameterizedType());
                     }
-                    default ->
-                            throw new Summary.ParseException(newContext, "Expect statement, got " + ncs1.getClass());
+                    default -> throw new Summary.ParseException(newContext, "Expect statement, got " + ncs1.getClass());
                 }
                 count++;
                 entries.add(entryBuilder.build());
@@ -294,17 +293,26 @@ public class ParseExpression extends CommonParse {
             }
         }
         String nameUpToEnd = name.children().subList(0, endIncl + 1).stream().map(Node::getSource).collect(Collectors.joining());
-        NamedType namedType = context.typeContext().get(nameUpToEnd, false);
-        if (namedType instanceof TypeInfo typeInfo) {
-            ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pt, source(name, 0, endIncl));
-            return runtime.newTypeExpressionBuilder()
-                    .setParameterizedType(pt)
-                    .setDiamond(runtime.diamondNo())
-                    .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
-                    .build();
-        } else if (namedType instanceof TypeParameter) {
-            throw new Summary.ParseException(context, "?");
+        List<? extends NamedType> nts = context.typeContext().getWithQualification(nameUpToEnd, false);
+        if (nts != null) {
+            NamedType namedType = nts.getLast();
+            if (namedType instanceof TypeInfo typeInfo) {
+                ParameterizedType pt = runtime.newParameterizedType(typeInfo, 0);
+                if (detailedSourcesBuilder != null) {
+                    detailedSourcesBuilder.put(pt, source(name, 0, endIncl));
+                    List<DetailedSources.Builder.TypeInfoSource> associatedList = computeTypeInfoSources(nts, name);
+                    if (!associatedList.isEmpty()) {
+                        detailedSourcesBuilder.putTypeQualification(typeInfo, List.copyOf(associatedList));
+                    }
+                }
+                return runtime.newTypeExpressionBuilder()
+                        .setParameterizedType(pt)
+                        .setDiamond(runtime.diamondNo())
+                        .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
+                        .build();
+            } else if (namedType instanceof TypeParameter) {
+                throw new Summary.ParseException(context, "?");
+            }
         }
         // since we don't have a type, we must have a variable
         // this will set the recursion going, from right to left

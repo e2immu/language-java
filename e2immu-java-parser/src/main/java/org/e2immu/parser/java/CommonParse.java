@@ -11,6 +11,7 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.SwitchEntry;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -362,4 +363,20 @@ public abstract class CommonParse {
         entryBuilder.setWhenExpression(whenExpression);
     }
 
+
+    // code structurally similar to code in ParseType.parseObjectType
+    protected List<DetailedSources.Builder.TypeInfoSource> computeTypeInfoSources(List<? extends NamedType> nts, Node node) {
+        List<DetailedSources.Builder.TypeInfoSource> list = new ArrayList<>(nts.size());
+        int i = nts.size() - 2; // last one is the type itself, not a qualified type
+        int j = node.size() - 3; // last one is the simple name of the type itself, then a delimiter
+        while (i >= 0) {
+            TypeInfo typeInfo = (TypeInfo) nts.get(i);
+            Source source = source(node, 0, j);
+            list.add(new DetailedSources.Builder.TypeInfoSource(typeInfo, source));
+            if (typeInfo.isPrimaryType()) break;
+            i--;
+            j -= 2;
+        }
+        return List.copyOf(list);
+    }
 }
