@@ -1,6 +1,7 @@
 package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.CompilationUnit;
+import org.e2immu.language.cst.api.element.SourceSet;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -85,7 +86,7 @@ public class CommonTestParse {
     class CompiledTypesManagerImpl implements CompiledTypesManager {
 
         @Override
-        public TypeInfo get(String fullyQualifiedName) {
+        public TypeInfo get(String fullyQualifiedName, SourceSet sourceSetOfRequest) {
             return predefined(fullyQualifiedName, false);
         }
 

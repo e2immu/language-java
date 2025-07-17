@@ -119,7 +119,8 @@ public class TestParseGenerics extends CommonJmodBaseTests {
 
     @Test
     public void testExtends4() {
-        TypeInfo SliceSpliterator = compiledTypesManager.getOrLoad("java.util.stream.StreamSpliterators.SliceSpliterator");
+        TypeInfo SliceSpliterator = compiledTypesManager
+                .getOrLoad("java.util.stream.StreamSpliterators.SliceSpliterator", null);
         assertEquals(2, SliceSpliterator.typeParameters().size());
 
         TypeInfo OfPrimitive = SliceSpliterator.findSubType("OfPrimitive");
