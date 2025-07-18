@@ -1,9 +1,8 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.element.CompilationUnit;
-import org.e2immu.language.cst.api.element.DetailedSources;
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
@@ -26,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class ParseTypeDeclaration extends CommonParse {
@@ -213,13 +214,41 @@ public class ParseTypeDeclaration extends CommonParse {
         }
         builder.hierarchyIsDone();
         // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
+        // do not change the order in the OR disjunction; we must add the subtypes!
         if (!mustDelayForStaticStarImport
-                && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight())) {
+                && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)
+                && hierarchyOfImportsAllDefined(typeInfo.compilationUnit(), context.typeContext())
+                || packageNameOrEnclosing.isRight())) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
                     detailedSourcesBuilder, i, annotations, recordComponents));
         }
         return Either.right(new DelayedParsingInformation(typeInfo, builder, td, context, typeNature, newContext,
                 detailedSourcesBuilder, i, annotations, recordComponents));
+    }
+
+    private boolean hierarchyOfImportsAllDefined(CompilationUnit compilationUnit, TypeContext typeContext) {
+        for (ImportStatement is : compilationUnit.importStatements()) {
+            if (!is.isStatic() && !is.isStar()) {
+                TypeInfo typeInfo = (TypeInfo) typeContext.getWithQualification(is.importString(), true).getLast();
+                if (hierarchyNotYetDone(typeInfo, new HashSet<>())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean hierarchyNotYetDone(TypeInfo typeInfo, Set<TypeInfo> visited) {
+        if (visited.add(typeInfo)) {
+            if (typeInfo.hierarchyNotYetDone()) return true;
+            if (typeInfo.parentClass() != null) {
+                if (hierarchyNotYetDone(typeInfo.parentClass().typeInfo(), visited)) return true;
+            }
+            for (ParameterizedType interfaceImplemented : typeInfo.interfacesImplemented()) {
+                if (hierarchyNotYetDone(interfaceImplemented.typeInfo(), visited)) return true;
+            }
+        }
+        return false;
     }
 
     public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {

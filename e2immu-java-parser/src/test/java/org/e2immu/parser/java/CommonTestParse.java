@@ -131,7 +131,7 @@ public class CommonTestParse {
                 .commitParameters();
         MethodInfo toString = runtime.newMethod(runtime.objectTypeInfo(), "toString", runtime.methodTypeMethod());
         toString.builder().setAccess(runtime.accessPublic()).setReturnType(runtime.stringParameterizedType()).commitParameters();
-        runtime.objectTypeInfo().builder().addMethod(getClass).addMethod(clone).addMethod(toString);
+        runtime.objectTypeInfo().builder().addMethod(getClass).addMethod(clone).addMethod(toString).hierarchyIsDone();
 
         defineFunction();
         defineConsumer();
@@ -254,7 +254,9 @@ public class CommonTestParse {
                 .setParentClass(runtime.objectParameterizedType())
                 .addMethod(apply).addTypeModifier(runtime.typeModifierPublic())
                 .setSingleAbstractMethod(apply)
-                .computeAccess();
+                .computeAccess()
+                .hierarchyIsDone()
+                .commit();
     }
 
     private void defineConsumer() {
@@ -268,7 +270,10 @@ public class CommonTestParse {
         accept.builder().commit();
         consumer.builder().addMethod(accept).addTypeModifier(runtime.typeModifierPublic())
                 .setSingleAbstractMethod(accept)
-                .computeAccess();
+                .computeAccess()
+                .setParentClass(runtime.objectParameterizedType())
+                .hierarchyIsDone()
+                .commit();
     }
 
     private void defineBiConsumer() {
@@ -284,7 +289,10 @@ public class CommonTestParse {
         accept.builder().commit();
         biConsumer.builder().addMethod(accept).addTypeModifier(runtime.typeModifierPublic())
                 .setSingleAbstractMethod(accept)
-                .computeAccess();
+                .computeAccess()
+                .setParentClass(runtime.objectParameterizedType())
+                .hierarchyIsDone()
+                .commit();
     }
 
 
