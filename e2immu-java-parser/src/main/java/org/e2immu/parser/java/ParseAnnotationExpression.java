@@ -30,15 +30,20 @@ public class ParseAnnotationExpression extends CommonParse {
     }
 
     public AnnotationExpression parse(Context context, Info.Builder<?> infoBuilder, Annotation a, int index) {
-        String name = a.get(1).getSource();
+        Node a1 = a.get(1);
+        String name = a1.getSource();
         List<? extends NamedType> nts = context.typeContext().getWithQualification(name, true);
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         TypeInfo typeInfo = (TypeInfo) nts.getLast();
         if (detailedSourcesBuilder != null) {
-            detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+            detailedSourcesBuilder.put(typeInfo, source(a1));
             if (nts.size() > 1 && !typeInfo.isPrimaryType()) {
-                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a.get(1));
+                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a1);
                 detailedSourcesBuilder.putTypeQualification(typeInfo, typeInfoSources);
+            }
+            Source pkgNameSource = sourceOfPrefix(a1, Math.max(0, nts.size() - 1));
+            if (pkgNameSource != null) {
+                detailedSourcesBuilder.put(typeInfo.packageName(), pkgNameSource);
             }
         }
         Source source = source(a);
@@ -110,15 +115,20 @@ public class ParseAnnotationExpression extends CommonParse {
     }
 
     public AnnotationExpression parseDirectly(Context context, Annotation a) {
-        String name = a.get(1).getSource();
+        Node a1 = a.get(1);
+        String name = a1.getSource();
         List<? extends NamedType> nts = context.typeContext().getWithQualification(name, true);
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         TypeInfo typeInfo = (TypeInfo) nts.getLast();
         if (detailedSourcesBuilder != null) {
-            detailedSourcesBuilder.put(typeInfo, source(a.get(1)));
+            detailedSourcesBuilder.put(typeInfo, source(a1));
             if (nts.size() > 1 && !typeInfo.isPrimaryType()) {
-                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a.get(1));
+                List<DetailedSources.Builder.TypeInfoSource> typeInfoSources = computeTypeInfoSources(nts, a1);
                 detailedSourcesBuilder.putTypeQualification(typeInfo, typeInfoSources);
+            }
+            Source pkgNameSource = sourceOfPrefix(a1, nts.size() - 1);
+            if (pkgNameSource != null) {
+                detailedSourcesBuilder.put(typeInfo.packageName(), pkgNameSource);
             }
         }
         AnnotationExpression.Builder builder = runtime.newAnnotationExpressionBuilder().setTypeInfo(typeInfo);

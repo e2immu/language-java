@@ -1,9 +1,7 @@
 package org.e2immu.parser.java;
 
+import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
-import org.e2immu.language.cst.api.element.Element;
-import org.e2immu.language.cst.api.element.JavaDoc;
-import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
@@ -28,17 +26,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ParseHelperImpl implements ParseHelper {
-    private final Parsers parsers;
-    private final Runtime runtime;
-
+public class ParseHelperImpl extends CommonParse implements ParseHelper {
     public ParseHelperImpl(Runtime runtime) {
         this(runtime, new Parsers(runtime));
     }
 
     public ParseHelperImpl(Runtime runtime, Parsers parsers) {
-        this.parsers = parsers;
-        this.runtime = runtime;
+        super(runtime, parsers);
     }
 
     @Override
@@ -233,16 +227,33 @@ public class ParseHelperImpl implements ParseHelper {
 
     @Override
     public JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info info, JavaDoc.Tag tag) {
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+        JavaDoc.Tag newTag = parseJavaDocReferenceInTag(context, info, tag, detailedSourcesBuilder);
+        if (detailedSourcesBuilder != null) {
+            return newTag.withSource(tag.source().withDetailedSources(detailedSourcesBuilder.build()));
+        }
+        return newTag;
+    }
+
+    private JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info info, JavaDoc.Tag tag,
+                                                   DetailedSources.Builder detailedSourcesBuilder) {
         int hash = tag.content().indexOf('#');
         String packageOrType = hash < 0 ? tag.content() : tag.content().substring(0, hash);
         String memberDescriptor = hash < 0 ? null : tag.content().substring(hash + 1);
         NamedType namedType;
+        List<? extends NamedType> nts;
         if (hash == 0) {
             namedType = info.typeInfo();
+            nts = null;
         } else {
-            namedType = context.typeContext().get(packageOrType, false);
+            nts = context.typeContext().getWithQualification(packageOrType, false);
+            namedType = nts == null ? null : nts.getLast();
         }
         if (namedType instanceof TypeInfo typeInfo) {
+            if (detailedSourcesBuilder != null && nts != null) {
+                addDetailedSources(tag, detailedSourcesBuilder, typeInfo, packageOrType);
+            }
+
             if (memberDescriptor == null) {
                 return tag.withResolvedReference(typeInfo);
             }
@@ -280,6 +291,52 @@ public class ParseHelperImpl implements ParseHelper {
             return tag.withResolvedReference(methodInfo);
         }
         return tag;
+    }
+
+    private void addDetailedSources(JavaDoc.Tag tag,
+                                    DetailedSources.Builder detailedSourcesBuilder,
+                                    TypeInfo typeInfo,
+                                    String packageOrType) {
+        Source pkgNameSource = null;
+        List<DetailedSources.Builder.TypeInfoSource> associatedList = new ArrayList<>();
+
+        String[] split = packageOrType.split("\\.");
+        if (split.length > 1) {
+            TypeInfo ti = typeInfo.compilationUnitOrEnclosingType().isRight()
+                    ? typeInfo.compilationUnitOrEnclosingType().getRight() : null;
+            int i = split.length - 2;
+            while (i >= 0) {
+                if (ti == null) {
+                    // we're at the primary type now. If i>0, we have a package
+                    if (i > 0) {
+                        pkgNameSource = makeSource(tag.source(), split, i);
+                    }
+                    break;
+                }
+                // qualification
+                Source src = makeSource(tag.source(), split, i);
+                DetailedSources.Builder.TypeInfoSource tis = new DetailedSources.Builder.TypeInfoSource(ti, src);
+                associatedList.add(tis);
+                ti = ti.compilationUnitOrEnclosingType().isRight() ? ti.compilationUnitOrEnclosingType().getRight()
+                        : null;
+                --i;
+            }
+        }
+
+        if (!associatedList.isEmpty()) {
+            detailedSourcesBuilder.putTypeQualification(typeInfo, List.copyOf(associatedList));
+        }
+        if (pkgNameSource != null) {
+            detailedSourcesBuilder.put(typeInfo.packageName(), pkgNameSource);
+        }
+    }
+
+    private Source makeSource(Source source, String[] split, int i) {
+        int endPos = source.beginPos();
+        for (int j = 0; j < i; ++j) {
+            endPos += split[j].length() + 1;
+        }
+        return runtime.newParserSource(source.index(), source.beginLine(), source.beginPos(), source.endLine(), endPos);
     }
 
     private boolean parameterTypesMatch(List<ParameterInfo> parameters, List<String> parameterTypes) {

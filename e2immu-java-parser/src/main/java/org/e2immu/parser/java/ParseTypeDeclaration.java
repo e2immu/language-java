@@ -9,6 +9,7 @@ import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
+import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.api.type.TypeParameter;
@@ -46,7 +47,8 @@ public class ParseTypeDeclaration extends CommonParse {
                     simpleName -> {
                         // during the "scan" phase, we have already created all the TypeInfo objects
                         String fqn = fullyQualifiedName(packageNameOrEnclosing, simpleName);
-                        return (TypeInfo) context.typeContext().get(fqn, true);
+                        List<? extends NamedType> nts = context.typeContext().getWithQualification(fqn, true);
+                        return (TypeInfo) nts.getLast();
                     }, td, mustDelayForStaticStarImport);
         } catch (Summary.FailFastException ffe) {
             throw ffe;

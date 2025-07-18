@@ -53,7 +53,9 @@ public class ParseType extends CommonParse {
         if (nodes instanceof ObjectType ot) {
             pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);
         } else if (n0 instanceof Identifier identifier) {
-            NamedType nt = context.typeContext().get(identifier.getSource(), complain);
+            List<? extends NamedType> nts = context.typeContext().getWithQualification(identifier.getSource(), complain);
+            assert nts.size() == 1;
+            NamedType nt = nts.getLast();
             pt = nt.asSimpleParameterizedType();
         } else if (n0 instanceof ObjectType ot) {
             pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);
@@ -187,6 +189,9 @@ public class ParseType extends CommonParse {
                     TypeInfo qualifier = (TypeInfo) nts.get(j);
                     Source source = details.pop();
                     associatedList.add(new DetailedSources.Builder.TypeInfoSource(qualifier, source));
+                }
+                if (!details.isEmpty()) {
+                    detailedSourcesBuilder.put(withoutTypeParameters.typeInfo().packageName(), details.pop());
                 }
                 if (!associatedList.isEmpty()) {
                     detailedSourcesBuilder.putTypeQualification(withoutTypeParameters.typeInfo(), List.copyOf(associatedList));
