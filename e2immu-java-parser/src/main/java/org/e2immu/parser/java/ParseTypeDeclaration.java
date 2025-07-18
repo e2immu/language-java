@@ -211,6 +211,7 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
+        builder.hierarchyIsDone();
         // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
         if (!mustDelayForStaticStarImport
                 && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo) || packageNameOrEnclosing.isRight())) {
