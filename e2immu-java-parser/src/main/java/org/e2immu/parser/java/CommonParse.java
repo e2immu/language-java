@@ -117,8 +117,7 @@ public abstract class CommonParse {
     }
 
     // code copied from ParseTypeDeclaration
-    private TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex,
-                                             DetailedSources.Builder detailedSourcesBuilder) {
+    private TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex) {
         String name;
         List<AnnotationExpression> annotations = new ArrayList<>();
         int i = 0;
@@ -135,16 +134,17 @@ public abstract class CommonParse {
                 i++;
             } else throw new Summary.ParseException(context, "Expected Identifier");
         } else throw new Summary.ParseException(context, "Expected Identifier or TypeParameter");
-        TypeParameter typeParameter = runtime.newTypeParameter(comments(node), source(node), List.copyOf(annotations),
+        TypeParameter typeParameter = runtime.newTypeParameter(comments(node), List.copyOf(annotations),
                 typeParameterIndex, name, owner);
         context.typeContext().addToContext(typeParameter);
         // do type bounds
+        Source source = source(node);
+        DetailedSources.Builder dsb = context.newDetailedSourcesBuilder();
         TypeParameter.Builder builder = typeParameter.builder();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (i < tp.size()) {
                 if (tp.get(i) instanceof TypeBound tb) {
-                    ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false,
-                            detailedSourcesBuilder);
+                    ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false, dsb);
                     if (typeBound == null) {
                         return null;
                     }
@@ -152,7 +152,9 @@ public abstract class CommonParse {
                 } else throw new UnsupportedOperationException();
             }
         }
-        return builder.commit();
+        return builder
+                .setSource(dsb == null ? source : source.withDetailedSources(dsb.build()))
+                .commit();
     }
 
     protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent,
@@ -281,8 +283,7 @@ public abstract class CommonParse {
     }
 
 
-    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner,
-                                                    DetailedSources.Builder detailedSourcesBuilder) {
+    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner) {
         int infiniteLoopProtection = typeParametersToParse.size() + 2;
         boolean resolved = false;
         TypeParameter[] typeParameters = new TypeParameter[typeParametersToParse.size()];
@@ -292,7 +293,7 @@ public abstract class CommonParse {
             for (Node unparsedTypeParameter : typeParametersToParse) {
                 if (typeParameters[tpIndex] == null) {
                     TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner,
-                            tpIndex, detailedSourcesBuilder);
+                            tpIndex);
                     if (typeParameter != null) {
                         // paresTypeParameter has added it to the contextWithTP
                         typeParameters[tpIndex] = typeParameter;

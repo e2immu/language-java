@@ -126,8 +126,7 @@ public class ParseMethodDeclaration extends CommonParse {
         Context contextWithTP = context.newTypeContext();
 
         if (!typeParametersToParse.isEmpty()) {
-            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo,
-                    detailedSourcesBuilder);
+            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo);
             for (TypeParameter typeParameter : typeParameters) {
                 builder.addTypeParameter(typeParameter);
             }
