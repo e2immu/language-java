@@ -379,4 +379,13 @@ public abstract class CommonParse {
         }
         return List.copyOf(list);
     }
+
+    protected Source sourceOfPrefix(Node node, int qualifications) {
+        int i = node.size() - (1 + 2 * qualifications);
+        if (i > 2 && node.get(i) instanceof Identifier
+                && node.get(i - 1) instanceof Delimiter d && d.getType().equals(Token.TokenType.DOT)) {
+            return source(node, 0, i - 2);
+        }
+        return null;
+    }
 }

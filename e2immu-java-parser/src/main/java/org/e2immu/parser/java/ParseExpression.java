@@ -304,6 +304,10 @@ public class ParseExpression extends CommonParse {
                     if (!associatedList.isEmpty()) {
                         detailedSourcesBuilder.putTypeQualification(typeInfo, List.copyOf(associatedList));
                     }
+                    Source pkgNameSource =  sourceOfPrefix(name, associatedList.size());
+                    if (pkgNameSource != null) {
+                        detailedSourcesBuilder.put(typeInfo.packageName(), pkgNameSource);
+                    }
                 }
                 return runtime.newTypeExpressionBuilder()
                         .setParameterizedType(pt)
@@ -351,17 +355,20 @@ public class ParseExpression extends CommonParse {
                         .addComments(comments).build();
             }
         } // else: see for example parsing of annotation '...importhelper.a.Resources', line 6
-        NamedType namedType = context.typeContext().get(name, false);
+        List<? extends NamedType> nts = context.typeContext().getWithQualification(name, false);
+        if (nts == null) throw new Summary.ParseException(context, "Unknown identifier '" + name + "'");
+        assert nts.size() == 1; // identifier does not contain '.', so simple name
+        NamedType namedType = nts.getLast();
         TypeInfo typeInfo;
         if (namedType instanceof TypeInfo ti) {
             typeInfo = ti;
         } else if (namedType instanceof TypeParameter tp) {
             typeInfo = tp.typeBounds().size() != 1 ? runtime.objectTypeInfo() :
                     tp.typeBounds().stream().findFirst().orElseThrow().typeInfo();
-        } else {
-            throw new Summary.ParseException(context, "Unknown identifier '" + name + "'");
+        } else throw new UnsupportedOperationException();
+        if (detailedSourcesBuilder != null) {
+            detailedSourcesBuilder.put(typeInfo, source);
         }
-        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(typeInfo, source);
         ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, 0);
         return runtime.newTypeExpressionBuilder()
                 .setParameterizedType(parameterizedType)
