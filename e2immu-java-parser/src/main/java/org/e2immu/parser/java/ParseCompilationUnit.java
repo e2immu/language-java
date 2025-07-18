@@ -52,19 +52,14 @@ public class ParseCompilationUnit extends CommonParse {
         Context newContext = rootContext.newCompilationUnit(compilationUnit);
         TypeContext typeContext = newContext.typeContext();
         AtomicBoolean mustDelayForStaticImportTypeHierarchy = new AtomicBoolean();
-        compilationUnit.importStatements().forEach(is -> {
-            if (is.isStatic()) {
-                if (!typeContext.addToStaticImportMap(is)) {
-                    mustDelayForStaticImportTypeHierarchy.set(true);
-                }
-            } else {
-                typeContext.addNonStaticImportToContext(is);
-            }
-        });
+        handleImportStatements(compilationUnit, typeContext, mustDelayForStaticImportTypeHierarchy, false);
 
         // then, with lower priority, add type names from the same package
         rootContext.typeContext().typesInSamePackage(compilationUnit.packageName())
                 .forEach(ti -> typeContext.addToContext(ti, false));
+
+        // finally, add * imports
+        handleImportStatements(compilationUnit, typeContext, mustDelayForStaticImportTypeHierarchy, true);
 
         List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>> types = new ArrayList<>();
         String uriString = compilationUnit.uri().toString();
@@ -87,6 +82,24 @@ public class ParseCompilationUnit extends CommonParse {
             }
         } // else: has been parsed elsewhere
         return types;
+    }
+
+    private static void handleImportStatements(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit,
+                                               TypeContext typeContext,
+                                               AtomicBoolean mustDelayForStaticImportTypeHierarchy,
+                                               boolean isStar) {
+        compilationUnit.importStatements()
+                .stream()
+                .filter(is -> isStar == is.isStar())
+                .forEach(is -> {
+                    if (is.isStatic()) {
+                        if (!typeContext.addToStaticImportMap(compilationUnit, is)) {
+                            mustDelayForStaticImportTypeHierarchy.set(true);
+                        }
+                    } else {
+                        typeContext.addNonStaticImportToContext(is);
+                    }
+                });
     }
 
     private TypeInfo buildPackageInfoType(org.e2immu.language.cst.api.element.CompilationUnit compilationUnit,

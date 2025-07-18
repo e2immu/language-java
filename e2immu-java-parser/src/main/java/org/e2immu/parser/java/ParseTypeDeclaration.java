@@ -224,7 +224,8 @@ public class ParseTypeDeclaration extends CommonParse {
         // try again...
         if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)
                 && d.typeInfo.compilationUnit().importStatements().stream()
-                .allMatch(is -> !is.isStatic() || d.context.typeContext().addToStaticImportMap(is))) {
+                .allMatch(is -> !is.isStatic()
+                        || d.context.typeContext().addToStaticImportMap(d.typeInfo.compilationUnit(), is))) {
             return Either.left(continueParsingTypeDeclaration(d.typeInfo, d.builder, d.td, d.context, d.typeNature,
                     d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordComponents));
         }
