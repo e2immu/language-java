@@ -195,16 +195,19 @@ public class ParseLambdaExpression extends CommonParse {
             throw new Summary.ParseException(context, "Expected lambda lhs");
         }
         Node lhs0 = lhs.getFirst();
-        if (lhs0 instanceof Identifier identifier) {
+        if (lhs0 instanceof Identifier || lhs0 instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
             // single variable, no type given. we must extract it from the forward type, which must be a functional interface
-            String parameterName = identifier.getSource();
             ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, 0);
-
-            ParameterInfo pi = miBuilder.addParameter(parameterName, type);
-
+            ParameterInfo pi;
+            if (lhs0 instanceof Identifier identifier) {
+                String parameterName = identifier.getSource();
+                pi = miBuilder.addParameter(parameterName, type);
+            } else {
+                pi = miBuilder.addUnnamedParameter(type);
+            }
             Source source = source(lhs);
             DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(lhs0));
             pi.builder().setSource(detailedSourcesBuilder == null ? source
                     : source.withDetailedSources(detailedSourcesBuilder.build()));
 
@@ -228,12 +231,18 @@ public class ParseLambdaExpression extends CommonParse {
                         type = parsers.parseType().parse(context, lp.getFirst(), detailedSourcesBuilder);
                         outputVariant = runtime.lambdaOutputVariantTyped();
                     }
-                    Identifier identifier = (Identifier) lp.get(1);
-                    ParameterInfo pi = miBuilder.addParameter(identifier.getSource(), type.ensureBoxed(runtime));
+                    Node lp1 = lp.get(1);
+                    ParameterInfo pi;
+                    ParameterizedType boxedType = type.ensureBoxed(runtime);
+                    if (lp1 instanceof Identifier identifier) {
+                        pi = miBuilder.addParameter(identifier.getSource(), boxedType);
+                    } else if (lp1 instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
+                        pi = miBuilder.addUnnamedParameter(boxedType);
+                    } else throw new UnsupportedOperationException();
                     outputVariants.add(outputVariant);
 
                     Source source = source(lp);
-                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(identifier));
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source(lp1));
                     pi.builder().setSource(detailedSourcesBuilder == null ? source
                             : source.withDetailedSources(detailedSourcesBuilder.build()));
 
@@ -251,21 +260,28 @@ public class ParseLambdaExpression extends CommonParse {
             int i = 1;
             int paramIndex = 0;
             while (i < lhs.size()) {
-                if (lhs.get(i) instanceof Identifier identifier) {
-                    ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, paramIndex);
+                Node lhsI = lhs.get(i);
+                Source source = source(lhsI);
+                ParameterizedType type = sam.getConcreteTypeOfParameter(runtime, paramIndex);
+                ParameterInfo pi;
+                if (lhsI instanceof Identifier identifier) {
                     String parameterName = identifier.getSource();
-                    ParameterInfo pi = miBuilder.addParameter(parameterName, type);
-                    outputVariants.add(runtime.lambdaOutputVariantEmpty());
+                    pi = miBuilder.addParameter(parameterName, type);
+                } else if (lhsI instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
+                    pi = miBuilder.addUnnamedParameter(type);
+                } else {
+                    throw new Summary.ParseException(context, "Expected identifier");
+                }
+                outputVariants.add(runtime.lambdaOutputVariantEmpty());
 
-                    Source source = source(identifier);
-                    DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source);
-                    pi.builder().setSource(detailedSourcesBuilder == null ? source
-                            : source.withDetailedSources(detailedSourcesBuilder.build()));
+                DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pi.name(), source);
+                pi.builder().setSource(detailedSourcesBuilder == null ? source
+                        : source.withDetailedSources(detailedSourcesBuilder.build()));
 
-                    pi.builder().commit();
-                    newContext.variableContext().add(pi);
-                } else throw new Summary.ParseException(context, "Expected identifier");
+                pi.builder().commit();
+                newContext.variableContext().add(pi);
+
                 if (Token.TokenType.RPAREN.equals(lhs.get(i + 1).getType())) break;
                 paramIndex++;
                 i += 2;
@@ -280,8 +296,8 @@ public class ParseLambdaExpression extends CommonParse {
             numParameters = countParameters(lhs);
         } else throw new Summary.ParseException(context, "Expected LambdaLHS");
         Set<MethodResolution.Count> erasures = Set.of(
-                    new MethodResolution.Count(numParameters, true),
-                    new MethodResolution.Count(numParameters, false));
+                new MethodResolution.Count(numParameters, true),
+                new MethodResolution.Count(numParameters, false));
         LOGGER.debug("Returning erasure {}", erasures);
         return new LambdaErasure(runtime, erasures, source);
     }
