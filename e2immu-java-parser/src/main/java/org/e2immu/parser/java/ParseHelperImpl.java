@@ -297,6 +297,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                                     DetailedSources.Builder detailedSourcesBuilder,
                                     TypeInfo typeInfo,
                                     String packageOrType) {
+        detailedSourcesBuilder.put(typeInfo, makeSource(tag.source(), packageOrType));
         Source pkgNameSource = null;
         List<DetailedSources.Builder.TypeInfoSource> associatedList = new ArrayList<>();
 
@@ -308,9 +309,9 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             while (i >= 0) {
                 if (ti == null) {
                     // we're at the primary type now. If i>0, we have a package
-                    if (i > 0) {
-                        pkgNameSource = makeSource(tag.source(), split, i);
-                    }
+
+                    pkgNameSource = makeSource(tag.source(), split, i);
+
                     break;
                 }
                 // qualification
@@ -331,11 +332,17 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         }
     }
 
+    private Source makeSource(Source source, String packageOrType) {
+        int endPos = source.beginPos() + packageOrType.length() - 1;
+        return runtime.newParserSource(source.index(), source.beginLine(), source.beginPos(), source.endLine(), endPos);
+    }
+
     private Source makeSource(Source source, String[] split, int i) {
-        int endPos = source.beginPos();
-        for (int j = 0; j < i; ++j) {
+        int endPos = source.beginPos() - 1;
+        for (int j = 0; j <= i; ++j) {
             endPos += split[j].length() + 1;
         }
+        --endPos;
         return runtime.newParserSource(source.index(), source.beginLine(), source.beginPos(), source.endLine(), endPos);
     }
 
