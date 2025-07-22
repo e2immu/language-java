@@ -61,14 +61,14 @@ public class TestParseJavaDoc extends CommonTestParse {
         JavaDoc.Tag tag0 = javaDoc.tags().getFirst();
         assertEquals(JavaDoc.TagIdentifier.LINK, tag0.identifier());
         assertFalse(tag0.blockTag());
-        assertEquals("4-11:4-20", tag0.source().compact2());
+        assertEquals("4-12:4-20", tag0.source().compact2());
         assertEquals("a.b.D", ((TypeInfo) tag0.resolvedReference()).fullyQualifiedName());
         TypeInfo D = (TypeInfo) tag0.resolvedReference();
 
         JavaDoc.Tag tag1 = javaDoc.tags().getLast();
         assertEquals(JavaDoc.TagIdentifier.SEE, tag1.identifier());
         assertFalse(tag1.blockTag());
-        assertEquals("4-28:4-40", tag1.source().compact2());
+        assertEquals("4-29:4-40", tag1.source().compact2());
         assertEquals("a.b.D.a()", ((MethodInfo) tag1.resolvedReference()).fullyQualifiedName());
 
         assertEquals("""

@@ -238,8 +238,8 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
     private JavaDoc.Tag parseJavaDocReferenceInTag(Context context, Info info, JavaDoc.Tag tag,
                                                    DetailedSources.Builder detailedSourcesBuilder) {
         int hash = tag.content().indexOf('#');
-        String packageOrType = hash < 0 ? tag.content() : tag.content().substring(0, hash);
-        String memberDescriptor = hash < 0 ? null : tag.content().substring(hash + 1);
+        String packageOrType = (hash < 0 ? tag.content() : tag.content().substring(0, hash)).trim();
+        String memberDescriptor = hash < 0 ? null : tag.content().substring(hash + 1).trim();
         NamedType namedType;
         List<? extends NamedType> nts;
         if (hash == 0) {
@@ -297,7 +297,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                                     DetailedSources.Builder detailedSourcesBuilder,
                                     TypeInfo typeInfo,
                                     String packageOrType) {
-        detailedSourcesBuilder.put(typeInfo, makeSource(tag.source(), packageOrType));
+        detailedSourcesBuilder.put(typeInfo, makeSource(tag, packageOrType));
         Source pkgNameSource = null;
         List<DetailedSources.Builder.TypeInfoSource> associatedList = new ArrayList<>();
 
@@ -310,12 +310,12 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                 if (ti == null) {
                     // we're at the primary type now. If i>0, we have a package
 
-                    pkgNameSource = makeSource(tag.source(), split, i);
+                    pkgNameSource = makeSource(tag, split, i);
 
                     break;
                 }
                 // qualification
-                Source src = makeSource(tag.source(), split, i);
+                Source src = makeSource(tag, split, i);
                 DetailedSources.Builder.TypeInfoSource tis = new DetailedSources.Builder.TypeInfoSource(ti, src);
                 associatedList.add(tis);
                 ti = ti.compilationUnitOrEnclosingType().isRight() ? ti.compilationUnitOrEnclosingType().getRight()
@@ -332,12 +332,15 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         }
     }
 
-    private Source makeSource(Source source, String packageOrType) {
-        int endPos = source.beginPos() + packageOrType.length() - 1;
-        return runtime.newParserSource(source.index(), source.beginLine(), source.beginPos(), source.endLine(), endPos);
+    private Source makeSource(JavaDoc.Tag tag, String packageOrType) {
+        Source source = tag.sourceOfReference();
+        int beginContent = source.beginPos();
+        int endPos = beginContent + packageOrType.length() - 1;
+        return runtime.newParserSource(source.index(), source.beginLine(), beginContent, source.endLine(), endPos);
     }
 
-    private Source makeSource(Source source, String[] split, int i) {
+    private Source makeSource(JavaDoc.Tag tag, String[] split, int i) {
+        Source source = tag.sourceOfReference();
         int endPos = source.beginPos() - 1;
         for (int j = 0; j <= i; ++j) {
             endPos += split[j].length() + 1;
