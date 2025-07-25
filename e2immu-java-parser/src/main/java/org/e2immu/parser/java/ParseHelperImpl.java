@@ -263,8 +263,19 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             if (open < 0) {
                 member = memberDescriptor.trim();
                 parameterTypes = null;
-                FieldInfo fieldInfo = typeInfo.getFieldByName(member, false);
-                if (fieldInfo != null) return tag.withResolvedReference(fieldInfo);
+                Info resolved = typeInfo.getFieldByName(member, false);
+                if (resolved == null) {
+                    resolved = typeInfo.methodStream().filter(m -> m.name().equalsIgnoreCase(member))
+                            .findFirst().orElse(null);
+                }
+                if (resolved != null) {
+                    if (detailedSourcesBuilder != null) {
+                        // offset adds 1 extra for the '#' character itself
+                        detailedSourcesBuilder.put(resolved, makeSource(tag, member, hash + 1));
+                        detailedSourcesBuilder.put(resolved.simpleName(), makeSource(tag, member, hash + 1));
+                    }
+                    return tag.withResolvedReference(resolved);
+                }
             } else {
                 member = memberDescriptor.substring(0, open);
                 int close = memberDescriptor.indexOf(')', open + 1);
@@ -288,6 +299,12 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                         .filter(m -> parameterTypes == null || parameterTypesMatch(m.parameters(), parameterTypes))
                         .findFirst().orElse(null);
             }
+            if (methodInfo != null && detailedSourcesBuilder != null) {
+                // offset adds 1 extra for the '#' character itself
+                detailedSourcesBuilder.put(methodInfo.name(), makeSource(tag, member, hash + 1));
+                detailedSourcesBuilder.put(methodInfo, makeSource(tag, tag.content().substring(hash+1),
+                        hash + 1));
+            }
             return tag.withResolvedReference(methodInfo);
         }
         return tag;
@@ -297,7 +314,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                                     DetailedSources.Builder detailedSourcesBuilder,
                                     TypeInfo typeInfo,
                                     String packageOrType) {
-        detailedSourcesBuilder.put(typeInfo, makeSource(tag, packageOrType));
+        detailedSourcesBuilder.put(typeInfo, makeSource(tag, packageOrType, 0));
         Source pkgNameSource = null;
         List<DetailedSources.Builder.TypeInfoSource> associatedList = new ArrayList<>();
 
@@ -332,9 +349,9 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         }
     }
 
-    private Source makeSource(JavaDoc.Tag tag, String packageOrType) {
+    private Source makeSource(JavaDoc.Tag tag, String packageOrType, int offset) {
         Source source = tag.sourceOfReference();
-        int beginContent = source.beginPos();
+        int beginContent = offset + source.beginPos();
         int endPos = beginContent + packageOrType.length() - 1;
         return runtime.newParserSource(source.index(), source.beginLine(), beginContent, source.endLine(), endPos);
     }

@@ -111,9 +111,9 @@ public class ParseFieldDeclaration extends CommonParse {
         Source source = source(vd);
         builder.setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()));
         if (first) {
-            builder.addComments(comments(fd));
+            builder.addComments(comments(fd, context, fieldInfo, builder));
         } // else: comment is only on the first field in the sequence, see e.g. TestFieldComments in java-parser
-        builder.addComments(comments(vd));
+        builder.addComments(comments(vd, context, fieldInfo, builder));
 
         // now that there is a builder, we can parse the annotations
         parseAnnotations(context, builder, annotations);

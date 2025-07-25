@@ -76,7 +76,7 @@ public record JavaDocParser(Runtime runtime) {
                 JavaDoc.TagIdentifier identifier = JavaDoc.identifier(inlineTagMatcher.group(1));
                 Source sourceOfTag = subSource(sourceOfComment, lineCount, 1 + inlineTagMatcher.start(), inlineTagMatcher.end());
                 Source sourceOfReference = subSource(sourceOfComment, lineCount, 1 + inlineTagMatcher.start(2),
-                        1 + inlineTagMatcher.end(2));
+                        inlineTagMatcher.end(2));
                 JavaDoc.Tag tag = runtime().newJavaDocTag(identifier, content, null, sourceOfTag,
                         sourceOfReference, false);
                 inlineTagMatcher.appendReplacement(modifiedComment, "{" + tags.size() + "}");
