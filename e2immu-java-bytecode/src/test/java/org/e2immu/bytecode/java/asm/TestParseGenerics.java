@@ -67,7 +67,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         String signature = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/io/Serializable;Ljava/lang/Cloneable;";
         ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, new TypeParameterContext(), typeInfo,
                 byteCodeInspector, LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter,
-                typeInfo.builder()::addOrSetTypeParameter, signature);
+                typeInfo.builder()::addOrSetTypeParameter, signature, false);
         int expected = "<K:Ljava/lang/Enum<TK;>;V:Ljava/lang/Object;>".length();
         int pos = parseGenerics.goReturnEndPos() + 1;
         assertEquals(expected, pos);
@@ -151,7 +151,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         String signature = "<K:Ljava/lang/Object;>Ljdk/internal/loader/AbstractClassLoaderValue<Ljdk/internal/loader/AbstractClassLoaderValue<TCLV;TV;>.Sub<TK;>;TV;>;";
         ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, context, typeInfo, byteCodeInspector,
                 LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter,
-                typeInfo.builder()::addOrSetTypeParameter, signature);
+                typeInfo.builder()::addOrSetTypeParameter, signature, false);
 
         int expected = "<K:Ljava/lang/Object;>".length();
         int pos = parseGenerics.goReturnEndPos() + 1;
@@ -185,7 +185,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         TypeParameterContext typeContext = new TypeParameterContext();
         ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, typeContext, mi,
                 byteCodeInspector, LocalTypeMap.LoadMode.NOW,  runtime::newTypeParameter,
-                mib::addTypeParameter, signature);
+                mib::addTypeParameter, signature, false);
         parseGenerics.goReturnEndPos();
         assertEquals(2, mib.typeParameters().size());
     }
@@ -195,7 +195,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         TypeParameterContext typeContext = new TypeParameterContext();
         ParseParameterTypes ppt = new ParseParameterTypes(runtime, byteCodeInspector, LocalTypeMap.LoadMode.NOW);
         ParseParameterTypes.Result r = ppt.parseParameterTypesOfMethod(typeContext,
-                "(Ljava/lang/CharSequence;[Ljava/lang/CharSequence;)Ljava/lang/String;");
+                "(Ljava/lang/CharSequence;[Ljava/lang/CharSequence;)Ljava/lang/String;", false);
         assertNotNull(r);
         assertEquals(2, r.parameterTypes().size());
         assertEquals("Type String", r.returnType().toString());

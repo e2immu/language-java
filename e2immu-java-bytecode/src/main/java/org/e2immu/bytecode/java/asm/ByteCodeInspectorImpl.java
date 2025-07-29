@@ -55,12 +55,15 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
     private final Runtime runtime;
     private final CompiledTypesManager compiledTypesManager;
     private final MessageDigest md;
+    private final boolean allowCreationOfStubTypes;
 
     public ByteCodeInspectorImpl(Runtime runtime,
                                  CompiledTypesManager compiledTypesManager,
-                                 boolean computeFingerPrints) {
+                                 boolean computeFingerPrints,
+                                 boolean allowCreationOfStubTypes) {
         this.runtime = runtime;
         this.compiledTypesManager = compiledTypesManager;
+        this.allowCreationOfStubTypes = allowCreationOfStubTypes;
         for (TypeInfo ti : runtime.predefinedObjects()) {
             localTypeMap.put(ti.fullyQualifiedName(),
                     new TypeData(ti, Status.IN_QUEUE, new TypeParameterContext()));
@@ -278,6 +281,11 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         synchronized (md) {
             return MD5FingerPrint.compute(md, classBytes);
         }
+    }
+
+    @Override
+    public boolean allowCreationOfStubTypes() {
+        return allowCreationOfStubTypes;
     }
 }
 

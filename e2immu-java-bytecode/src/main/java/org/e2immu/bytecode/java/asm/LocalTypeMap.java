@@ -44,4 +44,6 @@ public interface LocalTypeMap {
     TypeInfo inspectFromPath(TypeInfo typeInfo, SourceFile name,
                              TypeParameterContext typeParameterContext, LoadMode loadMode);
 
+    boolean allowCreationOfStubTypes();
+
 }

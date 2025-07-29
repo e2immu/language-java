@@ -32,6 +32,7 @@ class ParseGenerics<T extends Info> {
     private final String signature;
     private final NewTypeParameterCreator<T> newTypeParameterCreator;
     private final Consumer<TypeParameter> addTypeParameter;
+    private final boolean createStub;
 
     public static final char COLON = ':';
     public static final char GT_END_TYPE_PARAMS = '>';
@@ -54,7 +55,8 @@ class ParseGenerics<T extends Info> {
                   LocalTypeMap.LoadMode loadMode,
                   NewTypeParameterCreator<T> newTypeParameterCreator,
                   Consumer<TypeParameter> addTypeParameter,
-                  String signature) {
+                  String signature,
+                  boolean createStub) {
         this.runtime = runtime;
         this.typeParameterContext = typeParameterContext;
         this.owner = owner;
@@ -63,6 +65,7 @@ class ParseGenerics<T extends Info> {
         this.signature = signature;
         this.newTypeParameterCreator = newTypeParameterCreator;
         this.addTypeParameter = addTypeParameter;
+        this.createStub = createStub;
     }
 
     int goReturnEndPos() {
@@ -115,7 +118,7 @@ class ParseGenerics<T extends Info> {
                 end++;
             }
             ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeParameterContext,
-                    localTypeMap, loadMode, signature.substring(end + 1));
+                    localTypeMap, loadMode, signature.substring(end + 1), createStub);
             if (result == null) return true; // unable to load type
             if (result.parameterizedType.typeInfo() == null
                 || !result.parameterizedType.typeInfo().isJavaLangObject()) {

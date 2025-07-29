@@ -50,7 +50,7 @@ public class MyAnnotationVisitor<T extends Info.Builder<? extends Info.Builder<T
         LOGGER.debug("My annotation visitor: {}", descriptor);
 
         ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeParameterContext, localTypeMap,
-                LocalTypeMap.LoadMode.TRIGGER, descriptor);
+                LocalTypeMap.LoadMode.TRIGGER, descriptor, false);
         if (from == null) {
             expressionBuilder = null;
         } else {

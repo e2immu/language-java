@@ -30,7 +30,7 @@ record ParseParameterTypes(Runtime runtime,
                   List<ParameterizedType> exceptionTypes) {
     }
 
-    Result parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature) {
+    Result parseParameterTypesOfMethod(TypeParameterContext typeContext, String signature, boolean createStub) {
         List<ParameterizedType> parameterTypes = new ArrayList<>();
         List<ParameterizedType> exceptionTypes = new ArrayList<>();
         ParameterizedType returnType = null;
@@ -48,12 +48,12 @@ record ParseParameterTypes(Runtime runtime,
         while (true) {
             String startOfType = signature.substring(startPos);
             ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext,
-                    findType, loadMode, startOfType);
+                    findType, loadMode, startOfType, createStub);
             if (result == null) return null;
             int end = startPos + result.nextPos;
 
             if (doParameters) parameterTypes.add(result.parameterizedType);
-            else if(doExceptionTypes) exceptionTypes.add(result.parameterizedType);
+            else if (doExceptionTypes) exceptionTypes.add(result.parameterizedType);
             else returnType = result.parameterizedType;
 
             if (end >= signature.length()) {

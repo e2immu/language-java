@@ -14,6 +14,7 @@
 
 package org.e2immu.bytecode.java.asm;
 
+import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
@@ -57,7 +58,8 @@ public class ParameterizedTypeFactory {
                        TypeParameterContext typeContext,
                        LocalTypeMap findType,
                        LocalTypeMap.LoadMode loadMode,
-                       String signature) {
+                       String signature,
+                       boolean createStub) {
         try {
             int firstCharPos = 0;
             char firstChar = signature.charAt(0);
@@ -89,7 +91,8 @@ public class ParameterizedTypeFactory {
 
             // normal class or interface type
             if (CHAR_L == firstChar) {
-                return normalType(runtime, typeContext, findType, loadMode, signature, arrays, wildCard, firstCharPos);
+                return normalType(runtime, typeContext, findType, loadMode, signature, arrays, wildCard, firstCharPos,
+                        createStub);
             }
 
             // type parameter
@@ -131,7 +134,8 @@ public class ParameterizedTypeFactory {
                                      String signature,
                                      int arrays,
                                      Wildcard wildCard,
-                                     int firstCharIndex) {
+                                     int firstCharIndex,
+                                     boolean createStub) {
         StringBuilder path = new StringBuilder();
         int semiColon = -1;
         int start = firstCharIndex + 1;
@@ -151,7 +155,7 @@ public class ParameterizedTypeFactory {
                 iterativeParsing.startPos = openGenerics + 1;
                 do {
                     iterativeParsing = iterativelyParseTypes(runtime, typeContext, localTypeMap, loadMode, signature,
-                            iterativeParsing);
+                            iterativeParsing, createStub);
                     if (iterativeParsing == null) return null;
                     typeParameters.add(iterativeParsing.result);
                     typeNotFoundError = typeNotFoundError || iterativeParsing.typeNotFoundError;
@@ -170,13 +174,28 @@ public class ParameterizedTypeFactory {
         }
         String fqn = path.toString().replaceAll("[/$]", ".");
 
-        TypeInfo typeInspection = localTypeMap.getOrCreate(fqn, loadMode);
-
-        boolean unableToLoadTypeError = typeInspection == null;
-        if (unableToLoadTypeError) {
-            return null;
+        TypeInfo typeInfo1 = localTypeMap.getOrCreate(fqn, loadMode);
+        TypeInfo typeInfo;
+        if (typeInfo1 == null) {
+            if (createStub) {
+                int lastDot = fqn.lastIndexOf('.');
+                String packageName = lastDot < 0 ? "" : fqn.substring(0, lastDot);
+                String simpleName = lastDot < 0 ? fqn : fqn.substring(lastDot + 1);
+                CompilationUnit cu = runtime.newCompilationUnitStub(packageName);
+                typeInfo = runtime.newTypeInfo(cu, simpleName);
+                typeInfo.builder().setTypeNature(runtime.typeNatureStub())
+                        .setParentClass(runtime.objectParameterizedType())
+                        .setAccess(runtime.accessPublic())
+                        .setSource(runtime.noSource())
+                        .commit();
+                LOGGER.info("Created stub {}", typeInfo);
+            } else {
+                return null;
+            }
+        } else {
+            typeInfo = typeInfo1;
         }
-        ParameterizedType parameterizedType = runtime.newParameterizedType(typeInspection, arrays, wildCard,
+        ParameterizedType parameterizedType = runtime.newParameterizedType(typeInfo, arrays, wildCard,
                 typeParameters);
         return new Result(parameterizedType, semiColon + 1, typeNotFoundError);
     }
@@ -209,9 +228,10 @@ public class ParameterizedTypeFactory {
                                                           LocalTypeMap findType,
                                                           LocalTypeMap.LoadMode loadMode,
                                                           String signature,
-                                                          IterativeParsing iterativeParsing) {
+                                                          IterativeParsing iterativeParsing,
+                                                          boolean createStub) {
         ParameterizedTypeFactory.Result result = ParameterizedTypeFactory.from(runtime, typeContext, findType, loadMode,
-                signature.substring(iterativeParsing.startPos));
+                signature.substring(iterativeParsing.startPos), createStub);
         if (result == null) return null;
         int end = iterativeParsing.startPos + result.nextPos;
         IterativeParsing next = new IterativeParsing();

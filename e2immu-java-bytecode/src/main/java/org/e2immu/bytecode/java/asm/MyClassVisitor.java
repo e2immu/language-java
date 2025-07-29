@@ -131,13 +131,14 @@ public class MyClassVisitor extends ClassVisitor {
                 int pos = 0;
                 if (signature.charAt(0) == '<') {
                     ParseGenerics<TypeInfo> parseGenerics = new ParseGenerics<>(runtime, typeParameterContext, currentType, localTypeMap,
-                            LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter, currentTypeBuilder::addOrSetTypeParameter, signature);
+                            LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter, currentTypeBuilder::addOrSetTypeParameter, signature,
+                            localTypeMap.allowCreationOfStubTypes());
                     pos = parseGenerics.goReturnEndPos() + 1;
                 }
                 {
                     String substring = signature.substring(pos);
                     ParameterizedTypeFactory.Result res = ParameterizedTypeFactory.from(runtime, typeParameterContext,
-                            localTypeMap, LocalTypeMap.LoadMode.NOW, substring);
+                            localTypeMap, LocalTypeMap.LoadMode.NOW, substring, localTypeMap.allowCreationOfStubTypes());
                     if (res == null) {
                         LOGGER.error("Stop inspection of {}, parent type unknown", currentType);
                         errorStateForType(substring);
@@ -150,7 +151,8 @@ public class MyClassVisitor extends ClassVisitor {
                     for (int i = 0; i < interfaces.length; i++) {
                         String interfaceSignature = signature.substring(pos);
                         ParameterizedTypeFactory.Result interFaceRes = ParameterizedTypeFactory.from(runtime,
-                                typeParameterContext, localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature);
+                                typeParameterContext, localTypeMap, LocalTypeMap.LoadMode.NOW, interfaceSignature,
+                                localTypeMap.allowCreationOfStubTypes());
                         if (interFaceRes == null) {
                             LOGGER.error("Stop inspection of {}, interface type unknown", currentType);
                             errorStateForType(interfaceSignature);
@@ -199,7 +201,8 @@ public class MyClassVisitor extends ClassVisitor {
 
         ParameterizedTypeFactory.Result from = ParameterizedTypeFactory.from(runtime, typeParameterContext, localTypeMap,
                 LocalTypeMap.LoadMode.QUEUE,
-                signature != null ? signature : descriptor);
+                signature != null ? signature : descriptor,
+                false);
         if (from == null) return null; // jdk
         ParameterizedType type = from.parameterizedType;
         boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
@@ -268,7 +271,8 @@ public class MyClassVisitor extends ClassVisitor {
         if (signatureOrDescription.startsWith("<")) {
             ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, methodContext, methodInfo,
                     localTypeMap, LocalTypeMap.LoadMode.QUEUE, runtime::newTypeParameter,
-                    methodInspectionBuilder::addTypeParameter, signatureOrDescription);
+                    methodInspectionBuilder::addTypeParameter, signatureOrDescription,
+                    localTypeMap.allowCreationOfStubTypes());
             int end = parseGenerics.goReturnEndPos();
             if (end < 0) {
                 // error state
@@ -279,7 +283,8 @@ public class MyClassVisitor extends ClassVisitor {
         }
 
         ParseParameterTypes ppt = new ParseParameterTypes(runtime, localTypeMap, LocalTypeMap.LoadMode.QUEUE);
-        ParseParameterTypes.Result r = ppt.parseParameterTypesOfMethod(methodContext, signatureOrDescription);
+        ParseParameterTypes.Result r = ppt.parseParameterTypesOfMethod(methodContext, signatureOrDescription,
+                false);
         if (r == null) {
             return null; // jdk
         }
