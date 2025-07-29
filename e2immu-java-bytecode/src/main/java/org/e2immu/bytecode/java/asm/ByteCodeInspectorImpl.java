@@ -199,7 +199,9 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
         }
         if (!typeInfo1.haveOnDemandInspection()) {
             typeInfo1.setOnDemandInspection(ti -> {
-                inspectFromPath(ti, path, typeParameterContext, LoadMode.NOW);
+                synchronized (ByteCodeInspectorImpl.this) {
+                    inspectFromPath(ti, path, typeParameterContext, LoadMode.NOW);
+                }
             });
         }
         return typeInfo1;

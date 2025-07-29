@@ -44,7 +44,7 @@ public class ScanCompilationUnit extends CommonParse {
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
-            re.printStackTrace(System.err);
+            //re.printStackTrace(System.err);
             LOGGER.error("Caught exception scanning compilation unit {}", uri);
             summary.addParseException(new Summary.ParseException(uri, cu, "Caught exception scanning compilation unit", re));
             return new ScanResult(Map.of(), null);

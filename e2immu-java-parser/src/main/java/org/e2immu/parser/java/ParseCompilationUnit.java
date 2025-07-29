@@ -37,7 +37,7 @@ public class ParseCompilationUnit extends CommonParse {
         } catch (Summary.FailFastException ffe) {
             throw ffe;
         } catch (RuntimeException re) {
-            re.printStackTrace(System.err);
+            //re.printStackTrace(System.err);
             LOGGER.error("Caught exception parsing compilation unit {}", compilationUnit.uri());
             rootContext.summary().addParseException(new Summary.ParseException(compilationUnit, compilationUnit,
                     re.getMessage(), re));
