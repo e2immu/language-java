@@ -250,16 +250,17 @@ public class ParseStatement extends CommonParse {
                         ParameterizedType pt = parsers.parseType().parse(context, type, detailedSourcesBuilderCb);
                         exceptionTypes.add(pt);
                         ccBuilder.addType(pt);
-                    } else if (cbj instanceof Identifier) {
+                    } else if (cbj instanceof Identifier
+                               || cbj instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
                         break;
                     } else if (!(cbj instanceof Operator operator
-                            && Token.TokenType.BIT_OR.equals(operator.getType()))) {
+                                 && Token.TokenType.BIT_OR.equals(operator.getType()))) {
                         throw new UnsupportedOperationException();
                     }
                     j++;
                 }
-                if (catchBlock.get(j) instanceof Identifier identifier) {
-                    String variableName = identifier.getSource();
+                Node id = catchBlock.get(j);
+                if (id instanceof Identifier || id instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
                     ParameterizedType commonType;
                     if (exceptionTypes.isEmpty()) throw new UnsupportedOperationException();
                     else if (exceptionTypes.size() == 1) {
@@ -268,8 +269,14 @@ public class ParseStatement extends CommonParse {
                         commonType = exceptionTypes.stream().skip(1)
                                 .reduce(exceptionTypes.getFirst(), runtime::commonType);
                     }
-                    LocalVariable cv = runtime.newLocalVariable(variableName, commonType);
-                    if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(cv, source(identifier));
+                    LocalVariable cv;
+                    if (id instanceof Identifier identifier) {
+                        String variableName = identifier.getSource();
+                        cv = runtime.newLocalVariable(variableName, commonType);
+                    } else {
+                        cv = runtime.newLocalVariable(commonType);
+                    }
+                    if (detailedSourcesBuilderCb != null) detailedSourcesBuilderCb.put(cv, source(id));
                     ccBuilder.setCatchVariable(cv);
                     catchContext.variableContext().add(cv);
                     j++;

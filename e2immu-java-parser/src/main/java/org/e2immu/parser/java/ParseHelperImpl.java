@@ -3,10 +3,12 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
-import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.expression.ConstructorCall;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.info.*;
+import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.Block;
 import org.e2immu.language.cst.api.statement.ExpressionAsStatement;
@@ -25,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.e2immu.util.internal.util.StringUtil.pad;
 
 public class ParseHelperImpl extends CommonParse implements ParseHelper {
     public ParseHelperImpl(Runtime runtime) {
@@ -89,11 +93,13 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
                                   Object unparsedEci,
                                   Object expression,
                                   List<Statement> recordAssignments) {
+        int n = (recordAssignments == null ? 0 : recordAssignments.size())
+                + countTopLevelStatements(unparsedEci, expression);
         org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation eci;
         if (unparsedEci == null) {
             eci = null;
         } else {
-            eci = parseEci(context, unparsedEci);
+            eci = parseEci(context, unparsedEci, n);
         }
         Element e;
         if (expression instanceof CompactConstructorDeclaration ccd) {
@@ -101,7 +107,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             while (!Token.TokenType.LBRACE.equals(ccd.get(j).getType())) j++;
             j++;
             if (ccd.get(j) instanceof org.parsers.java.ast.Statement s) {
-                e = parseStatements(context, s, 0);
+                e = parseStatements(context, s, 0, n);
             } else if (ccd.get(j) instanceof Delimiter) {
                 e = runtime.emptyBlock();
             } else throw new Summary.ParseException(context, "Expected either empty block, or statements");
@@ -109,7 +115,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             e = parsers.parseBlock().parse(context, "", null, codeBlock, false,
                     eci == null ? 0 : 1);
         } else {
-            e = parseStatements(context, forwardType, expression, eci != null);
+            e = parseStatements(context, forwardType, expression, eci != null, n);
         }
         if (e instanceof Block b) {
             Block bWithEci;
@@ -118,7 +124,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             } else if (recordAssignments != null) {
                 bWithEci = runtime.newBlockBuilder()
                         .addStatements(b.statements())
-                        .addStatements(addIndices(recordAssignments, b.statements().size()))
+                        .addStatements(addIndices(recordAssignments, b.statements().size(), n))
                         .build();
             } else {
                 bWithEci = b;
@@ -129,14 +135,14 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             if (eci != null) bb.addStatement(eci);
             bb.addStatement(s);
             if (recordAssignments != null) {
-                bb.addStatements(addIndices(recordAssignments, bb.statements().size()));
+                bb.addStatements(addIndices(recordAssignments, bb.statements().size(), n));
             }
             builder.setMethodBody(bb.build());
         } else if (e == null && eci != null) {
             builder.setMethodBody(runtime.newBlockBuilder().addStatement(eci).build());
         } else if (e == null && recordAssignments != null) {
             builder.setMethodBody(runtime.newBlockBuilder()
-                    .addStatements(addIndices(recordAssignments, 0))
+                    .addStatements(addIndices(recordAssignments, 0, n))
                     .build());
         } else {
             // in Java, we must have a block
@@ -144,11 +150,31 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         }
     }
 
+    private int countTopLevelStatements(Object unparsedEci, Object expression) {
+        int n = unparsedEci instanceof ExplicitConstructorInvocation ? 1 : 0;
+        Node node = (Node) expression;
+        if (node instanceof CompactConstructorDeclaration || node instanceof CodeBlock) {
+            n += node.childrenOfType(org.parsers.java.ast.Statement.class).size();
+        } else if (node instanceof org.parsers.java.ast.Statement) {
+            n += 1;
+            while (node.nextSibling() instanceof org.parsers.java.ast.Statement st) {
+                n += 1;
+                node = st;
+            }
+        } else if (node instanceof org.parsers.java.ast.Expression) {
+            ++n;
+        } else if (node != null) {
+            throw new UnsupportedOperationException();
+        }
+        return n;
+    }
+
     // each statement must have an index
-    private List<Statement> addIndices(List<Statement> statements, int start) {
+    private List<Statement> addIndices(List<Statement> statements, int start, int n) {
         AtomicInteger count = new AtomicInteger(start);
         return statements.stream().map(s -> (Statement) ((ExpressionAsStatement) s)
-                        .withSource(runtime.newParserSource("" + count.getAndIncrement(), 0, 0, 0, 0)))
+                        .withSource(runtime.newParserSource(pad(count.getAndIncrement(), n),
+                                0, 0, 0, 0)))
                 .toList();
     }
 
@@ -157,19 +183,23 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
     ExpressionStatements can replace a CodeBlock (no idea why, but we need to deal with it)
     See TestExplicitConstructorInvocation.
      */
-    private Element parseStatements(Context context, ForwardType forwardType, Object expression, boolean haveEci) {
+    private Element parseStatements(Context context,
+                                    ForwardType forwardType,
+                                    Object expression,
+                                    boolean haveEci,
+                                    int n) {
         int start = haveEci ? 1 : 0;
         if (expression instanceof org.parsers.java.ast.Statement est) {
-            return parseStatements(context, est, start);
+            return parseStatements(context, est, start, n);
         }
         if (expression != null) {
-            return parseExpression(context, "" + start, forwardType, expression);
+            return parseExpression(context, pad(start, n), forwardType, expression);
         }
         return null;
     }
 
-    private Statement parseStatements(Context context, org.parsers.java.ast.Statement first, int start) {
-        Statement firstStatement = parsers.parseStatement().parse(context, "" + start, first);
+    private Statement parseStatements(Context context, org.parsers.java.ast.Statement first, int start, int n) {
+        Statement firstStatement = parsers.parseStatement().parse(context, pad(start, n), first);
 
         List<org.parsers.java.ast.Statement> siblings = new ArrayList<>();
         while (first.nextSibling() instanceof org.parsers.java.ast.Statement next) {
@@ -183,19 +213,20 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         b.addStatement(firstStatement);
         for (org.parsers.java.ast.Statement es : siblings) {
             ++start;
-            Statement s2 = parsers.parseStatement().parse(context, "" + start, es);
+            Statement s2 = parsers.parseStatement().parse(context, pad(start, n), es);
             b.addStatement(s2);
         }
         return b.build();
     }
 
     private org.e2immu.language.cst.api.statement.ExplicitConstructorInvocation parseEci(Context context,
-                                                                                         Object eciObject) {
+                                                                                         Object eciObject,
+                                                                                         int n) {
         ExplicitConstructorInvocation unparsedEci = (ExplicitConstructorInvocation) eciObject;
 
         ConstructorDeclaration cd = (ConstructorDeclaration) unparsedEci.getParent();
         List<Comment> comments = parsers.parseStatement().comments(cd);
-        Source source = parsers.parseStatement().source("0", cd);
+        Source source = parsers.parseStatement().source(pad(0, n), cd);
         boolean isSuper = Token.TokenType.SUPER.equals(unparsedEci.getFirst().getType());
 
         List<Object> unparsedArguments = new ArrayList<>();
@@ -210,7 +241,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
         ParameterizedType formalType = typeInfo.asParameterizedType();
 
         Expression constructorCall = context.methodResolution().resolveConstructor(context, comments, source,
-                "0", formalType, formalType, runtime.diamondNo(), null, runtime.noSource(),
+                pad(0, n), formalType, formalType, runtime.diamondNo(), null, runtime.noSource(),
                 unparsedArguments, List.of(), true, false);
         if (constructorCall instanceof ConstructorCall cc) {
             assert cc.constructor() != null;
@@ -302,7 +333,7 @@ public class ParseHelperImpl extends CommonParse implements ParseHelper {
             if (methodInfo != null && detailedSourcesBuilder != null) {
                 // offset adds 1 extra for the '#' character itself
                 detailedSourcesBuilder.put(methodInfo.name(), makeSource(tag, member, hash + 1));
-                detailedSourcesBuilder.put(methodInfo, makeSource(tag, tag.content().substring(hash+1),
+                detailedSourcesBuilder.put(methodInfo, makeSource(tag, tag.content().substring(hash + 1),
                         hash + 1));
             }
             return tag.withResolvedReference(methodInfo);
