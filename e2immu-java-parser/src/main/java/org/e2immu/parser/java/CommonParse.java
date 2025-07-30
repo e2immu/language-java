@@ -145,7 +145,8 @@ public abstract class CommonParse {
             if (i < tp.size()) {
                 if (tp.get(i) instanceof TypeBound tb) {
                     ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false, dsb);
-                    if (typeBound == null) {
+                    if (typeBound == null || !typeBound.typeBoundsAreSet(typeParameter)) {
+                        // we'll try in a next iteration
                         return null;
                     }
                     builder.addTypeBound(typeBound);
@@ -238,9 +239,9 @@ public abstract class CommonParse {
             } else if (child instanceof Identifier id) {
                 identifier = id;
             } else if (child instanceof ClassOrInterfaceBody
-                    || child instanceof AnnotationTypeBody
-                    || child instanceof RecordBody
-                    || child instanceof EnumBody) {
+                       || child instanceof AnnotationTypeBody
+                       || child instanceof RecordBody
+                       || child instanceof EnumBody) {
                 sub = child;
                 break;
             }
@@ -307,6 +308,9 @@ public abstract class CommonParse {
         }
         if (infiniteLoopProtection <= 0) {
             throw new UnsupportedOperationException("Hit infinite loop protection");
+        }
+        for (TypeParameter tp : typeParameters) {
+            assert tp.typeBoundsAreSet();
         }
         return typeParameters;
     }
@@ -384,7 +388,7 @@ public abstract class CommonParse {
     protected Source sourceOfPrefix(Node node, int qualifications) {
         int i = node.size() - (1 + 2 * qualifications);
         if (i > 2 && node.get(i) instanceof Identifier
-                && node.get(i - 1) instanceof Delimiter d && d.getType().equals(Token.TokenType.DOT)) {
+            && node.get(i - 1) instanceof Delimiter d && d.getType().equals(Token.TokenType.DOT)) {
             return source(node, 0, i - 2);
         }
         return null;
