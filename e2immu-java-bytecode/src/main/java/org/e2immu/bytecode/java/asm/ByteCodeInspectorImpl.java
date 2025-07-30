@@ -40,8 +40,6 @@ Its access is protected in CompiledTypesManager
 public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteCodeInspectorImpl.class);
 
-    private static boolean singletonCheck;
-
     private enum Status {
         BEING_LOADED, DONE, IN_QUEUE, ON_DEMAND
     }
@@ -62,11 +60,6 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
                                  CompiledTypesManager compiledTypesManager,
                                  boolean computeFingerPrints,
                                  boolean allowCreationOfStubTypes) {
-        if (singletonCheck) {
-            throw new UnsupportedOperationException("Singleton!");
-        } else {
-            singletonCheck = true;
-        }
         this.runtime = runtime;
         this.compiledTypesManager = compiledTypesManager;
         this.allowCreationOfStubTypes = allowCreationOfStubTypes;
