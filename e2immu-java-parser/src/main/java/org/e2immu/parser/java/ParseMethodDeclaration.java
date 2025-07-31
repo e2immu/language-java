@@ -3,7 +3,6 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.Assignment;
-import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
@@ -95,12 +94,6 @@ public class ParseMethodDeclaration extends CommonParse {
             rt = (ReturnType) md.get(i);
             i++;
         } else throw new UnsupportedOperationException();
-        String name;
-        if (md.get(i) instanceof Identifier identifier) {
-            name = identifier.getSource();
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
-            i++;
-        } else throw new UnsupportedOperationException();
 
         MethodInfo.MethodType methodType;
         if (compactConstructor) {
@@ -112,11 +105,18 @@ public class ParseMethodDeclaration extends CommonParse {
         } else if (methodModifiers.contains(runtime.methodModifierStatic())) {
             methodType = runtime.methodTypeStaticMethod();
         } else if (methodModifiers.contains(runtime.methodModifierAbstract())
-                || context.enclosingType().isInterface()) {
+                   || context.enclosingType().isInterface()) {
             methodType = runtime.methodTypeAbstractMethod();
         } else {
             methodType = runtime.methodTypeMethod();
         }
+
+        String name;
+        if (md.get(i) instanceof Identifier identifier) {
+            name = methodType.isConstructor() ? MethodInfo.CONSTRUCTOR_NAME : identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
+            i++;
+        } else throw new UnsupportedOperationException();
 
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder();

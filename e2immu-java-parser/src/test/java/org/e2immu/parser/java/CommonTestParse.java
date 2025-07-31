@@ -2,6 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.SourceSet;
+import org.e2immu.language.cst.api.info.ComputeMethodOverrides;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
@@ -337,9 +338,18 @@ public class CommonTestParse {
         ParseCompilationUnit parseCompilationUnit = new ParseCompilationUnit(rootContext);
         List<Either<TypeInfo, ParseTypeDeclaration.DelayedParsingInformation>> types
                 = parseCompilationUnit.parse(cu, parser.get().CompilationUnit());
+        computeSingleAbstractMethods(types.stream().map(Either::getLeft).toList());
         rootContext.resolver().resolve(true);
         return new ParseResult(rootContext, types.stream().map(Either::getLeft).toList());
     }
 
-
+    private void computeSingleAbstractMethods(Collection<TypeInfo> types) {
+        ComputeMethodOverrides cmo = runtime.computeMethodOverrides();
+        types.parallelStream().flatMap(TypeInfo::recursiveSubTypeStream).forEach(ti -> {
+            if (!ti.hasBeenInspected()) {
+                MethodInfo sam = cmo.computeFunctionalInterface(ti);
+                ti.builder().setSingleAbstractMethod(sam);
+            } // else: package-info
+        });
+    }
 }

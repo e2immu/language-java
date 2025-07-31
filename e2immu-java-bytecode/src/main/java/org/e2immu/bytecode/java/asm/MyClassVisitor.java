@@ -247,7 +247,7 @@ public class MyClassVisitor extends ClassVisitor {
         if (synthetic) return null;
 
         MethodInfo methodInfo;
-        if ("<init>".equals(name)) {
+        if (MethodInfo.CONSTRUCTOR_NAME.equals(name)) {
             methodInfo = runtime.newConstructor(currentType);
         } else {
             MethodInfo.MethodType methodType = extractMethodType(access);

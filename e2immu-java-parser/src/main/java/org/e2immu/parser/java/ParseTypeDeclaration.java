@@ -382,7 +382,7 @@ public class ParseTypeDeclaration extends CommonParse {
         if (typeNature.isRecord()) {
             RecordSynthetics rs = new RecordSynthetics(runtime, typeInfo);
             assert recordFields != null;
-            if (!haveConstructorMatchingFields(builder)) {
+            if (!haveConstructorMatchingFields(builder, recordFields)) {
                 MethodInfo cc = rs.createSyntheticConstructor(source, recordFields);
                 builder.addConstructor(cc);
             }
@@ -399,13 +399,13 @@ public class ParseTypeDeclaration extends CommonParse {
         return typeInfo;
     }
 
-    private boolean haveConstructorMatchingFields(TypeInfo.Builder builder) {
+    private boolean haveConstructorMatchingFields(TypeInfo.Builder builder, List<RecordField> recordFields) {
         return builder.constructors().stream().anyMatch(mi -> {
-            if (mi.parameters().size() != builder.fields().size()) return false;
+            if (mi.parameters().size() !=recordFields.size()) return false;
             int i = 0;
-            for (FieldInfo fieldInfo : builder.fields()) {
+            for (RecordField recordField : recordFields) {
                 ParameterInfo pi = mi.parameters().get(i);
-                if (!pi.parameterizedType().equals(fieldInfo.type())) return false;
+                if (!pi.parameterizedType().equals(recordField.fieldInfo.type())) return false;
                 i++;
             }
             return true;
@@ -600,9 +600,6 @@ public class ParseTypeDeclaration extends CommonParse {
         for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
             parsers.parseFieldDeclaration().parse(newContext, fieldDeclaration).forEach(builder::addField);
         }
-
-        MethodInfo sam = runtime.computeMethodOverrides().computeFunctionalInterface(typeInfo);
-        builder.setSingleAbstractMethod(sam);
     }
 
 }
