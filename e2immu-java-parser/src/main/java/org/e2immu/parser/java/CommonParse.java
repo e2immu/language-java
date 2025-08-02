@@ -7,6 +7,7 @@ import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.info.TypeModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
@@ -392,5 +393,19 @@ public abstract class CommonParse {
             return source(node, 0, i - 2);
         }
         return null;
+    }
+
+    protected MethodModifier methodModifier(KeyWord keyWord) {
+        return switch (keyWord.getType()) {
+            case FINAL -> runtime.methodModifierFinal();
+            case PRIVATE -> runtime.methodModifierPrivate();
+            case PROTECTED -> runtime.methodModifierProtected();
+            case PUBLIC -> runtime.methodModifierPublic();
+            case STATIC -> runtime.methodModifierStatic();
+            case SYNCHRONIZED -> runtime.methodModifierSynchronized();
+            case ABSTRACT -> runtime.methodModifierAbstract();
+            case _DEFAULT -> runtime.methodModifierDefault();
+            default -> throw new UnsupportedOperationException("Have " + keyWord.getType());
+        };
     }
 }

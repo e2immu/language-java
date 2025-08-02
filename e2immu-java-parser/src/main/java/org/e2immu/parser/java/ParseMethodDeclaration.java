@@ -61,14 +61,14 @@ public class ParseMethodDeclaration extends CommonParse {
                         if (node instanceof Annotation a) {
                             annotations.add(a);
                         } else if (node instanceof KeyWord keyWord) {
-                            MethodModifier m = modifier(keyWord);
+                            MethodModifier m = methodModifier(keyWord);
                             methodModifiers.add(m);
                             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
                         }
                     }
                     break;
                 case KeyWord keyWord:
-                    MethodModifier m = modifier(keyWord);
+                    MethodModifier m = methodModifier(keyWord);
                     methodModifiers.add(m);
                     if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
                     break;
@@ -293,19 +293,5 @@ public class ParseMethodDeclaration extends CommonParse {
 
         // do not commit yet!
         context.variableContext().add(pi);
-    }
-
-    private MethodModifier modifier(KeyWord keyWord) {
-        return switch (keyWord.getType()) {
-            case FINAL -> runtime.methodModifierFinal();
-            case PRIVATE -> runtime.methodModifierPrivate();
-            case PROTECTED -> runtime.methodModifierProtected();
-            case PUBLIC -> runtime.methodModifierPublic();
-            case STATIC -> runtime.methodModifierStatic();
-            case SYNCHRONIZED -> runtime.methodModifierSynchronized();
-            case ABSTRACT -> runtime.methodModifierAbstract();
-            case _DEFAULT -> runtime.methodModifierDefault();
-            default -> throw new UnsupportedOperationException("Have " + keyWord.getType());
-        };
     }
 }

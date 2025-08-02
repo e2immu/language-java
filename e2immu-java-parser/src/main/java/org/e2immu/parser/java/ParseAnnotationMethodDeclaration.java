@@ -3,12 +3,16 @@ package org.e2immu.parser.java;
 import org.e2immu.language.cst.api.element.DetailedSources;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.info.MethodInfo;
+import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.ast.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ParseAnnotationMethodDeclaration extends CommonParse {
 
@@ -18,15 +22,46 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
 
     public MethodInfo parse(Context context, AnnotationMethodDeclaration amd) {
         assert context.enclosingType() != null;
-
         int i = 0;
-        if (amd.children().get(i) instanceof KeyWord) {
+        List<Annotation> annotations = new ArrayList<>();
+        List<MethodModifier> methodModifiers = new ArrayList<>();
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
+
+        label:
+        while (true) {
+            Node mdi = amd.get(i);
+            switch (mdi) {
+                case Annotation a:
+                    annotations.add(a);
+                    break;
+                case Modifiers modifiers:
+                    for (Node node : modifiers.children()) {
+                        if (node instanceof Annotation a) {
+                            annotations.add(a);
+                        } else if (node instanceof KeyWord keyWord) {
+                            MethodModifier m = methodModifier(keyWord);
+                            methodModifiers.add(m);
+                            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
+                        }
+                    }
+                    break;
+                case KeyWord keyWord:
+                    MethodModifier m = methodModifier(keyWord);
+                    methodModifiers.add(m);
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(keyWord));
+                    break;
+                case TypeParameters _:
+                    throw new UnsupportedOperationException("? type parameters in annotations?");
+                case null:
+                default:
+                    break label;
+            }
             i++;
         }
+
         MethodInfo.MethodType methodType;
         ParameterizedType returnType;
         Node typeNode = amd.children().get(i);
-        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         if (typeNode instanceof Type type) {
             // depending on the modifiers...
             methodType = runtime.methodTypeMethod();
@@ -39,12 +74,16 @@ public class ParseAnnotationMethodDeclaration extends CommonParse {
         Node identifierNode = amd.children().get(i);
         if (identifierNode instanceof Identifier identifier) {
             name = identifier.getSource();
+            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
         } else throw new Summary.ParseException(context, "Expect Identifier, got " + identifierNode.getClass());
         MethodInfo methodInfo = runtime.newMethod(context.enclosingType(), name, methodType);
         MethodInfo.Builder builder = methodInfo.builder()
                 .setMethodBody(runtime.emptyBlock())
                 .setAccess(runtime.accessPublic())
                 .setReturnType(returnType);
+
+        parseAnnotations(context, builder, annotations);
+        methodModifiers.forEach(builder::addMethodModifier);
 
         builder.commitParameters();
 
