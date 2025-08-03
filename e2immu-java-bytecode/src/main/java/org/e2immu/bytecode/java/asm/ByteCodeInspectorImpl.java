@@ -269,7 +269,7 @@ public class ByteCodeInspectorImpl implements ByteCodeInspector, LocalTypeMap {
             compiledTypesManager.add(typeInfo);
             localTypeMapPut(fqn, new TypeData(typeInfo, Status.DONE, typeParameterContext));
             return typeInfo;
-        } catch (RuntimeException re) {
+        } catch (RuntimeException | AssertionError re) {
             LOGGER.error("Path = {}", path);
             LOGGER.error("FQN  = {}", fqn);
             LOGGER.error("Number of compiled types = {}", compiledTypesManager.typesLoaded().size());

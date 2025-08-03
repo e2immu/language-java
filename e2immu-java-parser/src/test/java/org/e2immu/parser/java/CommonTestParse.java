@@ -92,7 +92,7 @@ public class CommonTestParse {
         }
 
         @Override
-        public Collection<TypeInfo> primaryTypesInPackage(String packageName) {
+        public Collection<TypeInfo> primaryTypesInPackageEnsureLoaded(String packageName) {
             return Set.of();
         }
     }

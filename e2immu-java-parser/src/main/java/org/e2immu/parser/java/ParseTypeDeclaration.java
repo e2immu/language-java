@@ -56,14 +56,15 @@ public class ParseTypeDeclaration extends CommonParse {
         } catch (RuntimeException re) {
             Summary.ParseException parseException;
             if (packageNameOrEnclosing.isLeft()) {
+                LOGGER.error("Caught exception parsing type in {}", packageNameOrEnclosing.getLeft());
                 parseException = new Summary.ParseException(packageNameOrEnclosing.getLeft(),
                         packageNameOrEnclosing.getLeft(), re.getMessage(), re);
             } else {
+                LOGGER.error("Caught exception parsing type in {}", packageNameOrEnclosing.getRight());
                 parseException = new Summary.ParseException(packageNameOrEnclosing.getRight().compilationUnit(),
                         packageNameOrEnclosing.getRight(), re.getMessage(), re);
             }
             context.summary().addParseException(parseException);
-            LOGGER.error("Caught exception parsing type in {}", packageNameOrEnclosing);
             return null;
         }
     }
