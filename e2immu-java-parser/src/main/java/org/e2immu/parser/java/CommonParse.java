@@ -6,16 +6,13 @@ import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.info.Info;
-import org.e2immu.language.cst.api.info.MethodModifier;
-import org.e2immu.language.cst.api.info.TypeInfo;
-import org.e2immu.language.cst.api.info.TypeModifier;
+import org.e2immu.language.cst.api.info.*;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.SwitchEntry;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
-import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -135,13 +132,14 @@ public abstract class CommonParse {
                 i++;
             } else throw new Summary.ParseException(context, "Expected Identifier");
         } else throw new Summary.ParseException(context, "Expected Identifier or TypeParameter");
-        TypeParameter typeParameter = runtime.newTypeParameter(comments(node), List.copyOf(annotations),
-                typeParameterIndex, name, owner);
+        TypeParameter typeParameter = runtime.newTypeParameter(typeParameterIndex, name, owner);
+        typeParameter.builder().addAnnotations(annotations).addComments(comments(node));
         context.typeContext().addToContext(typeParameter);
         // do type bounds
         Source source = source(node);
         DetailedSources.Builder dsb = context.newDetailedSourcesBuilder();
         TypeParameter.Builder builder = typeParameter.builder();
+        List<ParameterizedType> typeBounds = new ArrayList<>();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
             if (i < tp.size()) {
                 if (tp.get(i) instanceof TypeBound tb) {
@@ -150,13 +148,14 @@ public abstract class CommonParse {
                         // we'll try in a next iteration
                         return null;
                     }
-                    builder.addTypeBound(typeBound);
+                    typeBounds.add(typeBound);
                 } else throw new UnsupportedOperationException();
             }
         }
-        return builder
-                .setSource(dsb == null ? source : source.withDetailedSources(dsb.build()))
+        builder.setSource(dsb == null ? source : source.withDetailedSources(dsb.build()))
+                .setTypeBounds(typeBounds)
                 .commit();
+        return typeParameter;
     }
 
     protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent,

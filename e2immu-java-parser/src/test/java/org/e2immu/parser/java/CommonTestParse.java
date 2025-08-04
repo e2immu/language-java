@@ -2,13 +2,9 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.SourceSet;
-import org.e2immu.language.cst.api.info.ComputeMethodOverrides;
-import org.e2immu.language.cst.api.info.FieldInfo;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Resolver;
@@ -117,9 +113,9 @@ public class CommonTestParse {
         autoCloseable = runtime.newTypeInfo(javaLang, "AutoCloseable");
         hashtable = runtime.newTypeInfo(javaUtil, "Hashtable");
 
-        TypeParameter tpClass = runtime.newTypeParameter(0, "C",
-                runtime.classTypeInfo()).builder().commit();
-        runtime.classTypeInfo().builder().addOrSetTypeParameter(tpClass);
+        TypeParameter C = runtime.newTypeParameter(0, "C", runtime.classTypeInfo());
+        C.builder().commit();
+        runtime.classTypeInfo().builder().addOrSetTypeParameter(C);
         MethodInfo getClass = runtime.newMethod(runtime.objectTypeInfo(), "getClass", runtime.methodTypeMethod());
         getClass.builder()
                 .setAccess(runtime.accessPublic())
@@ -184,9 +180,11 @@ public class CommonTestParse {
 
         override.builder().setTypeNature(runtime.typeNatureAnnotation());
 
+        TypeParameter E = runtime.newTypeParameter(0, "E", enumTypeInfo);
+        E.builder().commit();
         enumTypeInfo.builder()
                 .setParentClass(runtime.objectParameterizedType())
-                .addOrSetTypeParameter(runtime.newTypeParameter(0, "E", enumTypeInfo).builder().commit());
+                .addOrSetTypeParameter(E);
         enumTypeInfo.builder().commit();
 
         exception.builder().setTypeNature(runtime.typeNatureClass());
@@ -242,8 +240,10 @@ public class CommonTestParse {
     }
 
     private void defineFunction() {
-        TypeParameter T = runtime.newTypeParameter(0, "T", function).builder().commit();
-        TypeParameter R = runtime.newTypeParameter(1, "R", function).builder().commit();
+        TypeParameter T = runtime.newTypeParameter(0, "T", function);
+        T.builder().commit();
+        TypeParameter R = runtime.newTypeParameter(1, "R", function);
+        R.builder().commit();
         function.builder().addOrSetTypeParameter(T).addOrSetTypeParameter(R).setTypeNature(runtime.typeNatureInterface());
         MethodInfo apply = runtime.newMethod(function, "apply", runtime.methodTypeAbstractMethod());
         apply.builder().setReturnType(runtime.newParameterizedType(R, 0, null))
@@ -261,7 +261,8 @@ public class CommonTestParse {
     }
 
     private void defineConsumer() {
-        TypeParameter T = runtime.newTypeParameter(0, "T", consumer).builder().commit();
+        TypeParameter T = runtime.newTypeParameter(0, "T", consumer);
+        T.builder().commit();
         consumer.builder().addOrSetTypeParameter(T).setTypeNature(runtime.typeNatureInterface());
         MethodInfo accept = runtime.newMethod(consumer, "accept", runtime.methodTypeAbstractMethod());
         accept.builder().setReturnType(runtime.voidParameterizedType())
@@ -278,8 +279,10 @@ public class CommonTestParse {
     }
 
     private void defineBiConsumer() {
-        TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer).builder().commit();
-        TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer).builder().commit();
+        TypeParameter T = runtime.newTypeParameter(0, "T", biConsumer);
+        T.builder().commit();
+        TypeParameter U = runtime.newTypeParameter(1, "U", biConsumer);
+        U.builder().commit();
         biConsumer.builder().addOrSetTypeParameter(T).addOrSetTypeParameter(U).setTypeNature(runtime.typeNatureInterface());
         MethodInfo accept = runtime.newMethod(biConsumer, "accept", runtime.methodTypeAbstractMethod());
         accept.builder().setReturnType(runtime.voidParameterizedType())

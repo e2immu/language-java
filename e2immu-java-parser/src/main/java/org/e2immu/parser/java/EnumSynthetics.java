@@ -4,7 +4,6 @@ import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
-import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.inspection.api.parser.Context;
 
 import java.util.List;

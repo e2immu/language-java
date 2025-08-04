@@ -1,6 +1,6 @@
 package org.e2immu.bytecode.java.asm;
 
-import org.e2immu.language.cst.api.type.TypeParameter;
+import org.e2immu.language.cst.api.info.TypeParameter;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -18,14 +18,17 @@ package org.e2immu.bytecode.java.asm;
 import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.type.TypeParameter;
 import org.e2immu.language.cst.impl.output.QualificationImpl;
 import org.e2immu.language.cst.impl.type.DiamondEnum;
 import org.e2immu.language.cst.impl.type.ParameterizedTypePrinter;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.SortedSet;
+import java.util.Spliterator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -143,8 +146,12 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         TypeInfo typeInfo = runtime.newTypeInfo(runtime.newCompilationUnitBuilder().
                 setPackageName("jdk.internal.loader")
                 .build(), "AbstractClassLoaderValue");
-        context.add(runtime.newTypeParameter(0, "V", typeInfo).builder().commit());
-        context.add(runtime.newTypeParameter(1, "CLV", typeInfo).builder().commit());
+        TypeParameter tp1 = runtime.newTypeParameter(0, "V", typeInfo);
+        tp1.builder().commit();
+        context.add(tp1);
+        TypeParameter tp2 = runtime.newTypeParameter(1, "CLV", typeInfo);
+        tp2.builder().commit();
+        context.add(tp2);
 
         compiledTypesManager.add(typeInfo);
 
@@ -184,7 +191,7 @@ public class TestParseGenerics extends CommonJmodBaseTests {
         String signature = "<C::Ljava/util/concurrent/Callable<TT;>;T:Ljava/lang/Object;>(TC;[Ljava/lang/String;)TT;";
         TypeParameterContext typeContext = new TypeParameterContext();
         ParseGenerics<MethodInfo> parseGenerics = new ParseGenerics<>(runtime, typeContext, mi,
-                byteCodeInspector, LocalTypeMap.LoadMode.NOW,  runtime::newTypeParameter,
+                byteCodeInspector, LocalTypeMap.LoadMode.NOW, runtime::newTypeParameter,
                 mib::addTypeParameter, signature, false);
         parseGenerics.goReturnEndPos();
         assertEquals(2, mib.typeParameters().size());

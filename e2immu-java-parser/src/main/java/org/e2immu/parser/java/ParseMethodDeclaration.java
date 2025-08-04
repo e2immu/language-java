@@ -8,7 +8,7 @@ import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.type.TypeParameter;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
