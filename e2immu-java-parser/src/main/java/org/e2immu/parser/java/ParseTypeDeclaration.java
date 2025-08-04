@@ -210,6 +210,10 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
+        if (typeNature.isAnnotation()) {
+            TypeInfo annotationTypeInfo = runtime.getFullyQualified("java.lang.annotation.Annotation", true);
+            builder.addInterfaceImplemented(annotationTypeInfo.asParameterizedType());
+        }
         builder.hierarchyIsDone();
         // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
         // do not change the order in the OR disjunction; we must add the subtypes!

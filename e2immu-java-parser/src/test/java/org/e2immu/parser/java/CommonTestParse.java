@@ -5,6 +5,7 @@ import org.e2immu.language.cst.api.element.SourceSet;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
+import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.cst.impl.runtime.RuntimeImpl;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Resolver;
@@ -44,6 +45,7 @@ public class CommonTestParse {
             case "java.util.function.Consumer" -> consumer;
             case "java.util.function.BiConsumer" -> biConsumer;
             case "java.util.Hashtable" -> hashtable;
+            case "java.lang.annotation.Annotation" -> annotationClass;
             default -> {
                 if (complain) throw new UnsupportedOperationException("Type " + fullyQualifiedName);
                 yield null;
@@ -79,6 +81,7 @@ public class CommonTestParse {
     protected final TypeInfo enumTypeInfo;
     protected final TypeInfo autoCloseable;
     protected final TypeInfo hashtable;
+    protected final TypeInfo annotationClass;
 
     class CompiledTypesManagerImpl implements CompiledTypesManager {
 
@@ -98,6 +101,7 @@ public class CommonTestParse {
         CompilationUnit javaIo = runtime.newCompilationUnitBuilder().setPackageName("java.io").build();
         CompilationUnit javaUtil = runtime.newCompilationUnitBuilder().setPackageName("java.util").build();
         CompilationUnit javaUtilFunction = runtime.newCompilationUnitBuilder().setPackageName("java.util.function").build();
+        CompilationUnit javaLangAnnotation = runtime.newCompilationUnitBuilder().setPackageName("java.lang.annotation").build();
 
         suppressWarnings = runtime.newTypeInfo(javaLang, "SuppressWarnings");
         enumTypeInfo = runtime.newTypeInfo(javaLang, "Enum");
@@ -112,6 +116,7 @@ public class CommonTestParse {
         biConsumer = runtime.newTypeInfo(javaUtilFunction, "BiConsumer");
         autoCloseable = runtime.newTypeInfo(javaLang, "AutoCloseable");
         hashtable = runtime.newTypeInfo(javaUtil, "Hashtable");
+        annotationClass = runtime.newTypeInfo(javaLangAnnotation, "Annotation");
 
         TypeParameter C = runtime.newTypeParameter(0, "C", runtime.classTypeInfo());
         C.builder().commit();
@@ -148,7 +153,9 @@ public class CommonTestParse {
         pow.builder().addParameter("exponent", runtime.doubleParameterizedType());
         pow.builder().setReturnType(runtime.doubleParameterizedType());
         pow.builder().commit();
-        math.builder().addMethod(pow).setParentClass(runtime.objectParameterizedType());
+        TypeNature typeNatureClass = runtime.typeNatureClass();
+
+        math.builder().setTypeNature(typeNatureClass).addMethod(pow).setParentClass(runtime.objectParameterizedType());
         math.builder().commit();
 
         MethodInfo printlnString = runtime.newMethod(printStream, "println", runtime.methodTypeMethod());
@@ -169,10 +176,10 @@ public class CommonTestParse {
         printlnObject.builder().commit();
         printStream.builder().addMethod(printlnObject);
 
-        printStream.builder().setParentClass(runtime.objectParameterizedType());
+        printStream.builder().setTypeNature(typeNatureClass).setParentClass(runtime.objectParameterizedType());
         printStream.builder().commit();
 
-        system.builder().setParentClass(runtime.objectParameterizedType());
+        system.builder().setTypeNature(typeNatureClass).setParentClass(runtime.objectParameterizedType());
 
         FieldInfo out = runtime.newFieldInfo("out", true, printStream.asSimpleParameterizedType(), system);
         system.builder().addField(out);
@@ -183,17 +190,19 @@ public class CommonTestParse {
         TypeParameter E = runtime.newTypeParameter(0, "E", enumTypeInfo);
         E.builder().commit();
         enumTypeInfo.builder()
+                .setTypeNature(runtime.typeNatureClass())
                 .setParentClass(runtime.objectParameterizedType())
                 .addOrSetTypeParameter(E);
         enumTypeInfo.builder().commit();
 
-        exception.builder().setTypeNature(runtime.typeNatureClass());
+        exception.builder().setTypeNature(typeNatureClass);
 
         MethodInfo rteConstructor = runtime.newConstructor(runtimeException);
         rteConstructor.builder()
                 .setReturnType(runtime.parameterizedTypeReturnTypeOfConstructor())
                 .commitParameters().commit();
-        runtimeException.builder().setParentClass(runtime.newParameterizedType(exception, 0))
+        runtimeException.builder().setTypeNature(typeNatureClass)
+                .setParentClass(runtime.newParameterizedType(exception, 0))
                 .addConstructor(rteConstructor);
 
         MethodInfo valueOf = runtime.newMethod(runtime.boxedLongTypeInfo(), "valueOf", runtime.methodTypeStaticMethod());
@@ -236,7 +245,9 @@ public class CommonTestParse {
                 .addParameter("k", htTpKPt);
         htGet.builder().setAccess(runtime.accessPublic()).commitParameters().commit();
         hashtable.builder().addMethod(htGet);
-        hashtable.builder().commit();
+        hashtable.builder().setTypeNature(typeNatureClass).commit();
+
+        annotationClass.builder().setTypeNature(typeNatureClass).setParentClass(runtime.objectParameterizedType()).commit();
     }
 
     private void defineFunction() {

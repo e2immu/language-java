@@ -128,7 +128,7 @@ public class ParseExpression extends CommonParse {
                 }
                 throw new UnsupportedOperationException();
             }
-            case NormalAnnotation na -> parsers.parseAnnotationExpression().parseDirectly(context, na);
+            case Annotation a -> parsers.parseAnnotationExpression().parseDirectly(context, a);
             case DotThis _, DotSuper _ -> parseDotThisDotSuper(context, node, source);
             case NullLiteral _ -> runtime.newNullConstant(comments, source);
             default -> {
