@@ -6,9 +6,9 @@ import org.e2immu.language.cst.api.expression.Assignment;
 import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.MethodModifier;
 import org.e2immu.language.cst.api.info.ParameterInfo;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
@@ -126,10 +126,15 @@ public class ParseMethodDeclaration extends CommonParse {
         Context contextWithTP = context.newTypeContext();
 
         if (!typeParametersToParse.isEmpty()) {
-            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, contextWithTP, methodInfo);
-            for (TypeParameter typeParameter : typeParameters) {
+            List<TypeParameter> typeParameters = new ArrayList<>();
+            int typeParameterIndex = 0;
+            for (Node tp : typeParametersToParse) {
+                TypeParameter typeParameter = parseTypeParameterDoNotInspect(tp, methodInfo, typeParameterIndex++);
+                typeParameters.add(typeParameter);
                 builder.addTypeParameter(typeParameter);
+                contextWithTP.typeContext().addToContext(typeParameter);
             }
+            parseAndResolveTypeParameterBounds(typeParametersToParse, typeParameters, contextWithTP);
         }
 
         // we need the type parameters in the context, because the return type may be one of them/contain one

@@ -5,15 +5,18 @@ import org.e2immu.language.cst.api.element.ImportStatement;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.element.SourceSet;
 import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.support.Either;
+import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -87,6 +90,61 @@ public class ScanCompilationUnit extends CommonParse {
         return new ScanResult(sourceTypes, compilationUnit);
     }
 
+    private Map<String, TypeInfo> recursivelyFindTypes(Either<org.e2immu.language.cst.api.element.CompilationUnit, TypeInfo> parent,
+                                                       TypeInfo typeInfoOrNull,
+                                                       Node body,
+                                                       boolean addDetailedSources) {
+        Map<String, TypeInfo> map = new HashMap<>();
+        for (Node node : body) {
+            if (node instanceof TypeDeclaration td && !(node instanceof EmptyDeclaration)) {
+                handleTypeDeclaration(parent, typeInfoOrNull, td, map, addDetailedSources);
+            }
+        }
+        return Map.copyOf(map);
+    }
+
+    /*
+    We extract type nature and type modifiers here, because we'll need them in sibling subtype declarations.
+     */
+    private void handleTypeDeclaration(Either<org.e2immu.language.cst.api.element.CompilationUnit, TypeInfo> enclosing,
+                                       TypeInfo typeInfoOrNull,
+                                       TypeDeclaration td,
+                                       Map<String, TypeInfo> map,
+                                       boolean addDetailedSources) {
+        Identifier identifier = td.firstChildOfType(Identifier.class);
+        String typeName = identifier.getSource();
+        TypeInfo typeInfo;
+        if (enclosing.isLeft()) {
+            if (typeInfoOrNull != null) {
+                typeInfo = typeInfoOrNull;
+                assert typeInfo.simpleName().equals(typeName);
+            } else {
+                typeInfo = runtime.newTypeInfo(enclosing.getLeft(), typeName);
+            }
+        } else {
+            TypeInfo enclosingType = enclosing.getRight();
+            typeInfo = runtime.newTypeInfo(enclosingType, typeName);
+            enclosingType.builder().addSubType(typeInfo);
+        }
+        Node sub = handleTypeModifiers(td, typeInfo, addDetailedSources);
+        map.put(typeInfo.fullyQualifiedName(), typeInfo);
+        if (sub != null) {
+            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub, addDetailedSources));
+        }
+
+        Node next = identifier.nextSibling();
+        if (next instanceof TypeParameters typeParameters) {
+            int j = 1;
+            int typeParameterIndex = 0;
+            while (j < typeParameters.size()) {
+                Node tp = typeParameters.get(j);
+                TypeParameter typeParameter = parseTypeParameterDoNotInspect(tp, typeInfo, typeParameterIndex);
+                typeInfo.builder().addOrSetTypeParameter(typeParameter);
+                j += 2; // skip the ',' or '>' delimiter
+                ++typeParameterIndex;
+            }
+        }
+    }
 
     private ImportStatement parseImportDeclaration(ImportDeclaration id) {
         boolean isStatic = id.get(1) instanceof KeyWord kw && Token.TokenType.STATIC.equals(kw.getType());

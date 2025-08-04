@@ -11,7 +11,6 @@ import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
-import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.Summary;
@@ -159,12 +158,10 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
-
+        typeInfo.typeParameters().forEach(tp -> newContext.typeContext().addToContext(tp));
+        assert typeInfo.typeParameters().size() == typeParametersToParse.size();
         if (!typeParametersToParse.isEmpty()) {
-            TypeParameter[] typeParameters = resolveTypeParameters(typeParametersToParse, newContext, typeInfo);
-            for (TypeParameter typeParameter : typeParameters) {
-                builder.addOrSetTypeParameter(typeParameter);
-            }
+            parseAndResolveTypeParameterBounds(typeParametersToParse, typeInfo.typeParameters(), newContext);
         }
 
         TypeNature typeNature = builder.typeNature();
@@ -217,7 +214,7 @@ public class ParseTypeDeclaration extends CommonParse {
         // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
         // do not change the order in the OR disjunction; we must add the subtypes!
         if (!mustDelayForStaticStarImport
-                && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)
+            && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)
                 && hierarchyOfImportsAllDefined(typeInfo.compilationUnit(), context.typeContext())
                 || packageNameOrEnclosing.isRight())) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
@@ -255,9 +252,9 @@ public class ParseTypeDeclaration extends CommonParse {
     public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {
         // try again...
         if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)
-                && d.typeInfo.compilationUnit().importStatements().stream()
-                .allMatch(is -> !is.isStatic()
-                        || d.context.typeContext().addToStaticImportMap(d.typeInfo.compilationUnit(), is))) {
+            && d.typeInfo.compilationUnit().importStatements().stream()
+                    .allMatch(is -> !is.isStatic()
+                                    || d.context.typeContext().addToStaticImportMap(d.typeInfo.compilationUnit(), is))) {
             return Either.left(continueParsingTypeDeclaration(d.typeInfo, d.builder, d.td, d.context, d.typeNature,
                     d.newContext, d.detailedSourcesBuilder, d.iStart, d.annotations, d.recordComponents));
         }
@@ -402,7 +399,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
     private boolean haveConstructorMatchingFields(TypeInfo.Builder builder, List<RecordField> recordFields) {
         return builder.constructors().stream().anyMatch(mi -> {
-            if (mi.parameters().size() !=recordFields.size()) return false;
+            if (mi.parameters().size() != recordFields.size()) return false;
             int i = 0;
             for (RecordField recordField : recordFields) {
                 ParameterInfo pi = mi.parameters().get(i);

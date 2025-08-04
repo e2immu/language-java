@@ -2,9 +2,7 @@ package org.e2immu.parser.java;
 
 import org.e2immu.language.cst.api.element.*;
 import org.e2immu.language.cst.api.element.Comment;
-import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.element.RecordPattern;
-import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.*;
 import org.e2immu.language.cst.api.info.TypeParameter;
@@ -15,16 +13,16 @@ import org.e2immu.language.cst.api.type.ParameterizedType;
 import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
-import org.e2immu.language.inspection.api.parser.Summary;
 import org.e2immu.parser.java.util.JavaDocParser;
-import org.e2immu.support.Either;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 import org.parsers.java.ast.MultiLineComment;
 import org.parsers.java.ast.SingleLineComment;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class CommonParse {
     protected final Runtime runtime;
@@ -114,92 +112,6 @@ public abstract class CommonParse {
                 e.getEndLine(), e.getEndColumn());
     }
 
-    // code copied from ParseTypeDeclaration
-    private TypeParameter parseTypeParameter(Context context, Node node, Info owner, int typeParameterIndex) {
-        String name;
-        List<AnnotationExpression> annotations = new ArrayList<>();
-        int i = 0;
-        if (node instanceof Identifier) {
-            name = node.getSource();
-        } else if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            while (tp.get(i) instanceof Annotation a) {
-                // FIXME for now, we're not delaying the evaluation of annotations here to the resolution phase
-                annotations.add(parsers.parseAnnotationExpression().parseDirectly(context, a));
-                i++;
-            }
-            if (tp.get(i) instanceof Identifier id) {
-                name = id.getSource();
-                i++;
-            } else throw new Summary.ParseException(context, "Expected Identifier");
-        } else throw new Summary.ParseException(context, "Expected Identifier or TypeParameter");
-        TypeParameter typeParameter = runtime.newTypeParameter(typeParameterIndex, name, owner);
-        typeParameter.builder().addAnnotations(annotations).addComments(comments(node));
-        context.typeContext().addToContext(typeParameter);
-        // do type bounds
-        Source source = source(node);
-        DetailedSources.Builder dsb = context.newDetailedSourcesBuilder();
-        TypeParameter.Builder builder = typeParameter.builder();
-        List<ParameterizedType> typeBounds = new ArrayList<>();
-        if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            if (i < tp.size()) {
-                if (tp.get(i) instanceof TypeBound tb) {
-                    ParameterizedType typeBound = parsers.parseType().parse(context, tb.get(1), false, dsb);
-                    if (typeBound == null || !typeBound.typeBoundsAreSet(typeParameter)) {
-                        // we'll try in a next iteration
-                        return null;
-                    }
-                    typeBounds.add(typeBound);
-                } else throw new UnsupportedOperationException();
-            }
-        }
-        builder.setSource(dsb == null ? source : source.withDetailedSources(dsb.build()))
-                .setTypeBounds(typeBounds)
-                .commit();
-        return typeParameter;
-    }
-
-    protected Map<String, TypeInfo> recursivelyFindTypes(Either<CompilationUnit, TypeInfo> parent,
-                                                         TypeInfo typeInfoOrNull,
-                                                         Node body,
-                                                         boolean addDetailedSources) {
-        Map<String, TypeInfo> map = new HashMap<>();
-        for (Node node : body) {
-            if (node instanceof TypeDeclaration td && !(node instanceof EmptyDeclaration)) {
-                handleTypeDeclaration(parent, typeInfoOrNull, td, map, addDetailedSources);
-            }
-        }
-        return Map.copyOf(map);
-    }
-
-    /*
-    We extract type nature and type modifiers here, because we'll need them in sibling subtype declarations.
-     */
-    private void handleTypeDeclaration(Either<CompilationUnit, TypeInfo> enclosing,
-                                       TypeInfo typeInfoOrNull,
-                                       TypeDeclaration td,
-                                       Map<String, TypeInfo> map,
-                                       boolean addDetailedSources) {
-        String typeName = td.firstChildOfType(Identifier.class).getSource();
-        TypeInfo typeInfo;
-        if (enclosing.isLeft()) {
-            if (typeInfoOrNull != null) {
-                typeInfo = typeInfoOrNull;
-                assert typeInfo.simpleName().equals(typeName);
-            } else {
-                typeInfo = runtime.newTypeInfo(enclosing.getLeft(), typeName);
-            }
-        } else {
-            TypeInfo enclosingType = enclosing.getRight();
-            typeInfo = runtime.newTypeInfo(enclosingType, typeName);
-            enclosingType.builder().addSubType(typeInfo);
-        }
-        Node sub = handleTypeModifiers(td, typeInfo, addDetailedSources);
-        map.put(typeInfo.fullyQualifiedName(), typeInfo);
-        if (sub != null) {
-            map.putAll(recursivelyFindTypes(Either.right(typeInfo), typeInfoOrNull, sub, addDetailedSources));
-        }
-    }
-
     // also called for local type declarations
     protected Node handleTypeModifiers(TypeDeclaration td, TypeInfo typeInfo, boolean addDetailedSources) {
         DetailedSources.Builder detailedSourcesBuilder = addDetailedSources ? runtime.newDetailedSourcesBuilder() : null;
@@ -284,25 +196,53 @@ public abstract class CommonParse {
     }
 
 
-    protected TypeParameter[] resolveTypeParameters(List<Node> typeParametersToParse, Context contextWithTP, Info owner) {
+    protected TypeParameter parseTypeParameterDoNotInspect(Node node, Info owner, int typeParameterIndex) {
+        String name;
+        if (node instanceof Identifier) {
+            name = node.getSource();
+        } else if (node instanceof org.parsers.java.ast.TypeParameter tp) {
+            Identifier identifier = tp.firstChildOfType(Identifier.class);
+            name = identifier.getSource();
+        } else throw new UnsupportedOperationException("Expected Identifier or TypeParameter");
+        return runtime.newTypeParameter(typeParameterIndex, name, owner);
+    }
+
+
+    private record ParseTypeParameterResult(List<TypeBound> unparsedTypeBounds, boolean doCommit,
+                                            TypeParameter typeParameter,
+                                            Source source,
+                                            DetailedSources.Builder dsb) {
+    }
+
+    /*
+    We have created the type parameter objects by now, but have not yet parsed and resolved their
+    annotations, type bounds, source objects.
+
+    We will commit the type parameter if it does not have annotations.
+    If it has annotations, the resolver will do the commit.
+     */
+    protected void parseAndResolveTypeParameterBounds(List<Node> typeParametersToParse,
+                                                      List<TypeParameter> typeParameters,
+                                                      Context contextWithTP) {
+        List<ParseTypeParameterResult> results = typeParameters.stream()
+                .map(tp -> parseTypeParameter(typeParametersToParse.get(tp.getIndex()), tp, contextWithTP))
+                .toList();
         int infiniteLoopProtection = typeParametersToParse.size() + 2;
         boolean resolved = false;
-        TypeParameter[] typeParameters = new TypeParameter[typeParametersToParse.size()];
         while (infiniteLoopProtection >= 0 && !resolved) {
             resolved = true;
-            int tpIndex = 0;
-            for (Node unparsedTypeParameter : typeParametersToParse) {
-                if (typeParameters[tpIndex] == null) {
-                    TypeParameter typeParameter = parseTypeParameter(contextWithTP, unparsedTypeParameter, owner,
-                            tpIndex);
-                    if (typeParameter != null) {
-                        // paresTypeParameter has added it to the contextWithTP
-                        typeParameters[tpIndex] = typeParameter;
+            for (ParseTypeParameterResult result : results) {
+                if (result.unparsedTypeBounds.isEmpty()) {
+                    result.typeParameter.builder().setTypeBounds(List.of());
+                } else {
+                    List<ParameterizedType> typeBounds = parseTypeBounds(result.unparsedTypeBounds, contextWithTP,
+                            result.dsb);
+                    if (typeBounds != null) {
+                        result.typeParameter.builder().setTypeBounds(typeBounds);
                     } else {
                         resolved = false;
                     }
                 }
-                tpIndex++;
             }
             infiniteLoopProtection--;
         }
@@ -312,16 +252,63 @@ public abstract class CommonParse {
         for (TypeParameter tp : typeParameters) {
             assert tp.typeBoundsAreSet();
         }
-        return typeParameters;
+        for (ParseTypeParameterResult result : results) {
+            result.typeParameter.builder().setSource(result.dsb == null ? result.source
+                    : result.source.withDetailedSources(result.dsb.build()));
+            if (result.doCommit) result.typeParameter.builder().commit();
+        }
+    }
+
+    private List<ParameterizedType> parseTypeBounds(List<TypeBound> unparsedTypeBounds, Context context,
+                                                    DetailedSources.Builder dsb) {
+        List<ParameterizedType> res = new ArrayList<>(unparsedTypeBounds.size());
+        for (TypeBound typeBound : unparsedTypeBounds) {
+            ParameterizedType parsedTypeBound = parsers.parseType().parse(context, typeBound.get(1),
+                    false, dsb);
+            if (parsedTypeBound != null) {
+                res.add(parsedTypeBound);
+            } else {
+                return null;
+            }
+        }
+        return res;
     }
 
 
-    protected void parseAnnotations(Context context, Info.Builder<?> builder, List<Annotation> annotations) {
-        int annotationIndex = 0;
-        for (Annotation annotation : annotations) {
-            builder.addAnnotation(parsers.parseAnnotationExpression().parse(context, builder, annotation,
-                    annotationIndex++));
+    // code copied from ParseTypeDeclaration
+    private ParseTypeParameterResult parseTypeParameter(Node node, TypeParameter typeParameter, Context context) {
+        boolean doCommit;
+        if (node instanceof org.parsers.java.ast.TypeParameter tp) {
+            List<Annotation> annotations = tp.childrenOfType(Annotation.class);
+            if (annotations.isEmpty()) {
+                doCommit = true;
+            } else {
+                doCommit = !parseAnnotations(context, typeParameter.builder(), annotations);
+            }
+        } else {
+            doCommit = true;
         }
+        typeParameter.builder().addComments(comments(node));
+        Source source = source(node);
+        DetailedSources.Builder dsb = context.newDetailedSourcesBuilder();
+        List<TypeBound> unparsedTypeBounds = new ArrayList<>();
+        if (node instanceof org.parsers.java.ast.TypeParameter tp) {
+            unparsedTypeBounds.addAll(tp.childrenOfType(TypeBound.class));
+        }
+        return new ParseTypeParameterResult(unparsedTypeBounds, doCommit, typeParameter, source, dsb);
+    }
+
+    // returns true when there are annotations to be resolved
+    protected boolean parseAnnotations(Context context, Info.Builder<?> builder, List<Annotation> annotations) {
+        int annotationIndex = 0;
+        boolean toBeResolved = false;
+        for (Annotation annotation : annotations) {
+            ParseAnnotationExpression.Result result = parsers.parseAnnotationExpression().parse(context, builder,
+                    annotation, annotationIndex++);
+            builder.addAnnotation(result.annotationExpression());
+            toBeResolved |= result.toBeResolved();
+        }
+        return toBeResolved;
     }
 
 

@@ -14,7 +14,6 @@ import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -29,7 +28,10 @@ public class ParseAnnotationExpression extends CommonParse {
         super(runtime, parsers);
     }
 
-    public AnnotationExpression parse(Context context, Info.Builder<?> infoBuilder, Annotation a, int index) {
+    public record Result(AnnotationExpression annotationExpression, boolean toBeResolved) {
+    }
+
+    public Result parse(Context context, Info.Builder<?> infoBuilder, Annotation a, int index) {
         Node a1 = a.get(1);
         String name = a1.getSource();
         List<? extends NamedType> nts = context.typeContext().getWithQualification(name, true);
@@ -52,7 +54,8 @@ public class ParseAnnotationExpression extends CommonParse {
                 .addComments(comments(a))
                 .setSource(detailedSourcesBuilder == null ? source
                         : source.withDetailedSources(detailedSourcesBuilder.build()));
-        if (!(a instanceof MarkerAnnotation) && !onlyLiterals(context, a, builder)) {
+        boolean toBeResolved = !(a instanceof MarkerAnnotation) && !onlyLiterals(context, a, builder);
+        if (toBeResolved) {
             context.resolver().addAnnotationTodo(infoBuilder, typeInfo, builder, index, a, context);
         }
         /*
@@ -62,7 +65,7 @@ public class ParseAnnotationExpression extends CommonParse {
         We want it in place, however, because before resolution, in GetSetUtil, we create synthetic fields and
         rely on the presence of @GetSet, @Modified.
          */
-        return builder.build();
+        return new Result(builder.build(), toBeResolved);
     }
 
     private boolean onlyLiterals(Context context, Annotation a, AnnotationExpression.Builder builder) {
@@ -102,7 +105,7 @@ public class ParseAnnotationExpression extends CommonParse {
                         }
                     } else {
                         throw new Summary.ParseException(context, "Expected mvp, but got "
-                                + pairs.get(j).getClass() + ", src '" + pairs.get(j).getSource() + "'");
+                                                                  + pairs.get(j).getClass() + ", src '" + pairs.get(j).getSource() + "'");
                     }
                 }
             } else if (!(na3 instanceof Delimiter d && Token.TokenType.RPAREN.equals(d.getType()))) {
