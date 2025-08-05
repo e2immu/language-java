@@ -56,7 +56,7 @@ public class ParseCompilationUnit extends CommonParse {
 
         // then, with lower priority, add type names from the same package
         rootContext.typeContext().typesInSamePackage(compilationUnit.packageName())
-                .forEach(ti -> typeContext.addToContext(ti, false));
+                .forEach(ti -> typeContext.addToContext(ti, TypeContext.SAME_PACKAGE_PRIORITY));
 
         // finally, add * imports
         handleImportStatements(compilationUnit, typeContext, mustDelayForStaticImportTypeHierarchy, true);

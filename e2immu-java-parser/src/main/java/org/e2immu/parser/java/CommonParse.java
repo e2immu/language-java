@@ -208,7 +208,7 @@ public abstract class CommonParse {
     }
 
 
-    private record ParseTypeParameterResult(List<TypeBound> unparsedTypeBounds, boolean doCommit,
+    private record ParseTypeParameterResult(List<Node> unparsedTypeBounds, boolean doCommit,
                                             TypeParameter typeParameter,
                                             Source source,
                                             DetailedSources.Builder dsb) {
@@ -259,12 +259,11 @@ public abstract class CommonParse {
         }
     }
 
-    private List<ParameterizedType> parseTypeBounds(List<TypeBound> unparsedTypeBounds, Context context,
+    private List<ParameterizedType> parseTypeBounds(List<Node> unparsedTypeBounds, Context context,
                                                     DetailedSources.Builder dsb) {
         List<ParameterizedType> res = new ArrayList<>(unparsedTypeBounds.size());
-        for (TypeBound typeBound : unparsedTypeBounds) {
-            ParameterizedType parsedTypeBound = parsers.parseType().parse(context, typeBound.get(1),
-                    false, dsb);
+        for (Node typeBound : unparsedTypeBounds) {
+            ParameterizedType parsedTypeBound = parsers.parseType().parse(context, typeBound, false, dsb);
             if (parsedTypeBound != null) {
                 res.add(parsedTypeBound);
             } else {
@@ -291,9 +290,16 @@ public abstract class CommonParse {
         typeParameter.builder().addComments(comments(node));
         Source source = source(node);
         DetailedSources.Builder dsb = context.newDetailedSourcesBuilder();
-        List<TypeBound> unparsedTypeBounds = new ArrayList<>();
+        List<Node> unparsedTypeBounds = new ArrayList<>();
         if (node instanceof org.parsers.java.ast.TypeParameter tp) {
-            unparsedTypeBounds.addAll(tp.childrenOfType(TypeBound.class));
+            TypeBound tb = tp.firstChildOfType(TypeBound.class);
+            if (tb != null) {
+                int i = 1;
+                while (i < tb.size()) {
+                    unparsedTypeBounds.add(tb.get(i));
+                    i += 2; // skip the &
+                }
+            }
         }
         return new ParseTypeParameterResult(unparsedTypeBounds, doCommit, typeParameter, source, dsb);
     }

@@ -4,6 +4,7 @@ import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.LocalTypeDeclaration;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.parsers.java.ast.TypeDeclaration;
 
 public class ParseLocalTypeDeclaration extends CommonParse {
@@ -17,7 +18,7 @@ public class ParseLocalTypeDeclaration extends CommonParse {
 
         TypeInfo typeInfo = parsers.parseTypeDeclaration().parseLocal(newContext, context.enclosingMethod(), classDeclaration);
         newContext.resolver().resolve(false);
-        context.typeContext().addToContext(typeInfo);
+        context.typeContext().addToContext(typeInfo, TypeContext.CURRENT_TYPE_PRIORITY);
         return runtime.newLocalTypeDeclarationBuilder()
                 .setTypeInfo(typeInfo)
                 .setSource(source(index, classDeclaration))

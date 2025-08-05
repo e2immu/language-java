@@ -15,6 +15,7 @@ import org.e2immu.language.cst.api.type.TypeNature;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.e2immu.parser.java.erasure.ConstructorCallErasure;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -49,7 +50,8 @@ public class ParseConstructorCall extends CommonParse {
             if (typeInfo != null) {
                 // see TestConstructor,15 for an example
                 newContext = context.newTypeContext();
-                newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo);
+                newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo,
+                        TypeContext.SUBTYPE_HIERARCHY_ANONYMOUS);
             } else {
                 newContext = context; // type is Object... nothing to add
             }
@@ -244,7 +246,8 @@ public class ParseConstructorCall extends CommonParse {
         Context newContext = context.newAnonymousClassBody(anonymousType);
         // we must not only add the types of the enclosing type (this happens inside newAnonymousClassBody()), but
         // also those of the type we're extending:
-        newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(concreteReturnType.typeInfo());
+        newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(concreteReturnType.typeInfo(),
+                TypeContext.SUBTYPE_HIERARCHY_ANONYMOUS);
         parsers.parseTypeDeclaration().parseBody(newContext, body, typeNature, anonymousType, builder, null);
         newContext.resolver().resolve(false);
         builder.commit();

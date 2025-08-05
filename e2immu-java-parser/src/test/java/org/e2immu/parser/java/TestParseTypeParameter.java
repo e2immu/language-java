@@ -52,9 +52,9 @@ public class TestParseTypeParameter extends CommonTestParse {
         assertTrue(pt.isTypeParameter());
 
         assertEquals(1, tp.typeBounds().size());
-        ParameterizedType typeBound = tp.typeBounds().get(0);
+        ParameterizedType typeBound = tp.typeBounds().getFirst();
         assertEquals(1, typeBound.parameters().size());
-        assertSame(runtime.parameterizedTypeWildcard(), typeBound.parameters().get(0));
+        assertSame(runtime.parameterizedTypeWildcard(), typeBound.parameters().getFirst());
         assertNull(typeBound.wildcard());
         assertNull(typeBound.typeParameter());
         assertEquals("java.lang.Class", typeBound.typeInfo().fullyQualifiedName());
@@ -123,7 +123,7 @@ public class TestParseTypeParameter extends CommonTestParse {
         TypeInfo objectMapper = typeInfo.findSubType("ObjectMapper");
         MethodInfo setVc = objectMapper.findUniqueMethod("setVisibilityChecker", 1);
         MethodInfo u = typeInfo.findUniqueMethod("method1", 0);
-        if (u.methodBody().statements().get(0) instanceof ExpressionAsStatement eas && eas.expression() instanceof MethodCall mc) {
+        if (u.methodBody().statements().getFirst() instanceof ExpressionAsStatement eas && eas.expression() instanceof MethodCall mc) {
             assertSame(setVc, mc.methodInfo());
         } else fail();
     }

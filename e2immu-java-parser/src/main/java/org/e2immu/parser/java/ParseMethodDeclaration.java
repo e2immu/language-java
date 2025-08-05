@@ -13,6 +13,7 @@ import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
+import org.e2immu.language.inspection.api.parser.TypeContext;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
 import org.parsers.java.ast.*;
@@ -132,7 +133,7 @@ public class ParseMethodDeclaration extends CommonParse {
                 TypeParameter typeParameter = parseTypeParameterDoNotInspect(tp, methodInfo, typeParameterIndex++);
                 typeParameters.add(typeParameter);
                 builder.addTypeParameter(typeParameter);
-                contextWithTP.typeContext().addToContext(typeParameter);
+                contextWithTP.typeContext().addToContext(typeParameter, TypeContext.TYPE_PARAMETER_PRIORITY);
             }
             parseAndResolveTypeParameterBounds(typeParametersToParse, typeParameters, contextWithTP);
         }

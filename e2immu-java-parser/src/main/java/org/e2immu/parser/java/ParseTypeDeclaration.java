@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import static org.e2immu.language.inspection.api.parser.TypeContext.*;
+
 public class ParseTypeDeclaration extends CommonParse {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseTypeDeclaration.class);
     private final GetSetUtil getSetUtil;
@@ -145,8 +147,8 @@ public class ParseTypeDeclaration extends CommonParse {
         builder.setEnclosingMethod(context.enclosingMethod());
 
         Context newContext = context.newSubType(typeInfo);
-        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo.primaryType());
-        newContext.typeContext().addToContext(typeInfo); // our own type has priority over the subtypes
+        newContext.typeContext().addToContext(typeInfo, CURRENT_TYPE_PRIORITY);
+        collectNamesOfSubTypesIntoTypeContext(newContext.typeContext(), typeInfo);
 
         List<Node> typeParametersToParse = new ArrayList<>();
 
@@ -158,7 +160,8 @@ public class ParseTypeDeclaration extends CommonParse {
             }
             i++;
         }
-        typeInfo.typeParameters().forEach(tp -> newContext.typeContext().addToContext(tp));
+        typeInfo.typeParameters().forEach(tp ->
+                newContext.typeContext().addToContext(tp, TYPE_PARAMETER_PRIORITY));
         assert typeInfo.typeParameters().size() == typeParametersToParse.size();
         if (!typeParametersToParse.isEmpty()) {
             parseAndResolveTypeParameterBounds(typeParametersToParse, typeInfo.typeParameters(), newContext);
@@ -218,7 +221,7 @@ public class ParseTypeDeclaration extends CommonParse {
         // IMPORTANT: delaying is only done at the top-level; not for subtypes. See inspection-integration/
         // do not change the order in the OR disjunction; we must add the subtypes!
         if (!mustDelayForStaticStarImport
-            && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo)
+            && (newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(typeInfo, SUBTYPE_HIERARCHY_PRIORITY)
                 && hierarchyOfImportsAllDefined(typeInfo.compilationUnit(), context.typeContext())
                 || packageNameOrEnclosing.isRight())) {
             return Either.left(continueParsingTypeDeclaration(typeInfo, builder, td, context, typeNature, newContext,
@@ -232,7 +235,7 @@ public class ParseTypeDeclaration extends CommonParse {
         for (ImportStatement is : compilationUnit.importStatements()) {
             if (!is.isStatic() && !is.isStar()) {
                 TypeInfo typeInfo = (TypeInfo) typeContext.getWithQualification(is.importString(), true).getLast();
-                if (hierarchyNotYetDone(typeInfo, new HashSet<>())) {
+                if (!typeInfo.compilationUnit().equals(compilationUnit) && hierarchyNotYetDone(typeInfo, new HashSet<>())) {
                     return false;
                 }
             }
@@ -255,7 +258,7 @@ public class ParseTypeDeclaration extends CommonParse {
 
     public Either<TypeInfo, DelayedParsingInformation> continueParsingTypeDeclaration(DelayedParsingInformation d) {
         // try again...
-        if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo)
+        if (d.newContext.typeContext().addSubTypesOfHierarchyReturnAllDefined(d.typeInfo, SUBTYPE_HIERARCHY_PRIORITY)
             && d.typeInfo.compilationUnit().importStatements().stream()
                     .allMatch(is -> !is.isStatic()
                                     || d.context.typeContext().addToStaticImportMap(d.typeInfo.compilationUnit(), is))) {
@@ -351,7 +354,7 @@ public class ParseTypeDeclaration extends CommonParse {
             for (Node child : body.children()) {
                 if (child instanceof TypeDeclaration subTd) {
                     TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), subTd, false).getLeft();
-                    newContext.typeContext().addToContext(subTypeInfo);
+                    newContext.typeContext().addToContext(subTypeInfo, SUBTYPE_PRIORITY);
                 }
             }
             for (Node child : body.children()) {
@@ -428,14 +431,14 @@ public class ParseTypeDeclaration extends CommonParse {
         return prefix + simpleName;
     }
 
-    /*
-     Important: we'll be creating TypeInfo objects, which we MUST re-use!
-     */
     private void collectNamesOfSubTypesIntoTypeContext(TypeContext typeContext, TypeInfo typeInfo) {
-        typeContext.addToContext(typeInfo);
+        typeContext.addToContext(typeInfo, SUBTYPE_PRIORITY);
         // add direct children
         for (TypeInfo subType : typeInfo.subTypes()) {
-            collectNamesOfSubTypesIntoTypeContext(typeContext, subType);
+            typeContext.addToContext(subType, SUBTYPE_PRIORITY);
+        }
+        if (typeInfo.compilationUnitOrEnclosingType().isRight()) {
+            collectNamesOfSubTypesIntoTypeContext(typeContext, typeInfo.compilationUnitOrEnclosingType().getRight());
         }
     }
 
@@ -539,7 +542,8 @@ public class ParseTypeDeclaration extends CommonParse {
         for (TypeDeclaration typeDeclaration : typeDeclarations) {
             TypeInfo subTypeInfo = parse(newContext, Either.right(typeInfo), typeDeclaration,
                     false).getLeft();
-            newContext.typeContext().addToContext(subTypeInfo);
+            // for the rest of the body
+            newContext.typeContext().addToContext(subTypeInfo, SUBTYPE_PRIORITY);
         }
 
         // THEN, all sorts of methods and constructors
