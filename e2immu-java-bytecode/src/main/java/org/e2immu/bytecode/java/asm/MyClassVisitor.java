@@ -15,6 +15,7 @@
 package org.e2immu.bytecode.java.asm;
 
 import org.e2immu.bytecode.java.ExpressionFactory;
+import org.e2immu.language.cst.api.element.CompilationUnit;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.FieldInfo;
 import org.e2immu.language.cst.api.info.MethodInfo;
@@ -184,6 +185,20 @@ public class MyClassVisitor extends ClassVisitor {
         }
         TypeInfo fromMap = localTypeMap.getOrCreate(fqn, LocalTypeMap.LoadMode.NOW);
         if (fromMap == null) {
+            if (localTypeMap.allowCreationOfStubTypes()) {
+                int lastDot = fqn.lastIndexOf('.');
+                String packageName = lastDot < 0 ? "" : fqn.substring(0, lastDot);
+                String simpleName = lastDot < 0 ? fqn : fqn.substring(lastDot + 1);
+                CompilationUnit cu = runtime.newCompilationUnitStub(packageName);
+                TypeInfo typeInfo = runtime.newTypeInfo(cu, simpleName);
+                typeInfo.builder().setTypeNature(runtime.typeNatureStub())
+                        .setParentClass(runtime.objectParameterizedType())
+                        .setAccess(runtime.accessPublic())
+                        .setSource(runtime.noSource())
+                        .commit();
+                LOGGER.info("Created stub {}", typeInfo);
+                return typeInfo;
+            }
             LOGGER.error("Type inspection of {} is null", fqn);
             LOGGER.error("Current type is {}, source: {}", currentType.fullyQualifiedName(), currentType.source());
             throw new UnsupportedOperationException("Cannot load type '" + fqn + "'");
