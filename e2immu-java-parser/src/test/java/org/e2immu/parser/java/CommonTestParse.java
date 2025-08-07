@@ -91,7 +91,7 @@ public class CommonTestParse {
         }
 
         @Override
-        public Collection<TypeInfo> primaryTypesInPackageEnsureLoaded(String packageName) {
+        public Collection<TypeInfo> primaryTypesInPackageEnsureLoaded(String packageName, Set<String> fqnToAvoid) {
             return Set.of();
         }
     }
