@@ -89,7 +89,7 @@ public class ParseMethodDeclaration extends CommonParse {
         ReturnType rt;
         boolean constructor = md instanceof ConstructorDeclaration;
         boolean compactConstructor = md instanceof CompactConstructorDeclaration;
-        if (constructor) {
+        if (constructor || compactConstructor) {
             rt = null;
         } else if (md.get(i) instanceof ReturnType) {
             rt = (ReturnType) md.get(i);

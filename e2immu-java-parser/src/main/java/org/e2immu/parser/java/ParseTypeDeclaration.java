@@ -530,7 +530,7 @@ public class ParseTypeDeclaration extends CommonParse {
         for (Node child : body.children()) {
             if (!(child instanceof EmptyDeclaration)) {
                 if (child instanceof TypeDeclaration cid) typeDeclarations.add(cid);
-                else if (child instanceof ConstructorDeclaration && !(child instanceof CompactConstructorDeclaration)) {
+                else if (child instanceof ConstructorDeclaration) {
                     ++countNormalConstructors;
                 } else if (child instanceof FieldDeclaration fd) fieldDeclarations.add(fd);
             }
@@ -555,8 +555,8 @@ public class ParseTypeDeclaration extends CommonParse {
                     if (methodInfo != null) {
                         builder.addMethod(methodInfo);
                     } // else error
-                } else if (child instanceof ConstructorDeclaration cd) {
-                    MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, cd, recordFields);
+                } else if (child instanceof ConstructorDeclaration || child instanceof CompactConstructorDeclaration) {
+                    MethodInfo constructor = parsers.parseMethodDeclaration().parse(newContext, child, recordFields);
                     if (constructor != null) {
                         builder.addConstructor(constructor);
                     } // else error

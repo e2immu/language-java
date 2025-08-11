@@ -138,7 +138,9 @@ public class ParseStatement extends CommonParse {
         // type declarator delimiter declarator
         if (statement instanceof LocalVariableDeclaration nvd) {
             if (nvd.get(i) instanceof Token t && Token.TokenType.VAR.equals(t.getType())) {
-                lvcModifiers.add(runtime.localVariableModifierVar());
+                LocalVariableCreation.Modifier modifierVar = runtime.localVariableModifierVar();
+                lvcModifiers.add(modifierVar);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(modifierVar, source(t));
                 return localVariableCreationWithVar(context, index, nvd, i + 1, lvcModifiers, source,
                         detailedSourcesBuilder, comments, label, annotations);
             }
@@ -556,12 +558,18 @@ public class ParseStatement extends CommonParse {
     private LocalVariableCreation forEachElementWithVar(Context context, LocalVariableDeclaration varDeclaration,
                                                         ParameterizedType elementType) {
         int i = 0;
+        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
         while (varDeclaration.get(i) instanceof Token token) {
+            LocalVariableCreation.Modifier m = null;
             if (Token.TokenType.VAR.equals(token.getType())) {
-                builder.addModifier(runtime.localVariableModifierVar());
+                m = runtime.localVariableModifierVar();
             } else if (Token.TokenType.FINAL.equals(token.getType())) {
-                builder.addModifier(runtime.localVariableModifierFinal());
+                m = runtime.localVariableModifierFinal();
+            }
+            if (m != null) {
+                builder.addModifier(m);
+                if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(m, source(token));
             }
             ++i;
         }
@@ -574,7 +582,6 @@ public class ParseStatement extends CommonParse {
             String variableName = identifier.getSource();
             lv = runtime.newLocalVariable(variableName, elementType, runtime.newEmptyExpression());
         }
-        DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         Source source = source(varDeclaration);
         if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(vd.getFirst()));
         context.variableContext().add(lv);

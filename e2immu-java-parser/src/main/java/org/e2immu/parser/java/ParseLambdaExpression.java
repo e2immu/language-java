@@ -224,7 +224,7 @@ public class ParseLambdaExpression extends CommonParse {
                     Lambda.OutputVariant outputVariant;
                     DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
 
-                    if (lp.get(0) instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
+                    if (lp.get(0) instanceof Token kw && Token.TokenType.VAR.equals(kw.getType())) {
                         type = forwardType.type().parameters().get(1);
                         outputVariant = runtime.lambdaOutputVariantEmpty();
                     } else {

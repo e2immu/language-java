@@ -41,11 +41,11 @@ public class TestParseDetailedSources extends CommonTestParse {
         assertEquals("4-17:4-20", ds.detail(methodInfo.returnType()).compact2());
         assertEquals("4-22:4-25", ds.detail(methodInfo.name()).compact2());
 
-        ParameterInfo p0 = methodInfo.parameters().get(0);
+        ParameterInfo p0 = methodInfo.parameters().getFirst();
         assertEquals("4-27:4-34", p0.source().detailedSources().detail(p0.parameterizedType()).compact2());
         assertEquals("4-36:4-39", p0.source().detailedSources().detail(p0.name()).compact2());
 
-        LocalVariableCreation lvc0 = (LocalVariableCreation) methodInfo.methodBody().statements().get(0);
+        LocalVariableCreation lvc0 = (LocalVariableCreation) methodInfo.methodBody().statements().getFirst();
         assertEquals("5-5:5-25", lvc0.source().compact2());
         LocalVariableCreation.Modifier v = lvc0.modifiers().stream().findFirst().orElseThrow();
         DetailedSources ds0 = lvc0.source().detailedSources();
