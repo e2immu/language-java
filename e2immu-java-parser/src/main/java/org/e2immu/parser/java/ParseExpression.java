@@ -267,7 +267,7 @@ public class ParseExpression extends CommonParse {
 
     private Expression parseClassLiteral(Context context, List<Comment> comments, Source source, ClassLiteral cl) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        ParameterizedType pt = parsers.parseType().parse(context, cl.get(0), detailedSourcesBuilder);
+        ParameterizedType pt = parsers.parseType().parse(context, cl.getFirst(), detailedSourcesBuilder);
         return runtime.newClassExpressionBuilder(pt)
                 .addComments(comments)
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))

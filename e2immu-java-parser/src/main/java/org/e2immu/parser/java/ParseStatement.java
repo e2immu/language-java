@@ -130,15 +130,20 @@ public class ParseStatement extends CommonParse {
                     .build();
         }
 
-        // type declarator delimiter declarator
-        if (statement instanceof LocalVariableDeclaration nvd) {
-            return localVariableCreation(context, index, nvd, i, lvcModifiers, source, detailedSourcesBuilder,
-                    comments, label, annotations);
-        }
-
         if (statement instanceof VarDeclaration varDeclaration) {
             return localVariableCreationWithVar(context, index, varDeclaration, i, lvcModifiers, source,
                     detailedSourcesBuilder, comments, label, annotations);
+        }
+
+        // type declarator delimiter declarator
+        if (statement instanceof LocalVariableDeclaration nvd) {
+            if (nvd.get(i) instanceof Token t && Token.TokenType.VAR.equals(t.getType())) {
+                lvcModifiers.add(runtime.localVariableModifierVar());
+                return localVariableCreationWithVar(context, index, nvd, i + 1, lvcModifiers, source,
+                        detailedSourcesBuilder, comments, label, annotations);
+            }
+            return localVariableCreation(context, index, nvd, i, lvcModifiers, source, detailedSourcesBuilder,
+                    comments, label, annotations);
         }
 
         if (statement instanceof EnhancedForStatement enhancedFor) {
@@ -150,11 +155,13 @@ public class ParseStatement extends CommonParse {
             Expression expression = parsers.parseExpression().parse(context, index, forwardType, enhancedFor.get(i + 4));
             Context newContext = context.newVariableContext("forEach");
             Node varDeclaration = enhancedFor.get(i + 2);
-            if (varDeclaration instanceof NoVarDeclaration nvd) {
-                loopVariableCreation = (LocalVariableCreation) parse(newContext, index, nvd);
-            } else if (varDeclaration instanceof LocalVariableDeclaration vd) {
-                ParameterizedType elementType = computeForwardType(context, iterable, expression.parameterizedType());
-                loopVariableCreation = forEachElementWithVar(context, vd, elementType);
+            if (varDeclaration instanceof LocalVariableDeclaration vd) {
+                if (vd.hasChildOfType(Token.TokenType.VAR)) {
+                    ParameterizedType elementType = computeForwardType(context, iterable, expression.parameterizedType());
+                    loopVariableCreation = forEachElementWithVar(context, vd, elementType);
+                } else {
+                    loopVariableCreation = (LocalVariableCreation) parse(newContext, index, vd);
+                }
             } else throw new UnsupportedOperationException();
             Node n6 = enhancedFor.get(i + 6);
             Block block = parseBlockOrStatement(newContext, index + FIRST_BLOCK, n6);
@@ -548,14 +555,28 @@ public class ParseStatement extends CommonParse {
 
     private LocalVariableCreation forEachElementWithVar(Context context, LocalVariableDeclaration varDeclaration,
                                                         ParameterizedType elementType) {
+        int i = 0;
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
-        VariableDeclarator vd = (VariableDeclarator) varDeclaration.get(1);
-        Identifier identifier = (Identifier) vd.getFirst();
-        String variableName = identifier.getSource();
-        LocalVariable lv = runtime.newLocalVariable(variableName, elementType, runtime.newEmptyExpression());
+        while (varDeclaration.get(i) instanceof Token token) {
+            if (Token.TokenType.VAR.equals(token.getType())) {
+                builder.addModifier(runtime.localVariableModifierVar());
+            } else if (Token.TokenType.FINAL.equals(token.getType())) {
+                builder.addModifier(runtime.localVariableModifierFinal());
+            }
+            ++i;
+        }
+        VariableDeclarator vd = (VariableDeclarator) varDeclaration.get(i);
+        LocalVariable lv;
+        if (vd.getFirst() instanceof KeyWord kw && Token.TokenType.UNDERSCORE.equals(kw.getType())) {
+            lv = runtime.newLocalVariable(elementType).withAssignmentExpression(runtime.newEmptyExpression());
+        } else {
+            Identifier identifier = (Identifier) vd.getFirst();
+            String variableName = identifier.getSource();
+            lv = runtime.newLocalVariable(variableName, elementType, runtime.newEmptyExpression());
+        }
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         Source source = source(varDeclaration);
-        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(identifier));
+        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(lv, source(vd.getFirst()));
         context.variableContext().add(lv);
         return builder.setLocalVariable(lv)
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
@@ -563,7 +584,7 @@ public class ParseStatement extends CommonParse {
                 .build();
     }
 
-    private LocalVariableCreation localVariableCreationWithVar(Context context, String index, VarDeclaration varDeclaration,
+    private LocalVariableCreation localVariableCreationWithVar(Context context, String index, Node varDeclaration,
                                                                int i, List<LocalVariableCreation.Modifier> lvcModifiers,
                                                                Source source, DetailedSources.Builder detailedSourcesBuilder,
                                                                List<Comment> comments, String label,
