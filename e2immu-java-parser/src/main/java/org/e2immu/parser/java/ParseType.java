@@ -46,12 +46,14 @@ public class ParseType extends CommonParse {
                                      DetailedSources.Builder detailedSourcesBuilder) {
         Token.TokenType tt;
         ParameterizedType pt;
-        Node n0 = nodes instanceof Node.TerminalNode t ? t : nodes.getFirst();
+        Node n0 = nodes.isEmpty() ? (Node) nodes : nodes.getFirst();
         if (n0 instanceof ReferenceType rt) {
-            return parse(context, rt, detailedSourcesBuilder);
+            return parse(context, rt, complain, detailedSourcesBuilder);
         }
         if (nodes instanceof ObjectType ot) {
             pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);
+        } else if (n0 instanceof Name name) {
+            pt = parseObjectType(context, name, complain, detailedSourcesBuilder);
         } else if (n0 instanceof Identifier identifier) {
             List<? extends NamedType> nts = context.typeContext().getWithQualification(identifier.getSource(), complain);
             assert nts.size() == 1;
@@ -83,7 +85,7 @@ public class ParseType extends CommonParse {
             }
             if (n0 instanceof PrimitiveType primitive && primitive.getFirst() instanceof Primitive p) {
                 tt = p.getType();
-            } else if(n0 instanceof Primitive p) {
+            } else if (n0 instanceof Primitive p) {
                 tt = p.getType();
             } else if (n0 instanceof KeyWord keyWord) {
                 if (!keyWord.hasChildNodes() || nodes.size() == 1
@@ -148,7 +150,7 @@ public class ParseType extends CommonParse {
         };
     }
 
-    private ParameterizedType parseObjectType(Context context, ObjectType ot, boolean complain,
+    private ParameterizedType parseObjectType(Context context, Node ot, boolean complain,
                                               DetailedSources.Builder detailedSourcesBuilder) {
         int i = 0;
         StringBuilder sb = new StringBuilder();

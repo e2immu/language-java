@@ -6,15 +6,12 @@ import org.e2immu.language.cst.api.element.RecordPattern;
 import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.*;
 import org.e2immu.language.cst.api.expression.Expression;
-import org.e2immu.language.cst.api.info.FieldInfo;
-import org.e2immu.language.cst.api.info.Info;
-import org.e2immu.language.cst.api.info.MethodInfo;
-import org.e2immu.language.cst.api.info.TypeInfo;
+import org.e2immu.language.cst.api.info.*;
+import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.statement.SwitchEntry;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.cst.api.type.ParameterizedType;
-import org.e2immu.language.cst.api.info.TypeParameter;
 import org.e2immu.language.cst.api.variable.FieldReference;
 import org.e2immu.language.cst.api.variable.LocalVariable;
 import org.e2immu.language.cst.api.variable.This;
@@ -267,7 +264,7 @@ public class ParseExpression extends CommonParse {
 
     private Expression parseClassLiteral(Context context, List<Comment> comments, Source source, ClassLiteral cl) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
-        ParameterizedType pt = parsers.parseType().parse(context, cl.getFirst(), detailedSourcesBuilder);
+        ParameterizedType pt = parsers.parseType().parse(context, cl, detailedSourcesBuilder);
         return runtime.newClassExpressionBuilder(pt)
                 .addComments(comments)
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
@@ -304,7 +301,7 @@ public class ParseExpression extends CommonParse {
                     if (!associatedList.isEmpty()) {
                         detailedSourcesBuilder.putTypeQualification(typeInfo, List.copyOf(associatedList));
                     }
-                    Source pkgNameSource =  sourceOfPrefix(name, associatedList.size());
+                    Source pkgNameSource = sourceOfPrefix(name, associatedList.size());
                     if (pkgNameSource != null) {
                         detailedSourcesBuilder.put(typeInfo.packageName(), pkgNameSource);
                     }

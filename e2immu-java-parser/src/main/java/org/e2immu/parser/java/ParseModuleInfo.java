@@ -19,7 +19,7 @@ public class ParseModuleInfo extends CommonParse {
         ModuleInfo.Builder builder = runtime.newModuleInfoBuilder();
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         int i = 0;
-        if (mcu.get(i) instanceof KeyWord kw && kw.getType() == Token.TokenType.MODULE) {
+        if (mcu.get(i) instanceof Token kw && kw.getType() == Token.TokenType.MODULE) {
             ++i;
         } else throw new Summary.ParseException(context, "Expect keyword 'module'");
         if (mcu.get(i) instanceof Name name) {
@@ -52,7 +52,7 @@ public class ParseModuleInfo extends CommonParse {
         String api = apiNode.getSource();
         if (dsb != null) dsb.put(api, source(apiNode));
         String implementation;
-        if (pd.get(2) instanceof KeyWord kwTo && Token.TokenType.WITH == kwTo.getType()) {
+        if (pd.get(2) instanceof Token kwTo && Token.TokenType.WITH == kwTo.getType()) {
             Node iNode = pd.get(3);
             implementation = iNode.getSource();
             if (dsb != null) dsb.put(implementation, source(iNode));
@@ -79,7 +79,7 @@ public class ParseModuleInfo extends CommonParse {
         String packageName = packageNameNode.getSource();
         if (dsb != null) dsb.put(packageName, source(packageNameNode));
         String toPackageName;
-        if (ed.get(2) instanceof KeyWord kwTo && Token.TokenType.TO == kwTo.getType()) {
+        if (ed.get(2) instanceof Token kwTo && Token.TokenType.TO == kwTo.getType()) {
             Node toNode = ed.get(3);
             toPackageName = toNode.getSource();
             if (dsb != null) dsb.put(toPackageName, source(toNode));
@@ -98,7 +98,7 @@ public class ParseModuleInfo extends CommonParse {
         String packageName = packageNameNode.getSource();
         if (dsb != null) dsb.put(packageName, source(packageNameNode));
         String toPackageName;
-        if (ed.get(2) instanceof KeyWord kwTo && Token.TokenType.TO == kwTo.getType()) {
+        if (ed.get(2) instanceof Token kwTo && Token.TokenType.TO == kwTo.getType()) {
             Node toNode = ed.get(3);
             toPackageName = toNode.getSource();
             if (dsb != null) dsb.put(toPackageName, source(toNode));
@@ -114,7 +114,7 @@ public class ParseModuleInfo extends CommonParse {
         int j = 1;
         boolean isStatic = false;
         boolean isTransitive = false;
-        while (rd.get(j) instanceof KeyWord modifier) {
+        while (rd.get(j) instanceof Token modifier) {
             if (Token.TokenType.STATIC == modifier.getType()) {
                 isStatic = true;
             } else if (Token.TokenType.TRANSITIVE == modifier.getType()) {
