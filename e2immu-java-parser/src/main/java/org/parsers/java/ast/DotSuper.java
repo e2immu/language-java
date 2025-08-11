@@ -9,7 +9,7 @@ import java.util.*;
 import static org.parsers.java.Token.TokenType.*;
 
 
-public class DotSuper extends BaseNode {
+public class DotSuper extends BaseNode implements PrimaryExpression {
 }
 
 

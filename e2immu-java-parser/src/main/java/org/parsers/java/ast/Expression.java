@@ -10,12 +10,12 @@ import java.util.*;
 
 public interface Expression extends Node {
 
-    default boolean isAssignableTo() {
+    default boolean canBeAssignedTo() {
         return false;
     }
 
-    default String getAsString() {
-        return toString();
+    default boolean canBeThrown() {
+        return false;
     }
 
 }

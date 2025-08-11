@@ -9,7 +9,12 @@ import java.util.*;
 import static org.parsers.java.Token.TokenType.*;
 
 
-public class LiteralExpression extends BaseNode implements PrimaryExpression {
+public class LiteralExpression extends BaseNode implements PrimaryExpression, Expression {
+
+    public boolean canBeThrown() {
+        return toString().equals("this");
+    }
+
 }
 
 

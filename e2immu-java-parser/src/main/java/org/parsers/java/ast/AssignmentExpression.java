@@ -10,6 +10,11 @@ import static org.parsers.java.Token.TokenType.*;
 
 
 public class AssignmentExpression extends BaseNode implements Expression {
+
+    public boolean canBeThrown() {
+        return ((Expression) getLastChild()).canBeThrown();
+    }
+
 }
 
 

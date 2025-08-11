@@ -21,14 +21,11 @@ public class Token implements CharSequence, Node.TerminalNode {
         GOTO("goto"), IF("if"), IMPLEMENTS("implements"), _IMPORT("import"), INSTANCEOF("instanceof"),
         INT("int"), INTERFACE("interface"), LONG("long"), NATIVE("native"), NEW("new"),
         NULL("null"), PACKAGE("package"), PRIVATE("private"), PROTECTED("protected"),
-        PUBLIC("public"), RETURN("return"), RECORD("record"), SHORT("short"), STATIC("static"),
-        STRICTFP("strictfp"), SUPER("super"), SWITCH("switch"), SYNCHRONIZED("synchronized"),
-        THIS("this"), THROW("throw"), THROWS("throws"), TRANSIENT("transient"), TRUE("true"),
-        TRY("try"), VAR("var"), VOID("void"), VOLATILE("volatile"), WHILE("while"),
-        YIELD("yield"), SEALED("sealed"), NON_SEALED("non-sealed"), PERMITS("permits"),
-        WHEN("when"), MODULE("module"), EXPORTS("exports"), OPEN("open"), OPENS("opens"),
-        PROVIDES("provides"), REQUIRES("requires"), TO("to"), TRANSITIVE("transitive"),
-        USES("uses"), WITH("with"), LPAREN("("), RPAREN(")"), LBRACE("{"), RBRACE("}"),
+        PUBLIC("public"), RETURN("return"), SHORT("short"), STATIC("static"), STRICTFP("strictfp"),
+        SUPER("super"), SWITCH("switch"), SYNCHRONIZED("synchronized"), THIS("this"),
+        THROW("throw"), THROWS("throws"), TRANSIENT("transient"), TRUE("true"), TRY("try"),
+        VOID("void"), VOLATILE("volatile"), WHILE("while"), NON_SEALED("non-sealed"),
+        SEALED("sealed", true, false), LPAREN("("), RPAREN(")"), LBRACE("{"), RBRACE("}"),
         LBRACKET("["), RBRACKET("]"), SEMICOLON(";"), COMMA(","), DOT("."), DOUBLE_COLON("::"),
         VAR_ARGS("..."), AT("@"), ASSIGN("="), GT(">"), LT("<"), BANG("!"), TILDE("~"),
         HOOK("?"), COLON(":"), EQ("=="), LE("<="), GE(">="), NE("!="), SC_OR("||"),
@@ -37,8 +34,13 @@ public class Token implements CharSequence, Node.TerminalNode {
         MINUSASSIGN("-="), STARASSIGN("*="), SLASHASSIGN("/="), ANDASSIGN("&="), ORASSIGN("|="),
         XORASSIGN("^="), REMASSIGN("%="), LSHIFTASSIGN("<<="), RSIGNEDSHIFT(">>"),
         RUNSIGNEDSHIFT(">>>"), RSIGNEDSHIFTASSIGN(">>="), RUNSIGNEDSHIFTASSIGN(">>>="),
-        LAMBDA("->"), WHITESPACE, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, CHARACTER_LITERAL,
-        STRING_LITERAL, TEXT_BLOCK_LITERAL, INTEGER_LITERAL, LONG_LITERAL, FLOATING_POINT_LITERAL,
+        LAMBDA("->"), OPEN("open", true, false), MODULE("module", true, false), REQUIRES("requires", true, false),
+        TRANSITIVE("transitive", true, false), EXPORTS("exports", true, false), TO("to", true, false),
+        OPENS("opens", true, false), USES("uses", true, false), PROVIDES("provides", true, false),
+        WITH("with", true, false), RECORD("record", true, false), PERMITS("permits", true, false),
+        VAR("var", true, false), WHEN("when", true, false), YIELD("yield", true, false),
+        WHITESPACE, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, CHARACTER_LITERAL, STRING_LITERAL,
+        TEXT_BLOCK_LITERAL, INTEGER_LITERAL, LONG_LITERAL, FLOATING_POINT_LITERAL,
         IDENTIFIER, DUMMY, INVALID;
 
         TokenType() {
@@ -52,6 +54,22 @@ public class Token implements CharSequence, Node.TerminalNode {
 
         public String getLiteralString() {
             return literalString;
+        }
+
+        private boolean contextualKeyword, ignoreCase;
+
+        TokenType(String literalString, boolean contextualKeyword, boolean ignoreCase) {
+            this.literalString = literalString;
+            this.contextualKeyword = contextualKeyword;
+            this.ignoreCase = ignoreCase;
+        }
+
+        public boolean isContextualKeyword() {
+            return contextualKeyword;
+        }
+
+        public boolean isIgnoreCase() {
+            return ignoreCase;
         }
 
         public boolean isUndefined() {
@@ -324,14 +342,10 @@ public class Token implements CharSequence, Node.TerminalNode {
 
     public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         switch(type) {
-            case TRANSITIVE : 
-                return new KeyWord(TokenType.TRANSITIVE, tokenSource, beginOffset, endOffset);
             case UNDERSCORE : 
                 return new KeyWord(TokenType.UNDERSCORE, tokenSource, beginOffset, endOffset);
             case HOOK : 
                 return new Operator(TokenType.HOOK, tokenSource, beginOffset, endOffset);
-            case VAR : 
-                return new KeyWord(TokenType.VAR, tokenSource, beginOffset, endOffset);
             case THROW : 
                 return new KeyWord(TokenType.THROW, tokenSource, beginOffset, endOffset);
             case INTEGER_LITERAL : 
@@ -340,8 +354,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.STATIC, tokenSource, beginOffset, endOffset);
             case MINUS : 
                 return new Operator(TokenType.MINUS, tokenSource, beginOffset, endOffset);
-            case WHEN : 
-                return new KeyWord(TokenType.WHEN, tokenSource, beginOffset, endOffset);
             case STARASSIGN : 
                 return new Operator(TokenType.STARASSIGN, tokenSource, beginOffset, endOffset);
             case INTERFACE : 
@@ -376,8 +388,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Operator(TokenType.SLASHASSIGN, tokenSource, beginOffset, endOffset);
             case SC_AND : 
                 return new Operator(TokenType.SC_AND, tokenSource, beginOffset, endOffset);
-            case OPENS : 
-                return new KeyWord(TokenType.OPENS, tokenSource, beginOffset, endOffset);
             case PUBLIC : 
                 return new KeyWord(TokenType.PUBLIC, tokenSource, beginOffset, endOffset);
             case THROWS : 
@@ -386,8 +396,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.NON_SEALED, tokenSource, beginOffset, endOffset);
             case XOR : 
                 return new Operator(TokenType.XOR, tokenSource, beginOffset, endOffset);
-            case PROVIDES : 
-                return new KeyWord(TokenType.PROVIDES, tokenSource, beginOffset, endOffset);
             case LBRACE : 
                 return new Delimiter(TokenType.LBRACE, tokenSource, beginOffset, endOffset);
             case GOTO : 
@@ -416,8 +424,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Delimiter(TokenType.COMMA, tokenSource, beginOffset, endOffset);
             case MULTI_LINE_COMMENT : 
                 return new MultiLineComment(TokenType.MULTI_LINE_COMMENT, tokenSource, beginOffset, endOffset);
-            case YIELD : 
-                return new KeyWord(TokenType.YIELD, tokenSource, beginOffset, endOffset);
             case FLOATING_POINT_LITERAL : 
                 return new FloatingPointLiteral(TokenType.FLOATING_POINT_LITERAL, tokenSource, beginOffset, endOffset);
             case LBRACKET : 
@@ -426,8 +432,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Operator(TokenType.RSIGNEDSHIFT, tokenSource, beginOffset, endOffset);
             case PRIVATE : 
                 return new KeyWord(TokenType.PRIVATE, tokenSource, beginOffset, endOffset);
-            case OPEN : 
-                return new KeyWord(TokenType.OPEN, tokenSource, beginOffset, endOffset);
             case CONTINUE : 
                 return new KeyWord(TokenType.CONTINUE, tokenSource, beginOffset, endOffset);
             case VAR_ARGS : 
@@ -440,8 +444,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Operator(TokenType.INCR, tokenSource, beginOffset, endOffset);
             case LE : 
                 return new Operator(TokenType.LE, tokenSource, beginOffset, endOffset);
-            case TO : 
-                return new KeyWord(TokenType.TO, tokenSource, beginOffset, endOffset);
             case REM : 
                 return new Operator(TokenType.REM, tokenSource, beginOffset, endOffset);
             case VOLATILE : 
@@ -454,8 +456,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.NEW, tokenSource, beginOffset, endOffset);
             case SC_OR : 
                 return new Operator(TokenType.SC_OR, tokenSource, beginOffset, endOffset);
-            case RECORD : 
-                return new KeyWord(TokenType.RECORD, tokenSource, beginOffset, endOffset);
             case LT : 
                 return new Operator(TokenType.LT, tokenSource, beginOffset, endOffset);
             case CLASS : 
@@ -474,8 +474,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.PACKAGE, tokenSource, beginOffset, endOffset);
             case REMASSIGN : 
                 return new Operator(TokenType.REMASSIGN, tokenSource, beginOffset, endOffset);
-            case REQUIRES : 
-                return new KeyWord(TokenType.REQUIRES, tokenSource, beginOffset, endOffset);
             case TRY : 
                 return new KeyWord(TokenType.TRY, tokenSource, beginOffset, endOffset);
             case TEXT_BLOCK_LITERAL : 
@@ -512,8 +510,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Operator(TokenType.DECR, tokenSource, beginOffset, endOffset);
             case LAMBDA : 
                 return new Operator(TokenType.LAMBDA, tokenSource, beginOffset, endOffset);
-            case MODULE : 
-                return new KeyWord(TokenType.MODULE, tokenSource, beginOffset, endOffset);
             case RBRACE : 
                 return new Delimiter(TokenType.RBRACE, tokenSource, beginOffset, endOffset);
             case NE : 
@@ -530,8 +526,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.TRANSIENT, tokenSource, beginOffset, endOffset);
             case PLUS : 
                 return new Operator(TokenType.PLUS, tokenSource, beginOffset, endOffset);
-            case PERMITS : 
-                return new KeyWord(TokenType.PERMITS, tokenSource, beginOffset, endOffset);
             case FLOAT : 
                 return new Primitive(TokenType.FLOAT, tokenSource, beginOffset, endOffset);
             case NATIVE : 
@@ -550,8 +544,6 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new KeyWord(TokenType.SEALED, tokenSource, beginOffset, endOffset);
             case SINGLE_LINE_COMMENT : 
                 return new SingleLineComment(TokenType.SINGLE_LINE_COMMENT, tokenSource, beginOffset, endOffset);
-            case EXPORTS : 
-                return new KeyWord(TokenType.EXPORTS, tokenSource, beginOffset, endOffset);
             case IDENTIFIER : 
                 return new Identifier(TokenType.IDENTIFIER, tokenSource, beginOffset, endOffset);
             case BIT_AND : 
@@ -568,12 +560,8 @@ public class Token implements CharSequence, Node.TerminalNode {
                 return new Delimiter(TokenType.RBRACKET, tokenSource, beginOffset, endOffset);
             case COLON : 
                 return new Operator(TokenType.COLON, tokenSource, beginOffset, endOffset);
-            case USES : 
-                return new KeyWord(TokenType.USES, tokenSource, beginOffset, endOffset);
             case GT : 
                 return new Operator(TokenType.GT, tokenSource, beginOffset, endOffset);
-            case WITH : 
-                return new KeyWord(TokenType.WITH, tokenSource, beginOffset, endOffset);
             case SHORT : 
                 return new Primitive(TokenType.SHORT, tokenSource, beginOffset, endOffset);
             case DOUBLE_COLON : 

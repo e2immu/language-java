@@ -6,12 +6,14 @@ public class NonTerminalCall {
     final String sourceFile;
     public final String productionName;
     final String parserClassName;
-    final String location;
-    final int line, column;
+    final TokenSource tokenSource;
+    final int position, line, column;
+    int javaSourceLine;
 
-    public NonTerminalCall(String parserClassName, String location, String sourceFile, String productionName, int line, int column) {
+    public NonTerminalCall(String parserClassName, Node location, String sourceFile, String productionName, int line, int column) {
         this.parserClassName = parserClassName;
-        this.location = location;
+        this.tokenSource = location.getTokenSource();
+        this.position = location.getBeginOffset();
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
@@ -19,7 +21,7 @@ public class NonTerminalCall {
     }
 
     public String getLocation() {
-        return location;
+        return tokenSource.getInputSource() + ":" + tokenSource.getLineFromOffset(position) + ":" + tokenSource.getCodePointColumnFromOffset(position);
     }
 
     StackTraceElement createStackTraceElement() {
@@ -27,7 +29,12 @@ public class NonTerminalCall {
     }
 
     public String toString() {
-        return "at " + location + " entered " + productionName + "(" + sourceFile + ":" + line + ":" + column + ")\n";
+        StringBuilder buf = new StringBuilder();
+        buf.append("at ");
+        buf.append(getLocation());
+        buf.append(" in ");
+        String javaSourceLocation = javaSourceLine > 0 ? "," + parserClassName + ".java:" + javaSourceLine : "";
+        return "at " + getLocation() + " in " + productionName + "(" + sourceFile + ":" + line + ":" + column + javaSourceLocation + ")\n";
     }
 
 }

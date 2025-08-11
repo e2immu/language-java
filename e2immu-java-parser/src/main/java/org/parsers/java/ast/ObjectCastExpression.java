@@ -10,6 +10,11 @@ import static org.parsers.java.Token.TokenType.*;
 
 
 public class ObjectCastExpression extends CastExpression {
+
+    public boolean canBeThrown() {
+        return true;
+    }
+
 }
 
 

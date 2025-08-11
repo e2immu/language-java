@@ -10,6 +10,11 @@ import static org.parsers.java.Token.TokenType.*;
 
 
 public class TernaryExpression extends BaseNode implements Expression {
+
+    public boolean canBeThrown() {
+        return ((Expression) get(2)).canBeThrown() || ((Expression) get(4)).canBeThrown();
+    }
+
 }
 
 

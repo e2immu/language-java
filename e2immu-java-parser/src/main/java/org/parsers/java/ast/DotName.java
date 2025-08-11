@@ -11,7 +11,11 @@ import static org.parsers.java.Token.TokenType.*;
 
 public class DotName extends BaseNode implements PrimaryExpression {
 
-    public boolean isAssignableTo() {
+    public boolean canBeAssignedTo() {
+        return true;
+    }
+
+    public boolean canBeThrown() {
         return true;
     }
 

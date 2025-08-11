@@ -10,6 +10,11 @@ import static org.parsers.java.Token.TokenType.*;
 
 
 public class MethodCall extends BaseNode implements PrimaryExpression {
+
+    public boolean canBeThrown() {
+        return true;
+    }
+
 }
 
 

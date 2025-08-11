@@ -125,7 +125,7 @@ public class ParseTypeDeclaration extends CommonParse {
                 if (!Token.TokenType.AT.equals(tdi.getType())) {
                     throw new Summary.ParseException(context, "Expect @ delimiter");
                 }
-            } else if (!(tdi instanceof KeyWord)) {
+            } else if (!(tdi instanceof KeyWord) && !(tdi instanceof Token token && token.getType().equals(Token.TokenType.RECORD))) {
                 break;
             }
             i++;

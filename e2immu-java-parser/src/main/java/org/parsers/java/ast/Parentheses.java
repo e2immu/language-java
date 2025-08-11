@@ -23,8 +23,12 @@ public class Parentheses extends BaseNode implements PrimaryExpression {
     }
 
     // TODO: remove this @Property after jar refresh
-    public boolean isAssignableTo() {
-        return nestedExpression.isAssignableTo();
+    public boolean canBeAssignedTo() {
+        return nestedExpression.canBeAssignedTo();
+    }
+
+    public boolean canBeThrown() {
+        return nestedExpression.canBeThrown();
     }
 
 }

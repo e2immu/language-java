@@ -9,7 +9,7 @@ import java.util.*;
 import static org.parsers.java.Token.TokenType.*;
 
 
-public class CompactConstructorDeclaration extends ConstructorDeclaration {
+public class CompactConstructorDeclaration extends BaseNode {
 }
 
 
