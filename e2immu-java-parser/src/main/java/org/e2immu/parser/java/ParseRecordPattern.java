@@ -12,10 +12,7 @@ import org.e2immu.language.inspection.api.parser.Context;
 import org.e2immu.language.inspection.api.parser.GenericsHelper;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
-import org.parsers.java.ast.Identifier;
-import org.parsers.java.ast.KeyWord;
-import org.parsers.java.ast.LocalVariableDeclaration;
-import org.parsers.java.ast.Type;
+import org.parsers.java.ast.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +36,15 @@ public class ParseRecordPattern extends CommonParse {
             Node node = rp.get(i);
             RecordPattern pattern = switch (node) {
                 case org.parsers.java.ast.RecordPattern subRp -> parseRecordPattern(context, subRp);
-                case LocalVariableDeclaration lvd ->
+                case TypePattern lvd ->
                         parseLocalVariableDeclaration(context, lvd, recordFieldIndex, recordType);
-                case KeyWord kw when UNDERSCORE.equals(kw.getType()) -> runtime.newRecordPatternBuilder()
+                case Token kw when UNDERSCORE.equals(kw.getType()) -> runtime.newRecordPatternBuilder()
                         .setSource(source(kw))
                         .setUnnamedPattern(true).build();
-                case null, default -> throw new UnsupportedOperationException();
+                case null, default -> {
+
+                    throw new UnsupportedOperationException();
+                }
             };
             list.add(pattern);
             if (detailedSourcesBuilder != null) {
@@ -61,14 +61,14 @@ public class ParseRecordPattern extends CommonParse {
     }
 
     public RecordPattern parseLocalVariableDeclaration(Context context,
-                                                       LocalVariableDeclaration lvd,
+                                                       Node lvd,
                                                        int recordFieldIndex,
                                                        ParameterizedType recordType) {
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         ParameterizedType pt;
         if (lvd.getFirst() instanceof Type type) {
             pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
-        } else if (lvd.getFirst() instanceof KeyWord kw && Token.TokenType.VAR.equals(kw.getType())) {
+        } else if (lvd.getFirst() instanceof Token kw && Token.TokenType.VAR.equals(kw.getType())) {
             FieldInfo fieldInfo = recordType.typeInfo().fields().get(recordFieldIndex);
             if (fieldInfo.type().hasTypeParameters()) {
                 pt = handleTypeParameters(fieldInfo, recordType);
@@ -83,7 +83,7 @@ public class ParseRecordPattern extends CommonParse {
             String name = identifier.getSource();
             if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(name, source(identifier));
             lv = runtime.newLocalVariable(name, pt);
-        } else if (lvd.get(1) instanceof KeyWord kw && UNDERSCORE.equals(kw.getType())) {
+        } else if (lvd.get(1) instanceof Token kw && UNDERSCORE.equals(kw.getType())) {
             lv = runtime.newUnnamedLocalVariable(pt, null);
         } else {
             throw new UnsupportedOperationException();

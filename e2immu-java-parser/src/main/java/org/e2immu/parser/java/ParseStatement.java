@@ -688,9 +688,9 @@ public class ParseStatement extends CommonParse {
 
                             Node node = csl.get(k);
                             SwitchStatementOldStyle.SwitchLabel sl;
-                            if (node instanceof LocalVariableDeclaration || node instanceof RecordPattern) {
+                            if (node instanceof TypePattern || node instanceof RecordPattern) {
                                 org.e2immu.language.cst.api.element.RecordPattern recordPattern;
-                                if (node instanceof LocalVariableDeclaration lvd) {
+                                if (node instanceof TypePattern lvd) {
                                     recordPattern = parsers.parseRecordPattern()
                                             .parseLocalVariableDeclaration(context, lvd, 0, null);
                                 } else {
