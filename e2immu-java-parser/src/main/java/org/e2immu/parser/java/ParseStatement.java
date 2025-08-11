@@ -131,7 +131,7 @@ public class ParseStatement extends CommonParse {
         }
 
         // type declarator delimiter declarator
-        if (statement instanceof NoVarDeclaration nvd) {
+        if (statement instanceof LocalVariableDeclaration nvd) {
             return localVariableCreation(context, index, nvd, i, lvcModifiers, source, detailedSourcesBuilder,
                     comments, label, annotations);
         }
@@ -152,7 +152,7 @@ public class ParseStatement extends CommonParse {
             Node varDeclaration = enhancedFor.get(i + 2);
             if (varDeclaration instanceof NoVarDeclaration nvd) {
                 loopVariableCreation = (LocalVariableCreation) parse(newContext, index, nvd);
-            } else if (varDeclaration instanceof VarDeclaration vd) {
+            } else if (varDeclaration instanceof LocalVariableDeclaration vd) {
                 ParameterizedType elementType = computeForwardType(context, iterable, expression.parameterizedType());
                 loopVariableCreation = forEachElementWithVar(context, vd, elementType);
             } else throw new UnsupportedOperationException();
@@ -486,7 +486,9 @@ public class ParseStatement extends CommonParse {
         return map.values().stream().findFirst().orElseThrow();
     }
 
-    private LocalVariableCreation localVariableCreation(Context context, String index, NoVarDeclaration nvd, int i,
+    private LocalVariableCreation localVariableCreation(Context context,
+                                                        String index,
+                                                        LocalVariableDeclaration nvd, int i,
                                                         List<LocalVariableCreation.Modifier> lvcModifiers,
                                                         Source source, DetailedSources.Builder detailedSourcesBuilder,
                                                         List<Comment> comments, String label,
@@ -544,7 +546,7 @@ public class ParseStatement extends CommonParse {
                 .addComments(comments).setLabel(label).addAnnotations(annotations).build();
     }
 
-    private LocalVariableCreation forEachElementWithVar(Context context, VarDeclaration varDeclaration,
+    private LocalVariableCreation forEachElementWithVar(Context context, LocalVariableDeclaration varDeclaration,
                                                         ParameterizedType elementType) {
         LocalVariableCreation.Builder builder = runtime.newLocalVariableCreationBuilder();
         VariableDeclarator vd = (VariableDeclarator) varDeclaration.get(1);

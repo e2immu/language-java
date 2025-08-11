@@ -46,7 +46,7 @@ public class ParseType extends CommonParse {
                                      DetailedSources.Builder detailedSourcesBuilder) {
         Token.TokenType tt;
         ParameterizedType pt;
-        Node n0 = nodes.getFirst();
+        Node n0 = nodes instanceof Node.TerminalNode t ? t : nodes.getFirst();
         if (n0 instanceof ReferenceType rt) {
             return parse(context, rt, detailedSourcesBuilder);
         }
@@ -69,7 +69,7 @@ public class ParseType extends CommonParse {
             }
         } else {
             if (n0 instanceof PrimitiveArrayType pat && pat.getFirst() instanceof PrimitiveType primitive
-                    && primitive.getFirst() instanceof Primitive p) {
+                && primitive.getFirst() instanceof Primitive p) {
                 tt = p.getType();
                 int arrays = countArrays(pat);
                 ParameterizedType parameterizedType = primitiveType(tt);
@@ -95,7 +95,9 @@ public class ParseType extends CommonParse {
             }
         }
         if (pt == null) {
-            if (complain) throw new UnsupportedOperationException();
+            if (complain) {
+                throw new UnsupportedOperationException();
+            }
             return null;
         }
 

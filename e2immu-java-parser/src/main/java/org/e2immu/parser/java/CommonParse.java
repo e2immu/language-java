@@ -136,7 +136,15 @@ public abstract class CommonParse {
                         }
                     }
                 }
-            } else if (child instanceof KeyWord keyWord) {
+            } else if (child instanceof Identifier id) {
+                identifier = id;
+            } else if (child instanceof ClassOrInterfaceBody
+                       || child instanceof AnnotationTypeBody
+                       || child instanceof RecordBody
+                       || child instanceof EnumBody) {
+                sub = child;
+                break;
+            } else if (child instanceof Token keyWord) {
                 TypeNature tn = getTypeNature(td, keyWord.getType());
                 if (tn != null) {
                     assert typeNature == null;
@@ -148,14 +156,6 @@ public abstract class CommonParse {
                     typeModifiers.add(tm);
                     if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(tm, source(keyWord));
                 }
-            } else if (child instanceof Identifier id) {
-                identifier = id;
-            } else if (child instanceof ClassOrInterfaceBody
-                       || child instanceof AnnotationTypeBody
-                       || child instanceof RecordBody
-                       || child instanceof EnumBody) {
-                sub = child;
-                break;
             }
         }
         assert identifier != null;
