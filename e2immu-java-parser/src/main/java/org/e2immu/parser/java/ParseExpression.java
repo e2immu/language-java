@@ -171,7 +171,7 @@ public class ParseExpression extends CommonParse {
         RecordPattern recordPattern;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         Node ioe2 = ioe.get(2);
-        if (ioe2 instanceof NoVarDeclaration nvd) {
+        if (ioe2 instanceof LocalVariableDeclaration nvd) {
             testType = parsers.parseType().parse(context, nvd.get(0), detailedSourcesBuilder);
             String lvName = nvd.get(1).getSource();
             LocalVariable patternVariable = runtime.newLocalVariable(lvName, testType);

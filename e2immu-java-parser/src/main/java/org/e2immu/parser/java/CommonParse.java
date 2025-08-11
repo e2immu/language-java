@@ -325,7 +325,7 @@ public abstract class CommonParse {
         while (j < nsl.size()) {
             Node node = nsl.get(j);
             switch (node) {
-                case LocalVariableDeclaration lvd -> {
+                case TypePattern lvd -> {
                     RecordPattern recordPattern = parsers.parseRecordPattern()
                             .parseLocalVariableDeclaration(newContext, lvd, 0, null);
                     entryBuilder.setPatternVariable(recordPattern);
