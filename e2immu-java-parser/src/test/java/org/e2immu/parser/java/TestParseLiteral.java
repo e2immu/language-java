@@ -335,4 +335,23 @@ public class TestParseLiteral extends CommonTestParse {
     }
 
 
+    @Language("java")
+    public static final String INPUT12 = """
+            package a.b;
+            public class X {
+               Class<?> method() {
+                  return X[].class;
+               }
+            }
+            """;
+
+    @Test
+    public void test12() {
+        TypeInfo X = parse(INPUT12);
+        MethodInfo methodInfo = X.findUniqueMethod("method", 0);
+        assertEquals("Type Class<?>", methodInfo.returnType().toString());
+        assertEquals("Type Class<a.b.X[]>", methodInfo.methodBody().lastStatement().expression().parameterizedType().toString());
+    }
+
+
 }

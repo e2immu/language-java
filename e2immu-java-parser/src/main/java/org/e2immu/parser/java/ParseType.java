@@ -42,12 +42,13 @@ public class ParseType extends CommonParse {
         if (nodes instanceof ReturnType rt) {
             return parse(context, rt.getFirst(), complain, varargs, detailedSourcesBuilder);
         }
-        if (nodes instanceof ClassLiteral cl) {
-            return parse(context, cl.getFirst(), complain, varargs, detailedSourcesBuilder);
-        }
         Arrays arrays = countArrays(nodes, varargs);
         Source source;
         switch (nodes) {
+            case ClassLiteral cl -> {
+                pt = parse(context, cl.getFirst(), complain, varargs, detailedSourcesBuilder);
+                source = null; // will be set higher up
+            }
             case PrimitiveArrayType pat -> {
                 PrimitiveType primitiveType = pat.firstChildOfType(PrimitiveType.class);
                 Primitive primitive = primitiveType.firstChildOfType(Primitive.class);
