@@ -15673,6 +15673,39 @@ public class JavaParser {
     }
 
     // scanahead routine for expansion at:
+    // Java.ccc:541:28
+    // BuildScanRoutine macro
+    private boolean check$Java_ccc$541$28(boolean scanToEnd) {
+        boolean reachedScanCode = false;
+        int passedPredicateThreshold = remainingLookahead - 2;
+        try {
+            lookaheadRoutineNesting++;
+            // BuildPredicateCode macro
+            // End BuildPredicateCode macro
+            reachedScanCode = true;
+            // skipping check
+            if (hitFailure) return false;
+            if (remainingLookahead <= 0) return true;
+            // Lookahead Code for NonTerminal specified at Java.ccc:541:28
+            // NonTerminal Annotation at Java.ccc:541:28
+            pushOntoLookaheadStack("Type", "Java.ccc", 541, 28);
+            currentLookaheadProduction = "Annotation";
+            try {
+                if (!check$Annotation(false)) return false;
+            } finally {
+                popLookaheadStack();
+            }
+        } finally {
+            lookaheadRoutineNesting--;
+            if (reachedScanCode && remainingLookahead <= passedPredicateThreshold) {
+                passedPredicate = true;
+            }
+        }
+        passedPredicate = false;
+        return true;
+    }
+
+    // scanahead routine for expansion at:
     // Java.ccc:543:4
     // BuildScanRoutine macro
     private boolean check$Java_ccc$543$4(boolean scanToEnd) {
@@ -23567,6 +23600,27 @@ public class JavaParser {
         try {
             lookaheadRoutineNesting++;
             // skipping check
+            if (hitFailure) return false;
+            if (remainingLookahead <= 0) return true;
+            // Lookahead Code for ZeroOrMore specified at Java.ccc:541:27
+            boolean passedPredicate5 = passedPredicate;
+            try {
+                while (remainingLookahead > 0 && !hitFailure) {
+                    Token token6 = currentLookaheadToken;
+                    passedPredicate = false;
+                    if (!check$Java_ccc$541$28(false)) {
+                        if (passedPredicate) return false;
+                        currentLookaheadToken = token6;
+                        break;
+                    }
+                }
+            } finally {
+                passedPredicate = passedPredicate5;
+            }
+            hitFailure = false;
+            if (hitFailure) return false;
+            if (remainingLookahead <= 0) return true;
+            // Lookahead Code for Terminal specified at Java.ccc:541:41
             if (!scanToken(LBRACKET)) return false;
             return true;
         } finally {

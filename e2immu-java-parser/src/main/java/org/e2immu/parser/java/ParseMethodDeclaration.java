@@ -272,6 +272,16 @@ public class ParseMethodDeclaration extends CommonParse {
             throw new Summary.ParseException(context, "Expect formal parameter's type");
         }
         String parameterName;
+        while (fp.get(i) instanceof Annotation a) {
+            ++i;
+            annotations.add(a);
+        }
+        if (fp.get(i) instanceof Token token && Token.TokenType.VAR_ARGS.equals(token.getType())) {
+            ++i;
+            // VAR_ARGS with annotation; bit of an exception
+            typeOfParameter = typeOfParameter.copyWithArrays(typeOfParameter.arrays() + 1);
+            varargs = true;
+        }
         Node node2 = fp.get(i);
         if (node2 instanceof Identifier identifier) {
             parameterName = identifier.getSource();
