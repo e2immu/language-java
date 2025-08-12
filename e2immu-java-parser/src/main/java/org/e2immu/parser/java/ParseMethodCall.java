@@ -76,7 +76,7 @@ public class ParseMethodCall extends CommonParse {
         List<ParameterizedType> list = new ArrayList<>();
         for (int i = 1; i < typeArguments.size(); i += 2) {
             int index = i / 2;
-            ParameterizedType pt = parsers.parseType().parse(context, typeArguments.get(i), true, detailedSourcesBuilder);
+            ParameterizedType pt = parsers.parseType().parse(context, typeArguments.get(i), true, null, detailedSourcesBuilder);
             list.add(pt);
         }
         return List.copyOf(list);

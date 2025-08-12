@@ -263,7 +263,7 @@ public abstract class CommonParse {
                                                     DetailedSources.Builder dsb) {
         List<ParameterizedType> res = new ArrayList<>(unparsedTypeBounds.size());
         for (Node typeBound : unparsedTypeBounds) {
-            ParameterizedType parsedTypeBound = parsers.parseType().parse(context, typeBound, false, dsb);
+            ParameterizedType parsedTypeBound = parsers.parseType().parse(context, typeBound, false, null, dsb);
             if (parsedTypeBound != null) {
                 res.add(parsedTypeBound);
             } else {

@@ -223,85 +223,58 @@ public class ParseMethodDeclaration extends CommonParse {
     }
 
     private void parseFormalParameter(Context context, MethodInfo.Builder builder, FormalParameter fp) {
-        ParameterizedType typeOfParameter;
         DetailedSources.Builder detailedSourcesBuilder = context.newDetailedSourcesBuilder();
         List<Annotation> annotations = new ArrayList<>();
-        int i = 0;
+        Node varargs = fp.stream()
+                .filter(child -> child instanceof Token t && Token.TokenType.VAR_ARGS.equals(t.getType()))
+                .findFirst().orElse(null);
         boolean isFinal = false;
-        Node node0 = fp.get(i);
-        if (node0 instanceof Modifiers) {
-            for (Node modifier : node0) {
-                if (modifier instanceof Annotation a) {
-                    annotations.add(a);
-                } else if (modifier instanceof KeyWord kw) {
-                    if (Token.TokenType.FINAL.equals(kw.getType())) {
-                        isFinal = true;
-                    } else throw new Summary.ParseException(context, "Expect 'final' as only keyword");
-                } else {
-                    throw new Summary.ParseException(context, "Expect formal parameter's modifier to be an annotation");
-                }
-            }
-            ++i;
-        } else if (node0 instanceof Annotation a) {
-            annotations.add(a);
-            ++i;
-        } else if (node0 instanceof KeyWord kw) {
-            if (Token.TokenType.FINAL.equals(kw.getType())) {
-                isFinal = true;
-            } else throw new Summary.ParseException(context, "Expect 'final' as only keyword");
-            ++i;
-        }
-        Node node1 = fp.get(i);
-        boolean varargs;
-        if (node1 instanceof Type type) {
-            ParameterizedType pt = parsers.parseType().parse(context, type, detailedSourcesBuilder);
-            if (fp.get(i + 1) instanceof Delimiter d && Token.TokenType.VAR_ARGS.equals(d.getType())) {
-                typeOfParameter = pt.copyWithArrays(pt.arrays() + 1);
-                if (detailedSourcesBuilder != null) {
-                    detailedSourcesBuilder.put(typeOfParameter, source(fp, i, i + 1));
-                    detailedSourcesBuilder.putAssociatedObject(typeOfParameter, pt);
-                }
-                ++i;
-                varargs = true;
-            } else {
-                typeOfParameter = pt;
-                varargs = false;
-            }
-            ++i;
-        } else {
-            throw new Summary.ParseException(context, "Expect formal parameter's type");
-        }
-        String parameterName;
-        while (fp.get(i) instanceof Annotation a) {
-            ++i;
-            annotations.add(a);
-        }
-        if (fp.get(i) instanceof Token token && Token.TokenType.VAR_ARGS.equals(token.getType())) {
-            ++i;
-            // VAR_ARGS with annotation; bit of an exception
-            typeOfParameter = typeOfParameter.copyWithArrays(typeOfParameter.arrays() + 1);
-            varargs = true;
-        }
-        Node node2 = fp.get(i);
-        if (node2 instanceof Identifier identifier) {
-            parameterName = identifier.getSource();
-            if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
-        } else if (node2 instanceof VariableDeclaratorId vdi) {
-            // old C-style array type 'I data[]'
-            if (vdi.getFirst() instanceof Identifier identifier) {
+        ParameterizedType pt = null;
+        String parameterName = null;
+        int arrayCount = 0;
+        // these objects come is such weird orders, that we simply run over all of them
+        for (Node child : fp) {
+            if (child instanceof Modifiers) {
+                annotations.addAll(child.childrenOfType(Annotation.class));
+                isFinal |= child.stream().anyMatch(c -> c instanceof Token t && Token.TokenType.FINAL.equals(t.getType()));
+            } else if (child instanceof Annotation a) {
+                annotations.add(a);
+            } else if (child instanceof Type type) {
+                annotations.addAll(type.childrenOfType(Annotation.class)); // primitive array type, reference type
+                pt = parsers.parseType().parse(context, type, true, varargs, detailedSourcesBuilder);
+            } else if (child instanceof Identifier identifier) {
                 parameterName = identifier.getSource();
                 if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
-            } else throw new Summary.ParseException(context, "Expect first part to be Identifier");
-            int arrayCount = (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();
-            typeOfParameter = typeOfParameter.copyWithArrays(arrayCount);
-        } else {
-            throw new UnsupportedOperationException();
+            } else if (child instanceof VariableDeclaratorId vdi) {
+                if (vdi.getFirst() instanceof Identifier identifier) {
+                    parameterName = identifier.getSource();
+                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(parameterName, source(identifier));
+                } else throw new Summary.ParseException(context, "Expect first part to be Identifier");
+                arrayCount += (int) vdi.stream().filter(n -> Token.TokenType.LBRACKET.equals(n.getType())).count();
+            } else if (child instanceof Token kw) {
+                if (Token.TokenType.FINAL.equals(kw.getType())) {
+                    isFinal = true;
+                }
+            }
         }
+        if (pt == null) throw new UnsupportedOperationException("No type for formal parameter?");
+        if (parameterName == null) throw new UnsupportedOperationException("No name for formal parameter?");
+        ParameterizedType typeOfParameter;
+        if (arrayCount > 0 || pt.arrays() > 0) {
+            typeOfParameter = pt.copyWithArrays(pt.arrays() + arrayCount);
+            if (detailedSourcesBuilder != null) {
+                //FIXME detailedSourcesBuilder.put(typeOfParameter, source(fp, i, i + 1));
+                detailedSourcesBuilder.putAssociatedObject(typeOfParameter, pt);
+            }
+        } else {
+            typeOfParameter = pt;
+        }
+
         Source source = source(fp);
         ParameterInfo pi = builder.addParameter(parameterName, typeOfParameter);
         pi.builder().addComments(comments(fp))
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
-                .setVarArgs(varargs)
+                .setVarArgs(varargs != null)
                 .setIsFinal(isFinal);
 
         // now that there is a builder, we can parse the annotations
