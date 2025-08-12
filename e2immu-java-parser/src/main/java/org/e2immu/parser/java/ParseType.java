@@ -35,22 +35,17 @@ public class ParseType extends CommonParse {
         return parse(context, nodes, true, null, detailedSourcesBuilder);
     }
 
-    public ParameterizedType parse(Context context, List<Node> nodes, boolean complain,
-                                   Node varargs,
+    public ParameterizedType parse(Context context, List<Node> nodes, boolean complain, Node varargs,
                                    DetailedSources.Builder detailedSourcesBuilder) {
-        ParameterizedType pt = parse2(context, nodes, complain, varargs, detailedSourcesBuilder);
-        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pt, source((Node) nodes));
-        return pt;
-    }
-
-    private ParameterizedType parse2(Context context, List<Node> nodes, boolean complain, Node varargs,
-                                     DetailedSources.Builder detailedSourcesBuilder) {
         Token.TokenType tt;
         ParameterizedType pt;
         if (nodes instanceof ReturnType rt) {
             return parse(context, rt.getFirst(), complain, varargs, detailedSourcesBuilder);
         }
-        int arrays = countArrays(nodes) + (varargs != null ? 1 : 0);
+        if (nodes instanceof ClassLiteral cl) {
+            return parse(context, cl.getFirst(), complain, varargs, detailedSourcesBuilder);
+        }
+        Arrays arrays = countArrays(nodes, varargs);
         Source source;
         switch (nodes) {
             case PrimitiveArrayType pat -> {
@@ -70,51 +65,34 @@ public class ParseType extends CommonParse {
                 pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);
                 source = source(ot);
             }
-            default -> {
-                Node n0 = nodes.isEmpty() || nodes instanceof Node.TerminalNode ? (Node) nodes : nodes.getFirst();
-                source = source(n0);
-                if (n0 instanceof Name name) {
-                    pt = parseObjectType(context, name, complain, detailedSourcesBuilder);
-                } else if (n0 instanceof Identifier identifier) {
-                    List<? extends NamedType> nts = context.typeContext().getWithQualification(identifier.getSource(), complain);
-                    assert nts.size() == 1;
-                    NamedType nt = nts.getLast();
-                    pt = nt.asSimpleParameterizedType();
-                    if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pt, source(n0));
-                } else if (n0 instanceof ObjectType ot) {
-                    pt = parseObjectType(context, ot, complain, detailedSourcesBuilder);
-                } else if (n0 instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
+            case KeyWord kw -> {
+                pt = primitiveType(kw.getType());
+                source = source(kw);
+            }
+            case PrimitiveType primitiveType -> {
+                if (primitiveType.getFirst() instanceof Primitive p) {
+                    pt = primitiveType(p.getType());
+                    source = source(p);
+                } else throw new UnsupportedOperationException();
+            }
+            case Name name -> {
+                pt = parseObjectType(context, name, complain, detailedSourcesBuilder);
+                source = source(name);
+            }
+            case TypeArgument ta -> {
+                if (ta.getFirst() instanceof Operator o && Token.TokenType.HOOK.equals(o.getType())) {
                     // ?, ? super T ==
                     if (nodes.size() > 1 && nodes.get(1) instanceof WildcardBounds bounds) {
                         pt = parseWildcardBounds(context, bounds, detailedSourcesBuilder);
+                        source = null; // do not set!
                     } else {
                         // simply ?
                         pt = runtime.parameterizedTypeWildcard();
-                        if (detailedSourcesBuilder != null) detailedSourcesBuilder.put(pt, source(n0));
+                        source = source(o);
                     }
-                } else {
-                    if (n0 instanceof PrimitiveType primitive && primitive.getFirst() instanceof Primitive p) {
-                        tt = p.getType();
-                    } else if (n0 instanceof Primitive p) {
-                        tt = p.getType();
-                    } else if (n0 instanceof KeyWord keyWord) {
-                        if (!keyWord.hasChildNodes() || nodes.size() == 1
-                            || nodes.size() == 3 && nodes.get(2).getType() == Token.TokenType.CLASS) {
-                            tt = keyWord.getType();
-                        } else {
-                            throw new UnsupportedOperationException();
-                        }
-                    } else tt = null;
-                    if (tt != null) {
-                        pt = primitiveType(tt);
-                    } else {
-                        pt = null;
-                    }
-                    if (pt != null && detailedSourcesBuilder != null) {
-                        detailedSourcesBuilder.put(pt, source(n0));
-                    }
-                }
+                } else throw new UnsupportedOperationException();
             }
+            default -> throw new UnsupportedOperationException();
         }
         if (pt == null) {
             if (complain) {
@@ -122,20 +100,24 @@ public class ParseType extends CommonParse {
             }
             return null;
         }
-        if (arrays == 0) {
+        if (detailedSourcesBuilder != null && source != null) {
+            detailedSourcesBuilder.put(pt, source);
+        }
+        if (arrays == null) {
             return pt;
         }
-        ParameterizedType withArrays = pt.copyWithArrays(arrays);
-        if (detailedSourcesBuilder != null) {
-            //  Source source1 = source((Node) nodes);
-            //  detailedSourcesBuilder.put(withArrays, source1);
-            detailedSourcesBuilder.putAssociatedObject(withArrays, pt);
-            detailedSourcesBuilder.put(pt, source);
+        ParameterizedType withArrays = pt.copyWithArrays(arrays.count);
+        if (detailedSourcesBuilder != null && source != null) {
+            detailedSourcesBuilder.putWithArrayToWithoutArray(withArrays, pt);
+            Source sourceWithVarargs = source.withEndPos(arrays.endPos);
+            detailedSourcesBuilder.put(withArrays, sourceWithVarargs);
         }
         return withArrays;
     }
 
-    private ParameterizedType parseWildcardBounds(Context context, WildcardBounds bounds, DetailedSources.Builder detailedSourcesBuilder) {
+    private ParameterizedType parseWildcardBounds(Context context,
+                                                  WildcardBounds bounds,
+                                                  DetailedSources.Builder detailedSourcesBuilder) {
         Wildcard wildcard;
         Node node = bounds.getFirst();
         Node.NodeType type = node.getType();
@@ -261,13 +243,19 @@ public class ParseType extends CommonParse {
         return typeArguments;
     }
 
-    private int countArrays(List<Node> nodes) {
-        int arrays = 0;
+    private record Arrays(int count, int endPos) {
+    }
+
+    private Arrays countArrays(List<Node> nodes, Node varargs) {
+        int arrays = varargs == null ? 0 : 1;
+        int endPos = varargs == null ? 0 : varargs.getEndColumn();
         for (Node child : nodes) {
-            if (child instanceof Delimiter d && "[".equals(d.getSource())) {
+            if (child instanceof Delimiter d && "]".equals(d.getSource())) {
                 arrays++;
+                endPos = Math.max(d.getEndColumn(), endPos);
             }
         }
-        return arrays;
+        if (arrays == 0) return null;
+        return new Arrays(arrays, endPos);
     }
 }

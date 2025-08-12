@@ -263,8 +263,10 @@ public class ParseMethodDeclaration extends CommonParse {
         if (arrayCount > 0 || pt.arrays() > 0) {
             typeOfParameter = pt.copyWithArrays(pt.arrays() + arrayCount);
             if (detailedSourcesBuilder != null) {
-                //FIXME detailedSourcesBuilder.put(typeOfParameter, source(fp, i, i + 1));
-                detailedSourcesBuilder.putAssociatedObject(typeOfParameter, pt);
+                if (pt.arrays() > 0) {
+                    pt = (ParameterizedType) detailedSourcesBuilder.getAssociated(pt);
+                }
+                detailedSourcesBuilder.putWithArrayToWithoutArray(typeOfParameter, pt);
             }
         } else {
             typeOfParameter = pt;

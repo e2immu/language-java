@@ -27,7 +27,6 @@ public class TestParseDetailedSources extends CommonTestParse {
             }
             """;
 
-    @Disabled
     @Test
     public void test() {
         TypeInfo typeInfo = parse(INPUT, true);
