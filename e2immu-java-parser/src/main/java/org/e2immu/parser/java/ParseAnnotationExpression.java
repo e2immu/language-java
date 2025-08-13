@@ -5,10 +5,12 @@ import org.e2immu.language.cst.api.element.Source;
 import org.e2immu.language.cst.api.expression.AnnotationExpression;
 import org.e2immu.language.cst.api.expression.Expression;
 import org.e2immu.language.cst.api.info.Info;
+import org.e2immu.language.cst.api.info.MethodInfo;
 import org.e2immu.language.cst.api.info.TypeInfo;
 import org.e2immu.language.cst.api.runtime.Runtime;
 import org.e2immu.language.cst.api.type.NamedType;
 import org.e2immu.language.inspection.api.parser.Context;
+import org.e2immu.language.inspection.api.parser.ForwardType;
 import org.e2immu.language.inspection.api.parser.Summary;
 import org.parsers.java.Node;
 import org.parsers.java.Token;
@@ -142,15 +144,15 @@ public class ParseAnnotationExpression extends CommonParse {
             // delimiter @, annotation name, ( , mvp, delimiter ',', mvp, delimiter )
             if (na.get(3) instanceof MemberValuePair mvp) {
                 String key = mvp.getFirst().getSource();
-                Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
-                        mvp.get(2));
+                ForwardType ft = forwardType(context, key, typeInfo);
+                Expression value = parsers.parseExpression().parse(context, "", ft, mvp.get(2));
                 builder.addKeyValuePair(key, value);
             } else if (na.get(3) instanceof MemberValuePairs pairs) {
                 for (int j = 0; j < pairs.size(); j += 2) {
                     if (pairs.get(j) instanceof MemberValuePair mvp) {
                         String key = mvp.getFirst().getSource();
-                        Expression value = parsers.parseExpression().parse(context, "", context.emptyForwardType(),
-                                mvp.get(2));
+                        ForwardType ft = forwardType(context, key, typeInfo);
+                        Expression value = parsers.parseExpression().parse(context, "", ft, mvp.get(2));
                         builder.addKeyValuePair(key, value);
                     } else {
                         throw new Summary.ParseException(context, "Expected mvp");
@@ -166,5 +168,10 @@ public class ParseAnnotationExpression extends CommonParse {
         return builder.addComments(comments(a))
                 .setSource(detailedSourcesBuilder == null ? source : source.withDetailedSources(detailedSourcesBuilder.build()))
                 .build();
+    }
+
+    private ForwardType forwardType(Context context, String key, TypeInfo annotationType) {
+        MethodInfo methodInfo = annotationType.findUniqueMethod(key, 0);
+        return context.newForwardType(methodInfo.returnType());
     }
 }
