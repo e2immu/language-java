@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -63,18 +64,22 @@ public class ScanCompilationUnit extends CommonParse {
         String packageName;
         Source s1 = source(cu);
         Source source;
+        List<org.e2immu.language.cst.api.element.Comment> comments;
         if (packageDeclaration == null) {
             source = s1;
             packageName = "";
+            comments = List.of();
         } else {
             Name name = packageDeclaration.firstChildOfType(Name.class);
             packageName = Objects.requireNonNullElse(name.toString(), "");
             source = addDetailedSources
                     ? s1.withDetailedSources(runtime.newDetailedSourcesBuilder().put(packageName, source(name)).build())
                     : s1;
+            comments = comments(packageDeclaration);
         }
         org.e2immu.language.cst.api.element.CompilationUnit.Builder compilationUnitBuilder
                 = runtime.newCompilationUnitBuilder()
+                .addComments(comments)
                 .setSource(source)
                 .setURI(uri)
                 .setPackageName(packageName)
